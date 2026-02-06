@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PRJ-SPDM | Cronograma - Painel Executivo</title>
+  <title>MIT045 | Cronograma - Painel Gerencial (Live)</title>
 
   <!-- XLSX export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -126,82 +126,63 @@
     .notice pre{white-space:pre-wrap;word-break:break-word;margin:10px 0 0 0;font-size:11px;color:#334155;}
 
     @media (max-width:1200px){.grid{grid-template-columns:1fr;} header .wrap{padding:14px 12px;} .wrap{padding:12px 12px;}}
-  
-/* ===== MENU PRINCIPAL (PAINEL / CRONOGRAMA) ===== */
-.nav-main{
-  display:flex;
-  gap:12px;
-  margin-top:12px;
-}
-.nav-item{
-  text-decoration:none;
-  padding:10px 18px;
-  border-radius:999px;
-  border:1px solid rgba(226,232,240,.95);
-  background:linear-gradient(135deg,#ffffff,#f8fafc);
-  font-weight:950;
-  letter-spacing:.3px;
-  color:#0f172a;
-  box-shadow:0 6px 16px rgba(2,6,23,.08);
-  transition:all .15s ease;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-}
-.nav-item:hover{
-  transform:translateY(-1px);
-  box-shadow:0 10px 24px rgba(2,6,23,.14);
-  border-color:rgba(99,102,241,.55);
-}
-.nav-item.active{
-  background:linear-gradient(135deg,#6366f1,#22c55e);
-  color:#ffffff;
-  border-color:transparent;
-  box-shadow:0 12px 28px rgba(99,102,241,.35);
-}
-</style>
+  </style>
 
   <script>
-    // ===== CONFIG (EDITÁVEL) =====
-    const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
-    const CSV_LS_KEY = "spdm_cronograma_csv_url";
-  </script>
+  // ===== CONFIG (EDITÁVEL) =====
+  const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+  const SOURCE_LS_KEY = "spdm_crono_source_v1"; // stores {sheet, range}
+  const AUTO_LS_KEY = "spdm_crono_auto_refresh_sec";
+</script>
 </head>
 
 <body>
 <header>
   <div class="wrap">
-    <div class="row" style="justify-content:space-between">
+    <div class="row" style="justify-content: space-between;">
       <div>
-        <h1>PRJ-SPDM | Cronograma do Projeto</h1>
-        <div class="sub">Fonte: Google Sheets (CSV publicado) • Última atualização: <span id="lastUpdate">--</span></div>
+        <h1>MIT045 | Cronograma - Painel Gerencial (Live)</h1>
+        <div class="sub">Fonte: Google Sheets • Aba: <strong id="sheetInfoTop">Cronograma</strong> • CSV: gviz/out:csv • Última atualização: <span id="lastUpdate">--</span></div>
       </div>
       <div class="row">
-        <span class="pill" id="pillResumo">Carregando…</span>
-        <button class="iconbtn" id="btnReload" title="Recarregar">↻</button>
-        <button class="iconbtn" id="btnExportXlsx" title="Exportar Excel (XLSX)">⤓</button>
-      </div>
-    </div>
-
-    <div class="row" style="font-size:12px;color:var(--muted);margin-top:8px;justify-content:space-between;">
-      <div class="row" style="gap:8px;">
-        <span class="pill">CSV:</span>
-        <input id="csvEditor" style="min-width:520px;max-width:960px;" />
-        <button class="btn" id="btnApplyCsv" style="padding:8px 10px;">Aplicar</button>
-        <span class="pill" id="envPill">ENV: --</span>
-      </div>
-      <div class="row">
-        <button class="iconbtn" id="btnToggleSidebar" title="Expandir/Recolher filtros">☰</button>
+        <span id="pillResumo" class="pill">Carregando…</span>
+        <span class="pill" title="Auto refresh">Auto:
+          <select id="autoRefreshSel" style="border: none; background: transparent; font-weight: 800; color: #0f172a; outline: none;">
+            <option value="0">OFF</option>
+            <option value="60">1 min</option>
+            <option selected="selected" value="300">5 min</option>
+            <option value="900">15 min</option>
+          </select>
+        </span>
+        <button id="btnReload" class="iconbtn" title="Recarregar dados agora">↻</button>
+        <button id="btnExportXlsx" class="iconbtn" title="Exportar Excel (XLSX)">⤓</button>
       </div>
     </div>
   </div>
 
-<div class="wrap">
-  <div class="nav-main" aria-label="Navegação principal">
-    <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
-    <a href="cronograma.html" class="nav-item active" id="navCronograma">🗓️ CRONOGRAMA</a>
+  <div class="row wrap" style="font-size: 12px; color: #64748b; margin-top: 6px; justify-content: space-between;">
+    <div class="row" style="gap: 10px;">
+      <div>Fonte de dados: Google Sheets · Aba <strong id="sheetInfo"></strong> · Range <strong id="rangeInfo"></strong></div>
+      <span class="pill" title="Editar aba (sheet)">Aba:
+        <input id="sheetEditor" style="width: 220px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
+      </span>
+      <span class="pill" title="Editar range">Range:
+        <input id="rangeEditor" style="width: 140px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
+      </span>
+      <button id="btnApplySource" class="btn" style="padding: 8px 10px;">Aplicar</button>
+    </div>
+
+    <div class="row">
+      <button id="btnToggleSidebar" class="iconbtn" title="Expandir/Recolher filtros">☰</button>
+    </div>
   </div>
-</div>
+
+  <div class="wrap">
+    <div class="nav-main" aria-label="Navegação principal">
+      <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
+      <a href="cronograma.html" class="nav-item active" id="navCronograma">🗓️ CRONOGRAMA</a>
+    </div>
+  </div>
 </header>
 
 <div class="grid wrap" id="captureArea">
@@ -316,6 +297,46 @@
 
   // ===== Utils =====
   function nowBR(){ return new Date().toLocaleString("pt-BR"); }
+function getSource(){
+  try{
+    const raw = localStorage.getItem(SOURCE_LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {sheet:"Cronograma", range:"A1:Z999"};
+}
+function setSource(s){
+  try{ localStorage.setItem(SOURCE_LS_KEY, JSON.stringify(s)); }catch(e){}
+}
+
+function buildCsvUrl(){
+  // If DEFAULT_CSV_URL is a gviz/tq endpoint, we can rebuild with sheet/range.
+  // Otherwise, we keep DEFAULT_CSV_URL as-is (published CSV), and only use sheet/range as metadados.
+  const s = getSource();
+  const base = (DEFAULT_CSV_URL||"").trim();
+  const isGviz = base.includes("/gviz/tq") || base.includes("gviz/tq");
+  if(!isGviz) return base;
+
+  // Try to preserve the spreadsheetId URL and rebuild query
+  const u = new URL(base);
+  u.searchParams.set("sheet", s.sheet || "Cronograma");
+  u.searchParams.set("range", s.range || "A1:Z999");
+  u.searchParams.set("tqx", "out:csv");
+  return u.toString();
+}
+
+function syncSourceUI(){
+  const s = getSource();
+  const sheetInfo = document.getElementById("sheetInfo");
+  const rangeInfo = document.getElementById("rangeInfo");
+  const sheetEditor = document.getElementById("sheetEditor");
+  const rangeEditor = document.getElementById("rangeEditor");
+  const sheetTop = document.getElementById("sheetInfoTop");
+  if(sheetInfo) sheetInfo.textContent = s.sheet || "--";
+  if(rangeInfo) rangeInfo.textContent = s.range || "--";
+  if(sheetEditor) sheetEditor.value = s.sheet || "";
+  if(rangeEditor) rangeEditor.value = s.range || "";
+  if(sheetTop) sheetTop.textContent = s.sheet || "Cronograma";
+}
   function debug(msg){ document.getElementById("debugBox").textContent = msg; }
   function showLoad(on){ document.getElementById("loadOverlay").style.display = on ? "flex" : "none"; }
   function setLastUpdate(){ document.getElementById("lastUpdate").textContent = nowBR(); }
@@ -441,11 +462,6 @@
       end,
       raw: obj
     };
-  }
-
-  function setEnvPill(){
-    const host = location.host || "local";
-    document.getElementById("envPill").textContent = "ENV: " + host;
   }
 
   // ===== Filtering =====
@@ -649,11 +665,7 @@
   }
 
   // ===== Load + Init =====
-  function getCsvUrl(){ return (localStorage.getItem(CSV_LS_KEY) || DEFAULT_CSV_URL).trim(); }
-
-  function fillCsvEditor(){
-    document.getElementById("csvEditor").value = getCsvUrl();
-  }
+  function getCsvUrl(){ return buildCsvUrl(); }
 
   async function loadCsv(){
     showLoad(true);
@@ -696,7 +708,6 @@
       setOptions(fResp, respVals);
       setOptions(fFase, faseVals);
 
-      setEnvPill();
       setLastUpdate();
       setPill(`Total: ${ROWS.length} • Atualizado: ${nowBR()}`);
       document.getElementById("countPill").textContent = ROWS.length + " itens";
@@ -733,9 +744,37 @@
 
     document.getElementById("btnReload").addEventListener("click", ()=>loadCsv());
 
-    document.getElementById("btnApplyCsv").addEventListener("click", ()=>{
-      const v=(document.getElementById("csvEditor").value||"").trim();
-      if(v) localStorage.setItem(CSV_LS_KEY, v);
+// Aplicar Aba/Range (quando a fonte suportar gviz). Mesmo que não suporte, atualiza metadados.
+const btnApply = document.getElementById("btnApplySource");
+if(btnApply){
+  btnApply.addEventListener("click", ()=>{
+    const sheet = (document.getElementById("sheetEditor")?.value || "").trim() || "Cronograma";
+    const range = (document.getElementById("rangeEditor")?.value || "").trim() || "A1:Z999";
+    setSource({sheet, range});
+    syncSourceUI();
+    loadCsv();
+  });
+}
+
+// Auto refresh
+const sel = document.getElementById("autoRefreshSel");
+if(sel){
+  const saved = localStorage.getItem(AUTO_LS_KEY);
+  if(saved !== null) sel.value = saved;
+  let t = null;
+  const resetTimer = ()=>{
+    if(t) clearInterval(t);
+    const sec = parseInt(sel.value||"0",10);
+    localStorage.setItem(AUTO_LS_KEY, String(sec));
+    if(sec>0){
+      t = setInterval(()=>loadCsv(), sec*1000);
+    }
+  };
+  sel.addEventListener("change", resetTimer);
+  resetTimer();
+}
+
+    if(v) localStorage.setItem(CSV_LS_KEY, v);
       fillCsvEditor();
       loadCsv();
     });
@@ -768,25 +807,9 @@
   }
 
   // init
-  fillCsvEditor();
+  syncSourceUI();
   bindUI();
   loadCsv();
-</script>
-<script>
-  (function(){
-    try{
-      const p=(window.location.pathname||"").toLowerCase();
-      const aP=document.getElementById("navPainel");
-      const aC=document.getElementById("navCronograma");
-      if(aP&&aC){
-        if(p.includes("cronograma")){
-          aP.classList.remove("active"); aC.classList.add("active");
-        }else{
-          aP.classList.add("active"); aC.classList.remove("active");
-        }
-      }
-    }catch(e){}
-  })();
 </script>
 </body>
 </html>
