@@ -1,0 +1,411 @@
+
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PRJ-SPDM | DEBUG — Leitura de CSV</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2e; --line:#223054;
+      --text:#e6edf7; --muted:#a7b3d1; --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 800px at 15% 0%, rgba(99,102,241,.18), transparent 55%),
+                     radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.14), transparent 55%),
+                     var(--bg);
+         color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+    header{
+      padding:18px 20px; border-bottom:1px solid rgba(34,48,84,.9);
+      position:sticky; top:0; z-index:10;
+      background:rgba(11,18,32,.78); backdrop-filter: blur(10px);
+    }
+    .wrap{max-width:1200px;margin:0 auto;}
+    h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .sub{margin-top:6px;color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns: 1fr; gap:14px; padding:16px 20px;}
+    .card{
+      background:linear-gradient(180deg, rgba(17,26,46,.96), rgba(15,25,48,.92));
+      border:1px solid rgba(34,48,84,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .rowL{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.04);
+      color:var(--muted); font-size:12px; font-weight:900;
+    }
+    .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.45)}
+    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.45)}
+    .pill.warn{color:var(--warn);border-color:rgba(245,158,11,.45)}
+    .btn{
+      cursor:pointer; border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.06); color:var(--text);
+      padding:10px 14px; border-radius:14px; font-weight:950; letter-spacing:.2px;
+    }
+    .btn:hover{border-color:rgba(99,102,241,.65); box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .btn.primary{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.95), rgba(34,197,94,.85));
+    }
+    .btn.ghost{background:transparent}
+    label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:8px 0 6px}
+    input, textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color:rgba(99,102,241,.75);
+      box-shadow:0 0 0 4px rgba(99,102,241,.18);
+    }
+    textarea{min-height:92px;resize:vertical}
+    .two{display:grid;grid-template-columns: 1fr; gap:12px}
+    @media (min-width: 980px){
+      .two{grid-template-columns: 1.4fr .6fr;}
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    pre{
+      margin:0; padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(0,0,0,.20);
+      color:rgba(230,237,247,.92);
+      font-size:12px; line-height:1.35;
+      white-space:pre-wrap; word-break:break-word;
+    }
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    .small{font-size:11px;color:var(--muted)}
+    .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <div>
+        <h1>DEBUG — Validação de Leitura (CSV / Texto)</h1>
+        <div class="sub">Objetivo: validar carregamento e parsing antes de evoluir para Cronograma (Gantt / Filtros / KPIs).</div>
+      </div>
+      <div class="rowL">
+        <span id="pillStatus" class="pill">Status: Aguardando</span>
+        <span id="pillInfo" class="pill">—</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="grid wrap">
+  <section class="card">
+    <div class="two">
+      <div>
+        <label>Modo de entrada</label>
+        <select id="mode">
+          <option value="url" selected>URL do CSV (recomendado)</option>
+          <option value="text">Colar CSV (texto bruto)</option>
+        </select>
+
+        <div id="boxUrl">
+          <label>URL do CSV</label>
+          <input id="csvUrl" class="mono" type="text" placeholder="Cole aqui a URL publicada (…/pub?output=csv)" />
+          <div class="hint">Dica: use “Publicar na Web” → Documento inteiro → CSV.</div>
+        </div>
+
+        <div id="boxText" style="display:none;">
+          <label>CSV (texto)</label>
+          <textarea id="csvText" class="mono" placeholder="Cole aqui o conteúdo CSV completo (header + linhas)"></textarea>
+          <div class="hint">Use apenas para testes locais. Para GitHub Pages, prefira URL.</div>
+        </div>
+
+        <div class="rowL" style="margin-top:12px;">
+          <button id="btnTest" class="btn primary">Testar carregamento</button>
+          <button id="btnClear" class="btn ghost">Limpar</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="rowL">
+          <span class="pill" id="pillType">Content-Type: —</span>
+          <span class="pill" id="pillSize">Tamanho: —</span>
+          <span class="pill" id="pillDelim">Delimitador: —</span>
+          <span class="pill" id="pillRows">Linhas: —</span>
+          <span class="pill" id="pillCols">Colunas: —</span>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Log</label>
+          <pre id="log">Aguardando…</pre>
+          <div class="small" style="margin-top:8px;">
+            Se der erro, copie e cole aqui o texto do Log e/ou o erro do Console (F12).
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label>Checklist rápido</label>
+        <pre class="mono">Gate A — Fonte
+- CSV abre direto no navegador/baixa arquivo?
+- Conteúdo não é HTML / login?
+
+Gate B — Browser
+- fetch() retorna 200?
+- content-type é text/csv?
+
+Gate C — Estrutura
+- Cabeçalho detectado?
+- Datas no formato do cliente (ex.: "qua. 12/06/24")?</pre>
+
+        <div class="sep"></div>
+
+        <label>Prévia (primeiras colunas/linha)</label>
+        <pre id="preview" class="mono">—</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <div class="rowL">
+        <span class="pill">Prévia de tabela (até 30 linhas)</span>
+        <span class="pill warn">Somente debug</span>
+      </div>
+      <div class="small">Se preencher aqui, o Gate “Leitura OK” está aprovado.</div>
+    </div>
+    <div class="tablewrap" style="margin-top:10px;">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const els = {
+    mode: document.getElementById("mode"),
+    boxUrl: document.getElementById("boxUrl"),
+    boxText: document.getElementById("boxText"),
+    csvUrl: document.getElementById("csvUrl"),
+    csvText: document.getElementById("csvText"),
+    btnTest: document.getElementById("btnTest"),
+    btnClear: document.getElementById("btnClear"),
+    log: document.getElementById("log"),
+    preview: document.getElementById("preview"),
+    thead: document.getElementById("thead"),
+    tbody: document.getElementById("tbody"),
+    pillStatus: document.getElementById("pillStatus"),
+    pillInfo: document.getElementById("pillInfo"),
+    pillType: document.getElementById("pillType"),
+    pillSize: document.getElementById("pillSize"),
+    pillDelim: document.getElementById("pillDelim"),
+    pillRows: document.getElementById("pillRows"),
+    pillCols: document.getElementById("pillCols"),
+  };
+
+  function setPill(el, text, kind){
+    if(!el) return;
+    el.classList.remove("ok","bad","warn");
+    if(kind) el.classList.add(kind);
+    el.textContent = text;
+  }
+
+  function log(msg){ els.log.textContent = msg; }
+
+  function clearTable(){ els.thead.innerHTML = ""; els.tbody.innerHTML = ""; }
+
+  function detectDelimiter(firstLine){
+    const comma = firstLine.split(",").length - 1;
+    const semi  = firstLine.split(";").length - 1;
+    return semi > comma ? ";" : ",";
+  }
+
+  function parseCSV(text){
+    const norm = String(text || "").split("\r").join("");
+    const firstLine = (norm.split("\n").find(l => l.trim() !== "") || "");
+    const DELIM = detectDelimiter(firstLine);
+
+    const rows = [];
+    let row = [], cur = "", inQ = false;
+
+    for(let i=0;i<norm.length;i++){
+      const ch = norm[i];
+      const nx = norm[i+1];
+
+      if(inQ){
+        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
+        else if(ch === '"'){ inQ = false; }
+        else { cur += ch; }
+      }else{
+        if(ch === '"'){ inQ = true; }
+        else if(ch === DELIM){ row.push(cur); cur = ""; }
+        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        else { cur += ch; }
+      }
+    }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+
+    const clean = rows.filter(r => r.some(c => String(c).trim() !== ""));
+    return { rows: clean, delim: DELIM };
+  }
+
+  async function fetchCSV(url){
+    const res = await fetch(url, { cache: "no-store" });
+    const ctype = res.headers.get("content-type") || "";
+    const text = await res.text();
+    return { status: res.status, ok: res.ok, statusText: res.statusText, ctype, text };
+  }
+
+  function renderTable(rows){
+    clearTable();
+    if(!rows || !rows.length) return;
+
+    const headers = rows[0] || [];
+    const trh = document.createElement("tr");
+    headers.forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      trh.appendChild(th);
+    });
+    els.thead.appendChild(trh);
+
+    const max = Math.min(rows.length - 1, 30);
+    for(let i=1;i<=max;i++){
+      const tr = document.createElement("tr");
+      const r = rows[i] || [];
+      for(let c=0;c<headers.length;c++){
+        const td = document.createElement("td");
+        td.textContent = (r[c] !== undefined && r[c] !== null) ? r[c] : "";
+        tr.appendChild(td);
+      }
+      els.tbody.appendChild(tr);
+    }
+  }
+
+  function guardNotHTML(text){
+    const head = String(text || "").slice(0, 200).toLowerCase();
+    if(head.includes("<!doctype html") || head.includes("<html")){
+      throw new Error("Resposta não é CSV (recebi HTML). Verifique publicação/permissão.");
+    }
+  }
+
+  function updatePreview(rows){
+    if(!rows || rows.length < 2){ els.preview.textContent = "—"; return; }
+    const h = rows[0];
+    const r1 = rows[1];
+    const cols = h.slice(0, 12).join(" | ");
+    const v1 = r1.slice(0, 12).join(" | ");
+    els.preview.textContent = "Colunas (parcial):\n" + cols + "\n\nPrimeira linha (parcial):\n" + v1;
+  }
+
+  async function run(){
+    try{
+      setPill(els.pillStatus, "Status: Testando…", "warn");
+      setPill(els.pillInfo, "Executando Gate de leitura…", "warn");
+      setPill(els.pillType, "Content-Type: —");
+      setPill(els.pillSize, "Tamanho: —");
+      setPill(els.pillDelim, "Delimitador: —");
+      setPill(els.pillRows, "Linhas: —");
+      setPill(els.pillCols, "Colunas: —");
+      clearTable();
+      els.preview.textContent = "—";
+      log("Iniciando…");
+
+      const mode = els.mode.value;
+      let raw = "";
+      let meta = { ok: true, ctype: "text/csv", status: 0, statusText: "LOCAL" };
+
+      if(mode === "url"){
+        const url = (els.csvUrl.value || "").trim();
+        if(!url) throw new Error("Informe a URL do CSV.");
+        log("Buscando CSV via URL…");
+        const out = await fetchCSV(url);
+        meta = out;
+        raw = out.text;
+        log("Fetch finalizado. Status: " + out.status + " " + out.statusText);
+        guardNotHTML(raw);
+      }else{
+        raw = (els.csvText.value || "");
+        if(!raw.trim()) throw new Error("Cole o conteúdo CSV (texto).");
+        log("Usando CSV colado (texto) — sem fetch.");
+        guardNotHTML(raw);
+      }
+
+      setPill(els.pillType, "Content-Type: " + (meta.ctype || "—"), meta.ok ? "ok" : "warn");
+      setPill(els.pillSize, "Tamanho: " + String(raw.length), "ok");
+
+      const parsed = parseCSV(raw);
+      const rows = parsed.rows;
+      const delim = parsed.delim;
+
+      setPill(els.pillDelim, "Delimitador: " + delim, "ok");
+      setPill(els.pillRows, "Linhas: " + rows.length, rows.length > 1 ? "ok" : "warn");
+      setPill(els.pillCols, "Colunas: " + ((rows[0] || []).length), (rows[0] || []).length ? "ok" : "warn");
+
+      updatePreview(rows);
+      renderTable(rows);
+
+      const ok = (meta.ok !== false) && rows.length > 1 && (rows[0] || []).length > 0;
+      if(ok){
+        setPill(els.pillStatus, "Status: OK (Leitura aprovada)", "ok");
+        setPill(els.pillInfo, "Gate aprovado. Podemos evoluir.", "ok");
+        log("OK. CSV carregado e parseado.\n" +
+            "Headers: " + (rows[0] || []).slice(0, 12).join(" | ") + "\n" +
+            "Linha 1: " + (rows[1] || []).slice(0, 8).join(" | "));
+      }else{
+        setPill(els.pillStatus, "Status: NOK (Estrutura insuficiente)", "bad");
+        setPill(els.pillInfo, "Gate reprovado. Ajustar fonte/estrutura.", "bad");
+        log("NOK. O CSV não tem linhas/colunas suficientes.");
+      }
+    }catch(e){
+      setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
+      setPill(els.pillInfo, "Falha no Gate. Ver log.", "bad");
+      log("ERRO: " + String(e));
+      console.error(e);
+    }
+  }
+
+  function clearAll(){
+    els.csvText.value = "";
+    els.preview.textContent = "—";
+    clearTable();
+    setPill(els.pillStatus, "Status: Aguardando");
+    setPill(els.pillInfo, "—");
+    setPill(els.pillType, "Content-Type: —");
+    setPill(els.pillSize, "Tamanho: —");
+    setPill(els.pillDelim, "Delimitador: —");
+    setPill(els.pillRows, "Linhas: —");
+    setPill(els.pillCols, "Colunas: —");
+    log("Aguardando…");
+  }
+
+  els.mode.addEventListener("change", ()=>{
+    const m = els.mode.value;
+    els.boxUrl.style.display = (m === "url") ? "" : "none";
+    els.boxText.style.display = (m === "text") ? "" : "none";
+    clearAll();
+  });
+
+  els.btnTest.addEventListener("click", run);
+  els.btnClear.addEventListener("click", clearAll);
+
+  els.csvUrl.value = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+})();
+</script>
+</body>
+</html>
