@@ -315,25 +315,35 @@
   function uniq(arr){ return Array.from(new Set(arr.filter(v=>String(v||"").trim()!==""))).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')); }
 
   function parseCSV(text){
-    const rows=[];
-    let row=[], cur="", inQ=false;
-    for(let i=0;i<text.length;i++) {
-      const ch=text[i], nx=text[i+1];
-      if (inQ) {
-        if (ch === '"' && nx === '"') { cur += '"'; i++; }
-        else if (ch === '"') inQ=false;
-        else cur += ch;
-      } else {
-        if (ch === '"') inQ=true;
-        else if (ch === ',') { row.push(cur); cur=""; }
-        else if (ch === '\n') { row.push(cur); rows.push(row); row=[]; cur=""; }
-        else if (ch === '\r') {}
-        else cur += ch;
-      }
+  // Detect delimiter (',' vs ';') based on header line
+  const firstLine = (text.split(/
+?
+/).find(l=>l.trim()!=="") || "");
+  const commaCount = (firstLine.match(/,/g)||[]).length;
+  const semiCount  = (firstLine.match(/;/g)||[]).length;
+  const DELIM = semiCount > commaCount ? ";" : ",";
+
+  const rows=[];
+  let row=[], cur="", inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], nx=text[i+1];
+    if(inQ){
+      if(ch === '"' && nx === '"'){ cur += '"'; i++; }
+      else if(ch === '"'){ inQ=false; }
+      else cur += ch;
+    }else{
+      if(ch === '"') inQ=true;
+      else if(ch === DELIM){ row.push(cur); cur=""; }
+      else if(ch === '
+'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(ch === '
+'){ /* skip */ }
+      else cur += ch;
     }
-    if (cur.length || row.length) { row.push(cur); rows.push(row); }
-    return rows.filter(r => r.some(c => String(c).trim() !== ""));
   }
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
 
   function normalizeHeaders(headers){
     const seen={};
@@ -647,10 +657,17 @@
     showLoad(true);
     try{
       const url = getCsvUrl();
-      debug("Carregando Cronograma…");
+      debug("Carregando Cronograma (CSV)…");
       const res = await fetch(url, {cache:"no-store"});
       if(!res.ok) throw new Error("HTTP " + res.status + " ao buscar CSV");
       const text = await res.text();
+
+// Guardrails: Google sometimes returns HTML instead of CSV (permission / publish mismatch)
+const head = text.slice(0, 200).toLowerCase();
+if (head.includes("<!doctype html") || head.includes("<html")){
+  throw new Error("Resposta não é CSV (recebi HTML). Confirme que está publicado como CSV e acessível publicamente.");
+}
+debug("CSV recebido. Processando…");
 
       const rows2d = parseCSV(text);
       if(!rows2d.length) throw new Error("CSV vazio ou sem linhas");
