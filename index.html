@@ -1018,7 +1018,11 @@ const dsTP = tp.tipos.map((t,i)=>({
   data: tp.matrix[t],
   backgroundColor: (t.toLowerCase()==='ajuste' ? '#22c55e' : (t.toLowerCase()==='melhoria' ? '#6366f1' : PICK(i))),
   borderRadius: 10,
-  borderSkipped: false
+  borderSkipped: false,
+    barThickness: 10,
+    maxBarThickness: 12,
+    categoryPercentage: 0.7,
+    barPercentage: 0.9
 }));
 
 // Tipo x Processo (stacked por Tipo) — gráfico em colunas (vertical)
@@ -1028,7 +1032,7 @@ try{
   if (bodyTP && canvasTP){
     // Altura padrão (colunas) e largura dinâmica (muitos processos = scroll horizontal)
     bodyTP.style.height = "320px";
-    canvasTP.style.minWidth = Math.max(900, (tp.processos.length * 70)) + "px";
+    canvasTP.style.minWidth = Math.max(900, (tp.processos.length * 40)) + "px";
   }
 }catch(e){}
 
@@ -1036,6 +1040,8 @@ chTipoProcesso = new Chart(document.getElementById("chTipoProcesso"), {
   type: "bar",
   data: { labels: tp.processos, datasets: dsTP },
   options: {
+      layout:{padding:{left:6,right:6,top:0,bottom:0}},
+
     onClick:(evt, els)=>{
       if(!els || !els.length) return;
       const el = els[0];
@@ -1056,10 +1062,12 @@ chTipoProcesso = new Chart(document.getElementById("chTipoProcesso"), {
         }
       },
       y: {
-        stacked: true,
-        grid:{color:"rgba(148,163,184,.25)"},
-        ticks:{color:"#475569"}
-      }
+          stacked: true,
+          beginAtZero: true,
+          suggestedMax: 100,
+          grid:{color:"rgba(148,163,184,.25)"},
+          ticks:{color:"#475569"}
+        }
     },
     plugins: {
       legend: { position: "bottom", labels:{boxWidth:10, boxHeight:10} },
