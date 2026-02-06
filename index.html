@@ -464,8 +464,18 @@ input:focus{
           <div class="chartbody sm"><canvas id="chTickets"></canvas></div>
         </div>
       </div>
-        <div class="chartcard" id="panelTipo">
-          <div class="charthead"><div class="charttitle">Distribuição por Tipo</div><button class="iconbtn" data-export-panel="panelTipo" title="PNG">⤓</button></div>
+
+<div class="charts2">
+  <div class="chartcard" id="panelTipo">
+    <div class="charthead"><div class="charttitle">Distribuição por Tipo</div><button class="iconbtn" data-export-panel="panelTipo" title="PNG">⤓</button></div>
+    <div class="chartbody sm"><canvas id="chTipo"></canvas></div>
+  </div>
+
+  <div class="chartcard" id="panelTipoProcesso">
+    <div class="charthead"><div class="charttitle">Tipo x Processo</div><button class="iconbtn" data-export-panel="panelTipoProcesso" title="PNG">⤓</button></div>
+    <div class="chartbody sm"><canvas id="chTipoProcesso"></canvas></div>
+  </div>
+</div>
           <div class="chartbody sm"><canvas id="chTipo"></canvas></div>
         </div>
 
@@ -528,7 +538,7 @@ let QUICK_FILTER = null; // {key, predicate}
 
 
 let msProcesso, msCenario, msPlataforma, msResp, msGestao, msImpacto, msTipo, msStatus;
-let chStatus, chProcesso, chResp, chImpacto, chTickets, chTipo;
+let chStatus, chProcesso, chResp, chImpacto, chTickets, chTipo, chTipoProcesso;
 
 Chart.defaults.responsive = true;
 Chart.defaults.maintainAspectRatio = false;
@@ -865,7 +875,7 @@ function render(rows){
     tb.appendChild(tr);
   }
 
-  for (const ch of [chStatus,chProcesso,chResp,chImpacto,chTickets,chTipo]){ if (ch) ch.destroy(); }
+  for (const ch of [chStatus,chProcesso,chResp,chImpacto,chTickets,chTipo,chTipoProcesso]){ if (ch) ch.destroy(); }
 
   const byStatus = countBy(rows, "Status");
   const byProc = topN(rows, "Processo", 12);
@@ -922,6 +932,37 @@ function aggPlatformTicketSplit(rows){
 }
 
 
+
+function buildTipoProcesso(rows, topNProc=10){
+  // Top N processos e distribuição por Tipo (para gráfico empilhado)
+  const procCounts = new Map();
+  for (const r of rows){
+    const p = String(r["Processo"]||"").trim() || "(vazio)";
+    procCounts.set(p, (procCounts.get(p)||0)+1);
+  }
+  const processos = Array.from(procCounts.entries())
+    .sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],'pt-BR'))
+    .slice(0, topNProc)
+    .map(x=>x[0]);
+
+  const tipos = Array.from(new Set(rows.map(r=>String(r["Tipo"]||"").trim() || "(vazio)")))
+    .sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  const idxProc = new Map(processos.map((p,i)=>[p,i]));
+  const matrix = {};
+  for (const t of tipos) matrix[t] = Array(processos.length).fill(0);
+
+  for (const r of rows){
+    const p = String(r["Processo"]||"").trim() || "(vazio)";
+    const t = String(r["Tipo"]||"").trim() || "(vazio)";
+    if (!idxProc.has(p)) continue;
+    matrix[t][idxProc.get(p)] += 1;
+  }
+
+  return {processos, tipos, matrix};
+}
+
+
   const dlDonut = {
     color:"#0f172a",
     formatter:(value,ctx)=>{
@@ -967,7 +1008,48 @@ function aggPlatformTicketSplit(rows){
     options:{onClick:(evt,els)=>{if(!els||!els.length)return;const i=els[0].index;const label=byTipo.labels[i];applyMsFilter("Tipo",label);},plugins:{legend:{display:false},datalabels:dlBar},scales:{x:{grid:{color:"rgba(148,163,184,.25)"},ticks:{color:"#475569"}},y:{grid:{color:"rgba(148,163,184,.25)"},ticks:{color:"#475569"}}}}
   });
 
-  chTickets = new Chart(document.getElementById("chTickets"), {
+  
+// Tipo x Processo (stacked) - clique aplica filtro Tipo + Processo
+const tp = buildTipoProcesso(rows, 10);
+const dsTP = tp.tipos.map((t,i)=>({
+  label: t,
+  data: tp.matrix[t],
+  backgroundColor: PICK(i),
+  borderRadius: 10,
+  borderSkipped: false
+}));
+
+chTipoProcesso = new Chart(document.getElementById("chTipoProcesso"), {
+  type:"bar",
+  data:{ labels: tp.processos, datasets: dsTP },
+  options:{
+    indexAxis:"y",
+    onClick:(evt,els)=>{
+      if(!els||!els.length) return;
+      const el = els[0];
+      const processo = tp.processos[el.index];
+      const tipo = tp.tipos[el.datasetIndex];
+      // aplica 2 filtros (single-select), sem limpar os demais
+      applyMsFilter("Processo", processo);
+      applyMsFilter("Tipo", tipo);
+    },
+    scales:{
+      x:{stacked:true, grid:{color:"rgba(148,163,184,.25)"}, ticks:{color:"#475569"}},
+      y:{stacked:true, grid:{color:"rgba(148,163,184,.15)"}, ticks:{color:"#475569"}}
+    },
+    plugins:{
+      legend:{position:"bottom", labels:{boxWidth:10, boxHeight:10}},
+      datalabels:{
+        color:"#0f172a",
+        anchor:"center",
+        align:"center",
+        formatter:(v)=> v ? v : "",
+        font:{weight:"900", size:9}
+      }
+    }
+  }
+});
+chTickets = new Chart(document.getElementById("chTickets"), {
     type:"bar",
     data:{
       labels: byTickets.labels,
