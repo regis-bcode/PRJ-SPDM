@@ -1010,7 +1010,16 @@ function buildTipoProcesso(rows, topNProc=10){
 
   
 // Tipo x Processo (stacked) - clique aplica filtro Tipo + Processo
-const tp = buildTipoProcesso(rows, 10);
+const tp = buildTipoProcesso(rows, 9999);
+  // Ajuste dinâmico de altura para exibir todos os processos (evita corte de labels)
+  try{
+    const bodyTP = document.querySelector("#panelTipoProcesso .chartbody");
+    if (bodyTP){
+      const h = Math.max(260, (tp.processos.length * 26) + 90);
+      bodyTP.style.height = h + "px";
+    }
+  }catch(e){}
+
 const dsTP = tp.tipos.map((t,i)=>({
   label: t,
   data: tp.matrix[t],
