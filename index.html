@@ -1023,7 +1023,7 @@ const tp = buildTipoProcesso(rows, 9999);
 const dsTP = tp.tipos.map((t,i)=>({
   label: t,
   data: tp.matrix[t],
-  backgroundColor: PICK(i),
+  backgroundColor: (t.toLowerCase()==='ajuste' ? '#22c55e' : (t.toLowerCase()==='melhoria' ? '#6366f1' : PICK(i))),
   borderRadius: 10,
   borderSkipped: false
 }));
