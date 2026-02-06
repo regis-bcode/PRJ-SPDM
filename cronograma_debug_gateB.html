@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PRJ-SPDM | GATE B — Normalização do Cronograma</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2e; --line:#223054;
+      --text:#e6edf7; --muted:#a7b3d1; --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 800px at 15% 0%, rgba(99,102,241,.18), transparent 55%),
+                     radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.14), transparent 55%),
+                     var(--bg);
+         color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+    header{
+      padding:18px 20px; border-bottom:1px solid rgba(34,48,84,.9);
+      position:sticky; top:0; z-index:10;
+      background:rgba(11,18,32,.78); backdrop-filter: blur(10px);
+    }
+    .wrap{max-width:1400px;margin:0 auto;}
+    h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .sub{margin-top:6px;color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns: 1fr; gap:14px; padding:16px 20px;}
+    .card{
+      background:linear-gradient(180deg, rgba(17,26,46,.96), rgba(15,25,48,.92));
+      border:1px solid rgba(34,48,84,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .rowL{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.04);
+      color:var(--muted); font-size:12px; font-weight:900;
+    }
+    .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.45)}
+    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.45)}
+    .pill.warn{color:var(--warn);border-color:rgba(245,158,11,.45)}
+    .btn{
+      cursor:pointer; border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.06); color:var(--text);
+      padding:10px 14px; border-radius:14px; font-weight:950; letter-spacing:.2px;
+    }
+    .btn:hover{border-color:rgba(99,102,241,.65); box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .btn.primary{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.95), rgba(34,197,94,.85));
+    }
+    .btn.ghost{background:transparent}
+    label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:8px 0 6px}
+    input, textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color:rgba(99,102,241,.75);
+      box-shadow:0 0 0 4px rgba(99,102,241,.18);
+    }
+    textarea{min-height:92px;resize:vertical}
+    .two{display:grid;grid-template-columns: 1fr; gap:12px}
+    @media (min-width: 1080px){
+      .two{grid-template-columns: 1.2fr .8fr;}
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    pre{
+      margin:0; padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(0,0,0,.20);
+      color:rgba(230,237,247,.92);
+      font-size:12px; line-height:1.35;
+      white-space:pre-wrap; word-break:break-word;
+    }
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    .small{font-size:11px;color:var(--muted)}
+    .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:999px;border:1px solid rgba(34,48,84,.95);font-weight:950;font-size:12px}
+    .tag.ok{color:var(--ok);border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
+    .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
+    .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <div>
+        <h1>GATE B — Normalização do Cronograma</h1>
+        <div class="sub">Objetivo: transformar CSV cru em modelo canônico (datas ISO, progresso, status, chaves padronizadas).</div>
+      </div>
+      <div class="rowL">
+        <span id="pillStatus" class="pill">Status: Aguardando</span>
+        <span id="pillInfo" class="pill">—</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="grid wrap">
+  <section class="card">
+    <div class="two">
+      <div>
+        <label>Modo de entrada</label>
+        <select id="mode">
+          <option value="url" selected>URL do CSV (recomendado)</option>
+          <option value="text">Colar CSV (texto bruto)</option>
+        </select>
+
+        <div id="boxUrl">
+          <label>URL do CSV</label>
+          <input id="csvUrl" class="mono" type="text" placeholder="Cole aqui a URL publicada (…/pub?output=csv)" />
+          <div class="hint">Dica: use “Publicar na Web” (Documento inteiro → CSV).</div>
+        </div>
+
+        <div id="boxText" style="display:none;">
+          <label>CSV (texto)</label>
+          <textarea id="csvText" class="mono" placeholder="Cole aqui o conteúdo CSV completo (header + linhas)"></textarea>
+          <div class="hint">Use apenas para testes locais. Para GitHub Pages, prefira URL.</div>
+        </div>
+
+        <div class="rowL" style="margin-top:12px;">
+          <button id="btnRun" class="btn primary">Executar Gate B</button>
+          <button id="btnClear" class="btn ghost">Limpar</button>
+          <button id="btnExportNorm" class="btn">Exportar CSV Normalizado</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="rowL">
+          <span class="pill" id="pillType">Content-Type: —</span>
+          <span class="pill" id="pillSize">Tamanho: —</span>
+          <span class="pill" id="pillDelim">Delimitador: —</span>
+          <span class="pill" id="pillRows">Linhas: —</span>
+          <span class="pill" id="pillCols">Colunas: —</span>
+        </div>
+
+        <div class="rowL" style="margin-top:10px;">
+          <span class="pill" id="pillValidDates">Datas válidas: —</span>
+          <span class="pill" id="pillInvalidDates">Datas inválidas: —</span>
+          <span class="pill" id="pillMinMax">Janela: —</span>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Log (auditoria do Gate)</label>
+          <pre id="log">Aguardando…</pre>
+        </div>
+      </div>
+
+      <div>
+        <label>Regras de normalização (canônico)</label>
+        <pre class="mono">Chaves canônicas:
+- edt, indicador, atividade, status_raw, responsavel, predecessoras, anotacoes
+- pct_planejado (0-100), pct_concluido (0-100)
+- inicio_raw, termino_raw
+- inicio_iso, termino_iso (YYYY-MM-DD)
+- inicio_ts, termino_ts (epoch ms; null se inválido)
+- status_class: ok | warn | bad
+
+Datas aceitas:
+- "qua. 12/06/24" (dia da semana + dd/MM/yy)
+- "12/06/2024"
+- "2024-06-12"</pre>
+
+        <div class="sep"></div>
+
+        <label>Prévia canônica (primeiras 2 linhas)</label>
+        <pre id="preview" class="mono">—</pre>
+
+        <div class="sep"></div>
+
+        <label>Contagem por Status (normalizado)</label>
+        <div class="rowL" id="statusChips" style="gap:8px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <div class="rowL">
+        <span class="pill">Tabela normalizada (até 40 linhas)</span>
+        <span class="pill warn">Gate B</span>
+      </div>
+      <div class="small">Se a tabela preencher e datas ISO estiverem corretas, Gate B está aprovado.</div>
+    </div>
+    <div class="tablewrap" style="margin-top:10px;">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const els = {
+    mode: document.getElementById("mode"),
+    boxUrl: document.getElementById("boxUrl"),
+    boxText: document.getElementById("boxText"),
+    csvUrl: document.getElementById("csvUrl"),
+    csvText: document.getElementById("csvText"),
+    btnRun: document.getElementById("btnRun"),
+    btnClear: document.getElementById("btnClear"),
+    btnExportNorm: document.getElementById("btnExportNorm"),
+    log: document.getElementById("log"),
+    preview: document.getElementById("preview"),
+    thead: document.getElementById("thead"),
+    tbody: document.getElementById("tbody"),
+    statusChips: document.getElementById("statusChips"),
+    pillStatus: document.getElementById("pillStatus"),
+    pillInfo: document.getElementById("pillInfo"),
+    pillType: document.getElementById("pillType"),
+    pillSize: document.getElementById("pillSize"),
+    pillDelim: document.getElementById("pillDelim"),
+    pillRows: document.getElementById("pillRows"),
+    pillCols: document.getElementById("pillCols"),
+    pillValidDates: document.getElementById("pillValidDates"),
+    pillInvalidDates: document.getElementById("pillInvalidDates"),
+    pillMinMax: document.getElementById("pillMinMax"),
+  };
+
+  let NORMALIZED = [];
+
+  function setPill(el, text, kind){
+    if(!el) return;
+    el.classList.remove("ok","bad","warn");
+    if(kind) el.classList.add(kind);
+    el.textContent = text;
+  }
+  function log(msg){ els.log.textContent = msg; }
+  function clearTable(){ els.thead.innerHTML = ""; els.tbody.innerHTML = ""; }
+  function clearChips(){ els.statusChips.innerHTML = ""; }
+  function detectDelimiter(firstLine){
+    const comma = firstLine.split(",").length - 1;
+    const semi  = firstLine.split(";").length - 1;
+    return semi > comma ? ";" : ",";
+  }
+  function guardNotHTML(text){
+    const head = String(text || "").slice(0, 200).toLowerCase();
+    if(head.includes("<!doctype html") || head.includes("<html")){
+      throw new Error("Resposta não é CSV (recebi HTML). Verifique publicação/permissão.");
+    }
+  }
+
+  function parseCSV(text){
+    const norm = String(text || "").split("\r").join("");
+    const firstLine = (norm.split("\n").find(l => l.trim() !== "") || "");
+    const DELIM = detectDelimiter(firstLine);
+
+    const rows = [];
+    let row = [], cur = "", inQ = false;
+
+    for(let i=0;i<norm.length;i++){
+      const ch = norm[i];
+      const nx = norm[i+1];
+
+      if(inQ){
+        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
+        else if(ch === '"'){ inQ = false; }
+        else { cur += ch; }
+      }else{
+        if(ch === '"'){ inQ = true; }
+        else if(ch === DELIM){ row.push(cur); cur = ""; }
+        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        else { cur += ch; }
+      }
+    }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    const clean = rows.filter(r => r.some(c => String(c).trim() !== ""));
+    return { rows: clean, delim: DELIM };
+  }
+
+  async function fetchCSV(url){
+    const res = await fetch(url, { cache: "no-store" });
+    const ctype = res.headers.get("content-type") || "";
+    const text = await res.text();
+    return { status: res.status, ok: res.ok, statusText: res.statusText, ctype, text };
+  }
+
+  function idxOf(headers, name){
+    const n = String(name||"").trim().toLowerCase();
+    for(let i=0;i<headers.length;i++){
+      const h = String(headers[i]||"").trim().toLowerCase();
+      if(h === n) return i;
+    }
+    return -1;
+  }
+
+  function toPct(v){
+    const s = String(v||"").trim();
+    if(!s) return null;
+    const t = s.split("%").join("").trim();
+    const parts = t.split(",");
+    const main = parts[0];
+    const n = parseInt(main, 10);
+    return isNaN(n) ? null : n;
+  }
+
+  function stripWeekdayPrefix(s){
+    const t = String(s||"").trim();
+    if(!t) return "";
+    const parts = t.split(" ");
+    if(parts.length >= 2 && parts[0].endsWith(".")){
+      return parts.slice(1).join(" ").trim();
+    }
+    return t;
+  }
+
+  function toISODateMaybe(v){
+    let s = stripWeekdayPrefix(v);
+    if(!s) return "";
+    if(s.includes("/")){
+      const seg = s.split("/");
+      if(seg.length >= 3){
+        const dd = String(seg[0]).padStart(2, "0");
+        const mm = String(seg[1]).padStart(2, "0");
+        let yy = String(seg[2]).trim();
+        yy = yy.split(" ")[0];
+        if(yy.length === 2) yy = "20" + yy;
+        if(yy.length === 4) return yy + "-" + mm + "-" + dd;
+      }
+    }
+    if(s.length >= 10 && s[4] === "-" && s[7] === "-"){
+      return s.slice(0,10);
+    }
+    return "";
+  }
+
+  function toEpoch(iso){
+    if(!iso) return null;
+    const d = new Date(iso + "T00:00:00");
+    return isNaN(d) ? null : d.getTime();
+  }
+
+  function statusClass(s){
+    const t = String(s||"").toLowerCase();
+    if(t.includes("concl")) return "ok";
+    if(t.includes("atras")) return "bad";
+    if(t.includes("andam") || t.includes("exec") || t.includes("em ")) return "warn";
+    return "warn";
+  }
+
+  function normalize(rows){
+    const headers = rows[0] || [];
+    const required = ["edt","status","atividade","início","término"];
+    const missing = [];
+    required.forEach(r => { if(idxOf(headers, r) === -1) missing.push(r); });
+    if(missing.length){
+      throw new Error("Colunas obrigatórias ausentes no header: " + missing.join(", "));
+    }
+
+    const iEDT = idxOf(headers, "edt");
+    const iIndic = idxOf(headers, "indicador");
+    const iPlan = idxOf(headers, "% planejado");
+    const iConc = idxOf(headers, "% concluída");
+    const iStatus = idxOf(headers, "status");
+    const iAtiv = idxOf(headers, "atividade");
+    const iDur = idxOf(headers, "duração");
+    const iIni = idxOf(headers, "início");
+    const iFim = idxOf(headers, "término");
+    const iPred = idxOf(headers, "predecessoras");
+    const iResp = idxOf(headers, "responsável");
+    const iAnot = idxOf(headers, "anotações");
+
+    const out = [];
+    let validDates = 0;
+    let invalidDates = 0;
+    let minTS = null;
+    let maxTS = null;
+
+    const statusCount = {};
+
+    for(let r=1; r<rows.length; r++){
+      const row = rows[r] || [];
+      const obj = {
+        edt: row[iEDT] ?? "",
+        indicador: row[iIndic] ?? "",
+        pct_planejado: toPct(row[iPlan]),
+        pct_concluido: toPct(row[iConc]),
+        status_raw: row[iStatus] ?? "",
+        atividade: row[iAtiv] ?? "",
+        duracao_raw: row[iDur] ?? "",
+        predecessoras: row[iPred] ?? "",
+        responsavel: row[iResp] ?? "",
+        anotacoes: row[iAnot] ?? "",
+        inicio_raw: row[iIni] ?? "",
+        termino_raw: row[iFim] ?? "",
+      };
+
+      obj.inicio_iso = toISODateMaybe(obj.inicio_raw);
+      obj.termino_iso = toISODateMaybe(obj.termino_raw);
+      obj.inicio_ts = toEpoch(obj.inicio_iso);
+      obj.termino_ts = toEpoch(obj.termino_iso);
+      obj.status_class = statusClass(obj.status_raw);
+
+      if(!statusCount[obj.status_raw]) statusCount[obj.status_raw] = 0;
+      statusCount[obj.status_raw] += 1;
+
+      const hasDates = (obj.inicio_ts !== null) && (obj.termino_ts !== null);
+      if(hasDates){
+        validDates += 1;
+        if(minTS === null || obj.inicio_ts < minTS) minTS = obj.inicio_ts;
+        if(maxTS === null || obj.termino_ts > maxTS) maxTS = obj.termino_ts;
+      }else{
+        invalidDates += 1;
+      }
+
+      if(obj.inicio_ts !== null && obj.termino_ts === null){
+        obj.termino_ts = obj.inicio_ts;
+        obj.termino_iso = obj.inicio_iso;
+      }
+      if(obj.inicio_ts === null && obj.termino_ts !== null){
+        obj.inicio_ts = obj.termino_ts;
+        obj.inicio_iso = obj.termino_iso;
+      }
+
+      out.push(obj);
+    }
+
+    return { data: out, validDates, invalidDates, minTS, maxTS, statusCount };
+  }
+
+  function fmtDate(ts){
+    if(ts === null) return "—";
+    const d = new Date(ts);
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const yy = d.getFullYear();
+    return dd + "/" + mm + "/" + yy;
+  }
+
+  function buildPreview(norm){
+    if(!norm.length){ els.preview.textContent = "—"; return; }
+    const h = ["edt","indicador","pct_planejado","pct_concluido","status_raw","status_class","atividade","inicio_raw","inicio_iso","termino_raw","termino_iso","responsavel","predecessoras"];
+    const r1 = norm[0];
+    const r2 = norm[1] || {};
+    const line = (o) => h.map(k => String(o[k] ?? "")).join(" | ");
+    els.preview.textContent = "Campos:\n" + h.join(" | ") + "\n\nLinha 1:\n" + line(r1) + "\n\nLinha 2:\n" + line(r2);
+  }
+
+  function renderChips(statusCount){
+    clearChips();
+    const keys = Object.keys(statusCount || {});
+    keys.sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+    keys.forEach(k => {
+      const n = statusCount[k];
+      const cls = statusClass(k);
+      const span = document.createElement("span");
+      span.className = "tag " + cls;
+      span.textContent = k + ": " + n;
+      els.statusChips.appendChild(span);
+    });
+  }
+
+  function renderTable(norm){
+    clearTable();
+    if(!norm || !norm.length) return;
+
+    const headers = ["edt","indicador","status_raw","status_class","pct_planejado","pct_concluido","atividade","duracao_raw","inicio_raw","inicio_iso","termino_raw","termino_iso","responsavel","predecessoras","anotacoes"];
+
+    const trh = document.createElement("tr");
+    headers.forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      trh.appendChild(th);
+    });
+    els.thead.appendChild(trh);
+
+    const max = Math.min(norm.length, 40);
+    for(let i=0;i<max;i++){
+      const o = norm[i];
+      const tr = document.createElement("tr");
+      headers.forEach(h => {
+        const td = document.createElement("td");
+        td.textContent = String(o[h] ?? "");
+        tr.appendChild(td);
+      });
+      els.tbody.appendChild(tr);
+    }
+  }
+
+  function exportNormalizedCSV(){
+    if(!NORMALIZED.length){
+      alert("Nada para exportar. Execute o Gate B primeiro.");
+      return;
+    }
+    const headers = ["edt","indicador","pct_planejado","pct_concluido","status_raw","status_class","atividade","duracao_raw","inicio_raw","inicio_iso","termino_raw","termino_iso","predecessoras","responsavel","anotacoes"];
+    const lines = [];
+    lines.push(headers.join(","));
+    for(let i=0;i<NORMALIZED.length;i++){
+      const o = NORMALIZED[i];
+      const row = headers.map(k => {
+        const v = String(o[k] ?? "");
+        const q = v.split('"').join('""');
+        if(q.includes(",") || q.includes("\n") || q.includes('"')) return '"' + q + '"';
+        return q;
+      });
+      lines.push(row.join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cronograma_normalizado_gateB.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function clearAll(){
+    els.csvText.value = "";
+    clearTable();
+    clearChips();
+    els.preview.textContent = "—";
+    NORMALIZED = [];
+    setPill(els.pillStatus, "Status: Aguardando");
+    setPill(els.pillInfo, "—");
+    setPill(els.pillType, "Content-Type: —");
+    setPill(els.pillSize, "Tamanho: —");
+    setPill(els.pillDelim, "Delimitador: —");
+    setPill(els.pillRows, "Linhas: —");
+    setPill(els.pillCols, "Colunas: —");
+    setPill(els.pillValidDates, "Datas válidas: —");
+    setPill(els.pillInvalidDates, "Datas inválidas: —");
+    setPill(els.pillMinMax, "Janela: —");
+    log("Aguardando…");
+  }
+
+  async function runGateB(){
+    try{
+      setPill(els.pillStatus, "Status: Processando…", "warn");
+      setPill(els.pillInfo, "Executando normalização…", "warn");
+      clearTable(); clearChips(); els.preview.textContent = "—"; NORMALIZED = [];
+      log("Iniciando Gate B…");
+
+      const mode = els.mode.value;
+      let raw = "";
+      let meta = { ok: true, ctype: "text/csv", status: 0, statusText: "LOCAL" };
+
+      if(mode === "url"){
+        const url = (els.csvUrl.value || "").trim();
+        if(!url) throw new Error("Informe a URL do CSV.");
+        log("Fetch CSV…");
+        const out = await fetchCSV(url);
+        meta = out;
+        raw = out.text;
+        log("Fetch finalizado. Status: " + out.status + " " + out.statusText);
+        guardNotHTML(raw);
+        if(!out.ok) throw new Error("Fetch não OK: " + out.status + " " + out.statusText);
+      }else{
+        raw = (els.csvText.value || "");
+        if(!raw.trim()) throw new Error("Cole o conteúdo CSV (texto).");
+        log("Usando CSV colado (texto) — sem fetch.");
+        guardNotHTML(raw);
+      }
+
+      setPill(els.pillType, "Content-Type: " + (meta.ctype || "—"), meta.ok ? "ok" : "warn");
+      setPill(els.pillSize, "Tamanho: " + String(raw.length), "ok");
+
+      const parsed = parseCSV(raw);
+      const rows = parsed.rows;
+      const delim = parsed.delim;
+
+      setPill(els.pillDelim, "Delimitador: " + delim, "ok");
+      setPill(els.pillRows, "Linhas: " + rows.length, rows.length > 1 ? "ok" : "warn");
+      setPill(els.pillCols, "Colunas: " + ((rows[0] || []).length), (rows[0] || []).length ? "ok" : "warn");
+
+      const res = normalize(rows);
+      NORMALIZED = res.data;
+
+      setPill(els.pillValidDates, "Datas válidas: " + res.validDates, res.validDates > 0 ? "ok" : "warn");
+      setPill(els.pillInvalidDates, "Datas inválidas: " + res.invalidDates, res.invalidDates == 0 ? "ok" : "warn");
+      setPill(els.pillMinMax, "Janela: " + fmtDate(res.minTS) + " → " + fmtDate(res.maxTS), "ok");
+
+      buildPreview(NORMALIZED);
+      renderChips(res.statusCount);
+      renderTable(NORMALIZED);
+
+      const headersOk = (rows.length > 1) && ((rows[0] || []).length >= 8);
+      const datesOk = res.validDates > 0 && (res.invalidDates / Math.max(1, NORMALIZED.length)) < 0.50;
+      const ok = headersOk && datesOk;
+
+      if(ok){
+        setPill(els.pillStatus, "Status: OK (Gate B aprovado)", "ok");
+        setPill(els.pillInfo, "Modelo canônico pronto. Podemos avançar para Lista/Gantt.", "ok");
+        log("OK. Gate B aprovado.\n" +
+            "Registros normalizados: " + NORMALIZED.length + "\n" +
+            "Datas válidas: " + res.validDates + " | Datas inválidas: " + res.invalidDates + "\n" +
+            "Janela: " + fmtDate(res.minTS) + " → " + fmtDate(res.maxTS));
+      }else{
+        setPill(els.pillStatus, "Status: NOK (Gate B reprovado)", "bad");
+        setPill(els.pillInfo, "Estrutura/datas insuficientes para seguir. Ver log.", "bad");
+        log("NOK. Gate B reprovado.\n" +
+            "headersOk=" + headersOk + " | datesOk=" + datesOk + "\n" +
+            "Datas válidas: " + res.validDates + " | Datas inválidas: " + res.invalidDates);
+      }
+    }catch(e){
+      setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
+      setPill(els.pillInfo, "Falha no Gate. Ver log.", "bad");
+      log("ERRO: " + String(e));
+      console.error(e);
+    }
+  }
+
+  els.mode.addEventListener("change", ()=>{
+    const m = els.mode.value;
+    els.boxUrl.style.display = (m === "url") ? "" : "none";
+    els.boxText.style.display = (m === "text") ? "" : "none";
+    clearAll();
+  });
+  els.btnRun.addEventListener("click", runGateB);
+  els.btnClear.addEventListener("click", clearAll);
+  els.btnExportNorm.addEventListener("click", exportNormalizedCSV);
+
+  els.csvUrl.value = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+  clearAll();
+})();
+</script>
+</body>
+</html>
