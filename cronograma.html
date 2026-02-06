@@ -643,10 +643,6 @@
   // ===== Load + Init =====
   function getCsvUrl(){ return (DEFAULT_CSV_URL||"").trim(); }
 
-  function fillCsvEditor(){
-    document.getElementById("csvEditor").value = getCsvUrl();
-  }
-
   async function loadCsv(){
     showLoad(true);
     try{
@@ -766,9 +762,6 @@ if(sel){
   sel.addEventListener("change", resetTimer);
   resetTimer();
 }
-
-    document.getElementById("btnApplyCsv").addEventListener("click", ()=>{
-      const v=(document.getElementById("csvEditor").value||"").trim();
       if(v) localStorage.setItem(CSV_LS_KEY, v);
       fillCsvEditor();
       loadCsv();
@@ -802,7 +795,6 @@ if(sel){
   }
 
   // init
-  fillCsvEditor();
   bindUI();
   loadCsv();
 </script>
