@@ -292,6 +292,39 @@ input:focus{
 }
 .row .btn{min-width: 94px;}
 
+
+/* ===== MENU PRINCIPAL (PAINEL / CRONOGRAMA) ===== */
+.nav-main{
+  display:flex;
+  gap:12px;
+  margin-top:12px;
+}
+.nav-item{
+  text-decoration:none;
+  padding:10px 18px;
+  border-radius:999px;
+  border:1px solid rgba(226,232,240,.95);
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  font-weight:950;
+  letter-spacing:.3px;
+  color:#0f172a;
+  box-shadow:0 6px 16px rgba(2,6,23,.08);
+  transition:all .15s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.nav-item:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(2,6,23,.14);
+  border-color:rgba(99,102,241,.55);
+}
+.nav-item.active{
+  background:linear-gradient(135deg,#6366f1,#22c55e);
+  color:#ffffff;
+  border-color:transparent;
+  box-shadow:0 12px 28px rgba(99,102,241,.35);
+}
 </style>
 </head>
 <body>
@@ -325,6 +358,13 @@ input:focus{
         <button class="btn" id="btnApplySource" style="padding:8px 10px;">Aplicar</button>
       </div>
     </div>
+
+<div class="wrap">
+  <div class="nav-main" aria-label="Navegação principal">
+    <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
+    <a href="cronograma.html" class="nav-item" id="navCronograma">🗓️ CRONOGRAMA</a>
+  </div>
+</div>
 </header>
 
 <script>
@@ -1018,11 +1058,7 @@ const dsTP = tp.tipos.map((t,i)=>({
   data: tp.matrix[t],
   backgroundColor: (t.toLowerCase()==='ajuste' ? '#22c55e' : (t.toLowerCase()==='melhoria' ? '#6366f1' : PICK(i))),
   borderRadius: 10,
-  borderSkipped: false,
-    barThickness: 10,
-    maxBarThickness: 12,
-    categoryPercentage: 0.7,
-    barPercentage: 0.9
+  borderSkipped: false
 }));
 
 // Tipo x Processo (stacked por Tipo) — gráfico em colunas (vertical)
@@ -1032,7 +1068,7 @@ try{
   if (bodyTP && canvasTP){
     // Altura padrão (colunas) e largura dinâmica (muitos processos = scroll horizontal)
     bodyTP.style.height = "320px";
-    canvasTP.style.minWidth = Math.max(900, (tp.processos.length * 40)) + "px";
+    canvasTP.style.minWidth = Math.max(900, (tp.processos.length * 70)) + "px";
   }
 }catch(e){}
 
@@ -1040,8 +1076,6 @@ chTipoProcesso = new Chart(document.getElementById("chTipoProcesso"), {
   type: "bar",
   data: { labels: tp.processos, datasets: dsTP },
   options: {
-      layout:{padding:{left:6,right:6,top:0,bottom:0}},
-
     onClick:(evt, els)=>{
       if(!els || !els.length) return;
       const el = els[0];
@@ -1062,12 +1096,10 @@ chTipoProcesso = new Chart(document.getElementById("chTipoProcesso"), {
         }
       },
       y: {
-          stacked: true,
-          beginAtZero: true,
-          suggestedMax: 100,
-          grid:{color:"rgba(148,163,184,.25)"},
-          ticks:{color:"#475569"}
-        }
+        stacked: true,
+        grid:{color:"rgba(148,163,184,.25)"},
+        ticks:{color:"#475569"}
+      }
     },
     plugins: {
       legend: { position: "bottom", labels:{boxWidth:10, boxHeight:10} },
@@ -1186,6 +1218,18 @@ document.getElementById("btnXlsx").addEventListener("click", ()=>{
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "OcorrenciasPendencias");
   XLSX.writeFile(wb, "mit045_ocorrencias_pendencias.xlsx");
+// Botão da Lista (canto superior direito): exportar para Excel (XLSX) com filtros aplicados
+const _btnLista = document.getElementById("btnListaXlsx");
+if (_btnLista){
+  _btnLista.addEventListener("click", ()=>{
+    const rows=currentRows();
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "OcorrenciasPendencias");
+    XLSX.writeFile(wb, "mit045_ocorrencias_pendencias_lista.xlsx");
+  });
+}
+
 });
 
 function showOverlay(on){ const ov=document.getElementById("exportOverlay"); if(!ov) return; ov.style.display=on?"flex":"none"; }
@@ -1444,6 +1488,26 @@ function loadData(forceReset){
 
 // init
 loadData(false);
+</script>
+<script>
+  // Marca menu ativo automaticamente
+  (function(){
+    try{
+      const p = (window.location.pathname || "").toLowerCase();
+      const isCrono = p.includes("cronograma");
+      const aPainel = document.getElementById("navPainel");
+      const aCrono = document.getElementById("navCronograma");
+      if (aPainel && aCrono){
+        if (isCrono){
+          aPainel.classList.remove("active");
+          aCrono.classList.add("active");
+        } else {
+          aPainel.classList.add("active");
+          aCrono.classList.remove("active");
+        }
+      }
+    }catch(e){}
+  })();
 </script>
 </body>
 </html>
