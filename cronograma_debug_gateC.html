@@ -74,7 +74,6 @@
     @media (min-width: 1180px){
       .two{grid-template-columns: 430px 1fr;}
     }
-    /* KPI */
     .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
     .kpi{
       border:1px solid rgba(34,48,84,.9);
@@ -97,7 +96,6 @@
     .tag.ok{color:var(--ok);border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
     .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
     .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
-    /* Table */
     .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
     table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
     th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
@@ -353,8 +351,8 @@
     const t = s.split("%").join("").trim();
     const parts = t.split(",");
     const main = parts[0];
-    const n = parseInt(main, 10);
-    return isNaN(n) ? null : n;
+    const num = parseInt(main, 10);
+    return isNaN(num) ? null : num;
   }
 
   function stripWeekdayPrefix(s){
@@ -512,31 +510,29 @@
     const cur = countByClass(VIEW);
 
     els.kTotal.textContent = String(all.total);
-    document.getElementById("kOk").textContent = String(all.ok);
-    document.getElementById("kWarn").textContent = String(all.warn);
-    document.getElementById("kBad").textContent = String(all.bad);
+    els.kOk.textContent = String(all.ok);
+    els.kWarn.textContent = String(all.warn);
+    els.kBad.textContent = String(all.bad);
 
-    document.getElementById("kFiltered").textContent = String(cur.total) + " exibidos";
+    els.kFiltered.textContent = String(cur.total) + " exibidos";
     els.pillCount.textContent = String(cur.total) + " itens";
-    document.getElementById("chipOk").textContent = "ok: " + cur.ok;
-    document.getElementById("chipWarn").textContent = "warn: " + cur.warn;
-    document.getElementById("chipBad").textContent = "bad: " + cur.bad;
+    els.chipOk.textContent = "ok: " + cur.ok;
+    els.chipWarn.textContent = "warn: " + cur.warn;
+    els.chipBad.textContent = "bad: " + cur.bad;
 
-    // window
     if(DATA.length){
       const mins = DATA.map(o=>o.inicio_ts).filter(v=>v!==null);
       const maxs = DATA.map(o=>o.termino_ts).filter(v=>v!==null);
       if(mins.length && maxs.length){
         const minTS = Math.min(...mins), maxTS = Math.max(...maxs);
-        document.getElementById("kWindow").textContent = fmtISOToBR(new Date(minTS).toISOString().slice(0,10)) + " → " + fmtISOToBR(new Date(maxTS).toISOString().slice(0,10));
+        els.kWindow.textContent = fmtISOToBR(new Date(minTS).toISOString().slice(0,10)) + " → " + fmtISOToBR(new Date(maxTS).toISOString().slice(0,10));
       }else{
-        document.getElementById("kWindow").textContent = "—";
+        els.kWindow.textContent = "—";
       }
     }else{
-      document.getElementById("kWindow").textContent = "—";
+      els.kWindow.textContent = "—";
     }
 
-    // table
     const max = Math.min(VIEW.length, 800);
     let rows = "";
     for(let i=0;i<max;i++){
@@ -566,22 +562,6 @@
   }
 
   function exportCSV(){
-    if(!VIEW.length){ alert("Nada para exportar (lista vazia)."); return; }
-    const headers = ["edt","atividade","status_raw","status_class","pct_concluido","inicio_iso","termino_iso","responsavel","predecessoras","anotacoes"];
-    const lines = [headers.join(",")];
-    VIEW.forEach(o=>{
-      const row = headers.map(k=>{
-        const v = String(o[k] ?? "");
-        const q = v.replaceAll('"','""');
-        if(q.includes(",")||q.includes("\n")||q.includes('"')) return '"' + q + '"';
-        return q;
-      }).join(",");
-      lines.append(row) if False else None
-    });
-    // Python-like append not allowed, build properly:
-  }
-
-  function exportCSV2(){
     if(!VIEW.length){ alert("Nada para exportar (lista vazia)."); return; }
     const headers = ["edt","atividade","status_raw","status_class","pct_concluido","inicio_iso","termino_iso","responsavel","predecessoras","anotacoes"];
     const lines = [];
@@ -651,15 +631,13 @@
     render();
   }
 
-  // Wire
   els.btnLoad.addEventListener("click", load);
   els.btnApply.addEventListener("click", applyFilters);
-  els.btnExport.addEventListener("click", exportCSV2);
+  els.btnExport.addEventListener("click", exportCSV);
   els.btnResetAll.addEventListener("click", resetAll);
   els.btnClearFilters.addEventListener("click", resetFilters);
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
 
-  // init
   resetAll();
 })();
 </script>
