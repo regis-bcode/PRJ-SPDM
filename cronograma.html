@@ -3,864 +3,1103 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PRJ-SPDM | Cronograma - Painel Executivo</title>
-
-  <!-- XLSX export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+  <title>PRJ-SPDM | Cronograma (Gantt DOM/CSS)</title>
   <style>
     :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e2e8f0;
-      --brand:#6366f1;
-      --ok:#22c55e;
-      --warn:#f59e0b;
-      --bad:#ef4444;
-      --shadow: 0 18px 50px rgba(2,6,23,.08);
+      --bg:#0b1220; --panel:#111a2e; --line:#223054;
+      --text:#e6edf7; --muted:#a7b3d1;
+      --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
       --radius: 18px;
+      --dayW: 12px;
+      --rowH: 42px;
+      --filtersW: 430px;
+      --filtersWCollapsed: 72px;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden;}
-    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);
-      border-bottom:1px solid rgba(226,232,240,.9);}
-    .wrap{max-width:1600px;margin:0 auto;padding:14px 18px;}
-    h1{margin:0;font-size:18px;letter-spacing:.2px;}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 15% 0%, rgba(99,102,241,.18), transparent 55%),
+        radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.14), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    header{
+      padding:16px 18px;
+      border-bottom:1px solid rgba(34,48,84,.9);
+      position:sticky; top:0; z-index:10;
+      background:rgba(11,18,32,.78);
+      backdrop-filter: blur(10px);
+    }
+    .wrap{max-width:100%; margin:0 auto;}
+    h1{margin:0;font-size:18px;letter-spacing:.2px}
     .sub{margin-top:6px;color:var(--muted);font-size:12px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .btn{cursor:pointer;border:1px solid rgba(226,232,240,.95);background:#fff;color:var(--text);
-      padding:10px 12px;border-radius:14px;font-weight:900;}
-    .btn:hover{border-color:#cbd5e1;}
-    .iconbtn{cursor:pointer;border:1px solid rgba(226,232,240,.95);background:#fff;color:var(--text);
-      width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;
-      font-weight:900;line-height:1;}
-    .iconbtn:hover{border-color:#cbd5e1;}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
-      color:var(--muted);font-size:12px;background:#fff;font-weight:900;}
+    .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:12px 12px;}
+    .card{
+      background:linear-gradient(180deg, rgba(17,26,46,.96), rgba(15,25,48,.92));
+      border:1px solid rgba(34,48,84,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:12px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .rowL{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.45)}
+    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.45)}
+    .pill.warn{color:var(--warn);border-color:rgba(245,158,11,.45)}
 
-    .grid{display:grid;grid-template-columns:minmax(320px, 420px) minmax(0, 1fr);gap:14px;padding:14px 18px;align-items:start;}
-    body.sidebar-collapsed .grid{grid-template-columns:64px 1fr;}
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:14px;
+      font-weight:950;
+      letter-spacing:.2px;
+      user-select:none;
+    }
+    .btn:hover{border-color:rgba(99,102,241,.65); box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .btn.primary{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.95), rgba(34,197,94,.85));
+    }
+    .btn.ghost{background:transparent}
+    .btn.tab{padding:10px 14px;border-radius:999px}
+    .btn.tab.active{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,197,94,.75));
+    }
+    .btn.icon{
+      width:40px; height:40px; padding:0;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:12px;
+      font-weight:950;
+    }
 
-    .card{background:var(--card);border:1px solid rgba(226,232,240,.9);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+    label{display:block;color:rgba(203,213,225,.95);font-size:12px;font-weight:950;margin:8px 0 6px}
+    input, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      outline:none;
+    }
+    input::placeholder{color:rgba(167,179,209,.70)}
+    input:focus, select:focus{
+      border-color:rgba(99,102,241,.75);
+      box-shadow:0 0 0 4px rgba(99,102,241,.18);
+    }
+    /* Corrige opções do select (evita branco no branco) */
+    select, option{
+      background: rgba(15,25,48,.98);
+      color: var(--text);
+    }
 
-    /* Sidebar */
-    .sidebar{position:sticky;top:86px;max-height:calc(100vh - 110px);overflow:auto;
-      background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(236,72,153,.08));}
-    .sidebar .collapsebar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-14px -14px 10px -14px;
-      padding:10px 12px;background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(236,72,153,.10));
-      border-bottom:1px solid rgba(226,232,240,.9);border-radius:18px 18px 14px 14px;position:sticky;top:0;z-index:3;}
-    .sidebar .title{font-weight:950;font-size:16px;}
-    body.sidebar-collapsed .sidebar{padding:10px 8px;}
-    body.sidebar-collapsed .sidebar .title,
-    body.sidebar-collapsed .sidebar .filters-body,
-    body.sidebar-collapsed .sidebar .subhint{display:none;}
-    body.sidebar-collapsed .sidebar .collapsebar{justify-content:center;margin-bottom:0;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
+    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
+    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
 
-    .filters-body{background: rgba(255,255,255,.85);border:1px solid rgba(226,232,240,.9);border-radius:18px;padding:14px;
-      box-shadow:0 10px 24px rgba(2,6,23,.06);}
-    .label{display:flex;align-items:center;gap:10px;font-size:12px;color:#334155;font-weight:950;margin:14px 0 8px;}
-    .label:before{content:"";width:10px;height:10px;border-radius:999px;background: linear-gradient(90deg,#22c55e,#06b6d4,#6366f1);
-      box-shadow: 0 4px 10px rgba(99,102,241,.18);}
-    input, select{width:100%;padding:12px 12px;border-radius:14px;border:1px solid rgba(226,232,240,.95);background:rgba(255,255,255,.96);
-      color:var(--text);box-shadow: inset 0 1px 0 rgba(255,255,255,.7);font-weight:800;}
-    input:focus, select:focus{outline:none;border-color: rgba(99,102,241,.55);box-shadow:0 0 0 4px rgba(99,102,241,.14);}
-    .subhint{color:var(--muted);font-size:11px;word-break:break-all;margin-top:10px;}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
+    .kpi{
+      border:1px solid rgba(34,48,84,.9);
+      border-radius:16px;
+      background:
+        radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
+        radial-gradient(900px 900px at 110% 0%, rgba(34,197,94,.10), transparent 45%),
+        rgba(255,255,255,.04);
+      padding:12px;
+      box-shadow:0 10px 24px rgba(0,0,0,.20);
+    }
+    .kpi .label{color:var(--muted);font-weight:950;font-size:12px;letter-spacing:.2px}
+    .kpi .value{font-weight:950;font-size:22px;margin-top:6px}
+    .kpi small{color:var(--muted)}
 
-    /* Content */
-    .content{display:grid;grid-template-columns:1fr;gap:14px;min-width:0;}
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;}
-    .kpi{border:1px solid rgba(226,232,240,.9);border-radius:16px;padding:14px;background: radial-gradient(900px 900px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
-      radial-gradient(700px 700px at 110% 0%, rgba(236,72,153,.10), transparent 45%), #ffffff;box-shadow:0 8px 18px rgba(2,6,23,.06);}
-    .kpi .k{color:var(--muted);font-size:12px;font-weight:950;}
-    .kpi .v{font-size:24px;font-weight:950;margin-top:6px;}
-    .kpi .s{margin-top:6px;color:var(--muted);font-size:11px;font-weight:800;}
+    .tag{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:52px;
+      padding:5px 10px;border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      font-weight:950;font-size:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .tag.ok{color:var(--ok);border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
+    .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
+    .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
 
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
-    .tab{cursor:pointer;padding:10px 12px;border-radius:999px;border:1px solid rgba(226,232,240,.95);background:#fff;font-weight:950;color:#0f172a;}
-    .tab.active{border-color: rgba(99,102,241,.55);box-shadow:0 0 0 4px rgba(99,102,241,.12);}
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
+    tbody tr:hover{background:rgba(255,255,255,.04)}
 
-    /* Table */
-    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(226,232,240,.9);background:#fff;}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
-    thead th{position:sticky;top:0;background:#fbfcff;z-index:5;border-bottom:1px solid rgba(226,232,240,.95);white-space:nowrap;}
-    th,td{text-align:left;padding:10px 10px;font-size:12px;border-bottom:1px solid #eef2f7;vertical-align:top;}
-    tbody tr:hover{background:#f8fafc;}
+    .small{font-size:11px;color:var(--muted)}
+    .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
+    .hidden{display:none !important;}
 
-    .tag{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
-      background:#fff;font-weight:950;font-size:12px;}
-    .tag.ok{border-color:rgba(34,197,94,.35);color:var(--ok);}
-    .tag.warn{border-color:rgba(245,158,11,.40);color:var(--warn);}
-    .tag.bad{border-color:rgba(239,68,68,.35);color:var(--bad);}
-    .tag.muted{color:var(--muted);}
+    /* ===== Nav (PAINEL/CRONOGRAMA) ===== */
+    .nav{display:flex; gap:10px; align-items:center; margin-top:10px;}
+    .nav a{
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:10px;
+      padding:12px 16px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      font-weight:950;
+      letter-spacing:.2px;
+      box-shadow:0 12px 26px rgba(0,0,0,.18);
+    }
+    .nav a:hover{border-color:rgba(99,102,241,.65);}
+    .nav a.active{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.92), rgba(34,197,94,.78));
+    }
 
-    /* Gantt */
-    .ganttwrap{overflow:auto;border-radius:14px;border:1px solid rgba(226,232,240,.9);background:#fff;}
-    .gantt{min-width:1100px;}
-    .gantt-head{display:grid;grid-template-columns:520px 1fr;position:sticky;top:0;background:#fbfcff;border-bottom:1px solid rgba(226,232,240,.95);z-index:4;}
-    .gantt-head .left{padding:10px;font-weight:950;font-size:12px;white-space:nowrap;}
-    .gantt-head .right{padding:10px;display:flex;gap:8px;align-items:center;overflow:hidden;}
-    .timeline{display:flex;gap:0;align-items:center;width:100%;}
-    .tick{flex:1;border-left:1px solid rgba(226,232,240,.7);height:20px;position:relative;}
-    .tick:first-child{border-left:none;}
-    .tick span{position:absolute;top:-2px;left:6px;font-size:11px;color:var(--muted);font-weight:900;white-space:nowrap;}
+    /* ===== Filters collapse ===== */
+    .filtersCard{padding:12px;}
+    .filtersHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    body.filters-collapsed .filtersBody{display:none;}
+    body.filters-collapsed .filtersCard{padding:10px; display:flex; flex-direction:column; align-items:center;}
+    body.filters-collapsed .filtersHead{width:100%; justify-content:center;}
+    body.filters-collapsed #pillCount{display:none;}
+    body.filters-collapsed #btnApply{display:none;}
+    body.filters-collapsed .filtersHint{display:none;}
+    body.filters-collapsed .filtersCollapsedHint{display:block;}
+    .filtersCollapsedHint{display:none; color:rgba(167,179,209,.75); font-size:11px; text-align:center; margin-top:10px;}
+    .filtersSticky{position: sticky; top: 88px;}
 
-    .gantt-row{display:grid;grid-template-columns:520px 1fr;border-bottom:1px solid #eef2f7;}
-    .gantt-row:hover{background:#f8fafc;}
-    .gantt-row .meta{padding:10px;display:grid;grid-template-columns:1fr 120px 120px;gap:10px;align-items:start;}
-    .task-title{font-weight:950;font-size:12px;}
-    .task-sub{margin-top:4px;color:var(--muted);font-size:11px;font-weight:800;}
-    .meta small{color:var(--muted);font-weight:800;}
-    .gantt-row .barcell{padding:10px;position:relative;}
-    .bar-track{height:18px;border-radius:999px;background:rgba(226,232,240,.75);position:relative;overflow:hidden;}
-    .bar{height:100%;border-radius:999px;background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(99,102,241,.95));
-      position:absolute;left:0;top:0;}
-    .bar.ok{background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,197,94,.75));}
-    .bar.warn{background:linear-gradient(90deg, rgba(245,158,11,.95), rgba(245,158,11,.75));}
-    .bar.bad{background:linear-gradient(90deg, rgba(239,68,68,.95), rgba(239,68,68,.75));}
-    .barlabel{position:absolute;top:-2px;right:10px;font-size:11px;color:var(--muted);font-weight:950;}
-
-    #loadOverlay{display:flex;position:fixed;inset:0;background:rgba(15,23,42,.22);z-index:9998;align-items:center;justify-content:center;}
-    .notice{border:1px dashed #cbd5e1;background:#fff;border-radius:14px;padding:14px 16px;max-width:980px;box-shadow:var(--shadow);}
-    .notice pre{white-space:pre-wrap;word-break:break-word;margin:10px 0 0 0;font-size:11px;color:#334155;}
-
-    @media (max-width:1200px){.grid{grid-template-columns:1fr;} header .wrap{padding:14px 12px;} .wrap{padding:12px 12px;}}
-  
-
-/* ===== MENU PRINCIPAL (PAINEL / CRONOGRAMA) ===== */
-.nav-main{display:flex;gap:12px;margin-top:12px;}
-.nav-item{
-  text-decoration:none;padding:10px 18px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
-  background:linear-gradient(135deg,#ffffff,#f8fafc);font-weight:950;letter-spacing:.3px;color:#0f172a;
-  box-shadow:0 6px 16px rgba(2,6,23,.08);transition:all .15s ease;display:inline-flex;align-items:center;gap:8px;
-}
-.nav-item:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(2,6,23,.14);border-color:rgba(99,102,241,.55);}
-.nav-item.active{
-  background:linear-gradient(135deg,#6366f1,#22c55e);color:#ffffff;border-color:transparent;box-shadow:0 12px 28px rgba(99,102,241,.35);
-}
-
-</style>
-
-  <script>
-    // ===== CONFIG (EDITÁVEL) =====
-    const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
-    const CSV_LS_KEY = "spdm_cronograma_csv_url";
-  </script>
+    /* ===== GANTT ===== */
+    .ganttWrap{
+      border:1px solid rgba(34,48,84,.95);
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(0,0,0,.10);
+    }
+    .ganttTopbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+      padding:10px 12px;
+      background:rgba(15,25,48,.98);
+      border-bottom:1px solid rgba(34,48,84,.75);
+    }
+    .ganttBody{display:grid;grid-template-columns: 380px 1fr;min-height: 520px;}
+    @media (max-width: 1180px){ .ganttBody{grid-template-columns: 1fr;} }
+    .ganttLeft{
+      border-right:1px solid rgba(34,48,84,.75);
+      background:linear-gradient(180deg, rgba(15,25,48,.70), rgba(15,25,48,.55));
+      overflow:auto; max-height: 70vh;
+    }
+    .ganttRight{
+      overflow:auto; max-height: 70vh;
+      background: radial-gradient(900px 400px at 20% 0%, rgba(99,102,241,.10), transparent 60%);
+      position:relative;
+    }
+    .ganttAxis{position:sticky; top:0; z-index:5;background:rgba(15,25,48,.98);border-bottom:1px solid rgba(34,48,84,.75);}
+    .axisMonths{display:flex;height:28px;border-bottom:1px solid rgba(34,48,84,.55);}
+    .axisMonths .m{
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; color:var(--muted); font-weight:950;
+      border-right:1px solid rgba(34,48,84,.35);
+      padding:0 8px; white-space:nowrap;
+    }
+    .axisDays{display:flex;height:26px;}
+    .axisDays .d{
+      width:var(--dayW);
+      border-right:1px solid rgba(34,48,84,.20);
+      color:rgba(167,179,209,.65);
+      font-size:10px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .ganttRowL{
+      display:grid;
+      grid-template-columns: 86px 1fr;
+      gap:10px;
+      padding:10px 10px;
+      height: var(--rowH);
+      border-bottom:1px solid rgba(34,48,84,.45);
+      align-items:center;
+    }
+    .ganttRowL .edt{font-weight:950; font-size:12px; color:#dbe7ff}
+    .ganttRowL .name{
+      font-size:12px; color:var(--text);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .ganttRowR{
+      position:relative;
+      height: var(--rowH);
+      border-bottom:1px solid rgba(34,48,84,.30);
+      background:
+        repeating-linear-gradient(
+          to right,
+          rgba(34,48,84,.18) 0,
+          rgba(34,48,84,.18) 1px,
+          transparent 1px,
+          transparent calc(var(--dayW))
+        );
+    }
+    .bar{
+      position:absolute;
+      transform: translateY(-50%);
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      overflow:hidden;
+      min-width: 8px;
+    }
+    .bar.ok{background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(16,185,129,.80));}
+    .bar.warn{background:linear-gradient(90deg, rgba(245,158,11,.92), rgba(251,191,36,.75));}
+    .bar.bad{background:linear-gradient(90deg, rgba(239,68,68,.92), rgba(244,63,94,.75));}
+    .bar .fill{height:100%;background:rgba(0,0,0,.22);mix-blend-mode: overlay;}
+    .bar .pct{
+      position:absolute; right:8px; top:50%;
+      transform:translateY(-50%);
+      font-size:10px; font-weight:950;
+      color:rgba(255,255,255,.92);
+      text-shadow: 0 1px 2px rgba(0,0,0,.55);
+      pointer-events:none;
+    }
+    .todayLine{
+      position:absolute; top:0; bottom:0;
+      width:2px;
+      background:rgba(99,102,241,.85);
+      box-shadow:0 0 0 4px rgba(99,102,241,.14);
+      z-index:4;
+    }
+    .tooltip{
+      position:fixed;
+      z-index:9999;
+      pointer-events:none;
+      background:rgba(10,16,28,.92);
+      border:1px solid rgba(34,48,84,.95);
+      border-radius:14px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      padding:10px 12px;
+      min-width: 260px;
+      color:var(--text);
+      display:none;
+    }
+    .tooltip .t{font-weight:950; font-size:12px; margin-bottom:6px}
+    .tooltip .kv{font-size:11px;color:var(--muted);line-height:1.35}
+    .kbd{font-size:11px;color:rgba(167,179,209,.85);padding:6px 10px;border-radius:999px;border:1px solid rgba(34,48,84,.65);background:rgba(255,255,255,.03);}
+  </style>
 </head>
-
 <body>
 <header>
   <div class="wrap">
-    <div class="row" style="justify-content: space-between;">
-      <div>
-        <h1>MIT045 | Cronograma - Painel Gerencial (Live)</h1>
-        <div class="sub">Fonte: Google Sheets • Aba: <strong id="sheetStrong">Cronograma</strong> • CSV: publicado • Última atualização: <span id="lastUpdate">--</span></div>
-      </div>
-      <div class="row">
-        <span id="pillResumo" class="pill">Carregando…</span>
-        <span class="pill" title="Auto refresh">Auto:
-          <select id="autoRefreshSel" style="border: none; background: transparent; font-weight: 800; color: #0f172a; outline: none;">
-            <option value="0">OFF</option>
-            <option value="60">1 min</option>
-            <option selected="selected" value="300">5 min</option>
-            <option value="900">15 min</option>
-          </select>
-        </span>
-        <button id="btnReload" class="iconbtn" title="Recarregar dados agora">↻</button>
-        <button id="btnExportXlsx" class="iconbtn" title="Exportar Excel (XLSX)">⤓</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="row wrap" style="font-size: 12px; color: #64748b; margin-top: 6px; justify-content: space-between;">
-    <div class="row" style="gap: 10px;">
-      <div>Fonte de dados: Google Sheets · Aba <strong id="sheetInfo">Cronograma</strong> · Range <strong id="rangeInfo">A1:Z999</strong></div>
-      <span class="pill" title="Editar aba (metadado)">Aba:
-        <input id="sheetEditor" value="Cronograma" style="width: 220px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
-      </span>
-      <span class="pill" title="Editar range (metadado)">Range:
-        <input id="rangeEditor" value="A1:Z999" style="width: 140px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
-      </span>
-      <button id="btnApplySource" class="btn" style="padding: 8px 10px;">Aplicar</button>
-    </div>
     <div class="row">
-      <button id="btnToggleSidebar" class="iconbtn" title="Expandir/Recolher filtros">☰</button>
-    </div>
-  </div>
+      <div style="min-width:320px">
+        <h1>MIT045 | Cronograma — Painel Gerencial (Live)</h1>
+        <div class="sub">Gantt em HTML puro (DOM/CSS). Sem dependências externas. Fonte CSV publicada (oculta).</div>
 
-  <div class="wrap">
-    <div class="nav-main" aria-label="Navegação principal">
-      <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
-      <a href="cronograma.html" class="nav-item active" id="navCronograma">🗓️ CRONOGRAMA</a>
+        <div class="nav" aria-label="Navegação">
+          <a id="navPainel" href="index.html">📊 PAINEL</a>
+          <a class="active" href="cronograma.html">🗓️ CRONOGRAMA</a>
+        </div>
+      </div>
+      <div class="rowL">
+        <span id="pillStatus" class="pill">Status: Aguardando</span>
+        <span id="pillInfo" class="pill">—</span>
+      </div>
     </div>
   </div>
 </header>
 
-<div class="grid wrap" id="captureArea">
-  <aside class="card sidebar" id="sidebar">
-    <div class="collapsebar">
-      <div class="title">Filtros</div>
-      <span class="pill" id="countPill">0 itens</span>
-    </div>
-
-    <div class="filters-body">
-      <div class="label">Busca (texto livre)</div>
-      <input id="q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
-
-      <div class="label">Status</div>
-      <select id="fStatus">
-        <option value="">(todos)</option>
-      </select>
-
-      <div class="label">Responsável</div>
-      <select id="fResp">
-        <option value="">(todos)</option>
-      </select>
-
-      <div class="label">Fase / Etapa</div>
-      <select id="fFase">
-        <option value="">(todas)</option>
-      </select>
-
-      <div class="label">Período (data)</div>
-      <div class="row" style="gap:10px;">
-        <input id="dIni" type="date" />
-        <input id="dFim" type="date" />
+<div class="grid wrap">
+  <section class="card">
+    <div class="row">
+      <div class="rowL">
+        <span class="pill">Fonte: CSV publicado (oculto)</span>
+        <span id="pillMeta" class="pill">—</span>
       </div>
-
-      <div class="row" style="margin-top:12px;">
-        <button class="btn" id="btnReset">Reset</button>
-      </div>
-
-      <div class="subhint" style="margin-top:12px;">
-        Dica: o Gantt usa as colunas de data que ele encontrar (Prioridade: Início/Fim, depois Prevista/Real).
+      <div class="rowL">
+        <button id="btnLoad" class="btn primary">Carregar & Normalizar</button>
+        <button id="btnExport" class="btn">Exportar (CSV)</button>
+        <button id="btnResetAll" class="btn ghost">Reset</button>
       </div>
     </div>
-  </aside>
 
-  <main class="content">
-    <section class="card" id="panelResumo">
-      <div class="row" style="justify-content:space-between">
-        <div style="font-weight:950;">Snapshot Executivo do Cronograma</div>
-        <span class="pill" id="rangePill">Janela: --</span>
+    <div class="sep"></div>
+
+    <div class="row">
+      <div class="rowL">
+        <button id="tabLista" class="btn tab active">📄 Lista</button>
+        <button id="tabGantt" class="btn tab">📊 Gantt</button>
+        <span class="kbd">Zoom:
+          <select id="zoomSel" style="width:auto; display:inline-block; margin-left:6px; padding:8px 10px; border-radius:12px;">
+            <option value="6">Compacto</option>
+            <option value="12" selected>Normal</option>
+            <option value="18">Conforto</option>
+            <option value="26">Detalhado</option>
+          </select>
+        </span>
+        <span class="kbd"><input id="chkToday" type="checkbox" checked style="width:auto; margin-right:6px; vertical-align:middle;">Hoje</span>
       </div>
+      <div class="small">Gate D: renderização do Gantt baseada no modelo canônico já validado.</div>
+    </div>
 
-      <div class="kpis">
-        <div class="kpi"><div class="k">Total de Atividades</div><div class="v" id="kTotal">0</div><div class="s" id="kTotalS">—</div></div>
-        <div class="kpi"><div class="k">Concluídas</div><div class="v" id="kDone">0</div><div class="s" id="kDoneS">—</div></div>
-        <div class="kpi"><div class="k">Em Andamento</div><div class="v" id="kWip">0</div><div class="s" id="kWipS">—</div></div>
-        <div class="kpi"><div class="k">Atrasadas</div><div class="v" id="kLate">0</div><div class="s" id="kLateS">—</div></div>
-      </div>
+    <div class="sep"></div>
 
-      <div class="tabs">
-        <div class="tab active" data-tab="gantt">Gantt</div>
-        <div class="tab" data-tab="lista">Lista</div>
-      </div>
-    </section>
-
-    <section class="card" id="panelGantt">
-      <div class="row" style="justify-content:space-between">
-        <div style="font-weight:950;">Gantt (visão resumida)</div>
-        <div class="row">
-          <span class="pill">Legenda:</span>
-          <span class="tag ok">OK</span>
-          <span class="tag warn">Atenção</span>
-          <span class="tag bad">Crítico</span>
+    <div class="layout">
+      <aside class="card filtersCard filtersSticky" style="min-width:0;">
+        <div class="filtersHead">
+          <div class="rowL">
+            <span class="pill">Filtros</span>
+            <span id="pillCount" class="pill">0 itens</span>
+          </div>
+          <div class="rowL">
+            <button id="btnApply" class="btn">Aplicar</button>
+            <button id="btnToggleFilters" class="btn icon" title="Minimizar/Expandir filtros">≡</button>
+          </div>
         </div>
-      </div>
-      <div class="ganttwrap" style="margin-top:12px;">
-        <div class="gantt" id="gantt"></div>
-      </div>
-    </section>
 
-    <section class="card" id="panelLista" style="display:none;">
-      <div class="row" style="justify-content:space-between">
-        <div style="font-weight:950;">Lista do Cronograma</div>
-        <div class="row">
-          <span class="pill"><span id="rowCount">0</span> registros</span>
-          <button class="iconbtn" id="btnListaXlsx" title="Exportar Lista (XLSX)">⤓</button>
+        <div class="filtersBody">
+          <label>Busca (texto livre)</label>
+          <input id="q" type="text" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
+
+          <label>Status (classificado)</label>
+          <select id="fStatus">
+            <option value="">(todos)</option>
+            <option value="ok">ok (Concluída)</option>
+            <option value="warn">warn (Em andamento / outros)</option>
+            <option value="bad">bad (Atrasada)</option>
+          </select>
+
+          <label>Responsável</label>
+          <select id="fResp">
+            <option value="">(todos)</option>
+          </select>
+
+          <label>Período (início ≥ / término ≤)</label>
+          <div class="rowL" style="gap:10px;">
+            <div style="flex:1">
+              <input id="dIni" type="date" />
+              <div class="small">Início mínimo</div>
+            </div>
+            <div style="flex:1">
+              <input id="dFim" type="date" />
+              <div class="small">Término máximo</div>
+            </div>
+          </div>
+
+          <label>Ordenação</label>
+          <select id="sortBy">
+            <option value="inicio_ts">Início (asc)</option>
+            <option value="-inicio_ts">Início (desc)</option>
+            <option value="termino_ts">Término (asc)</option>
+            <option value="-termino_ts">Término (desc)</option>
+            <option value="edt">EDT (asc)</option>
+            <option value="status_class">Status (asc)</option>
+          </select>
+
+          <div class="rowL" style="margin-top:12px;">
+            <button id="btnClearFilters" class="btn ghost">Limpar filtros</button>
+          </div>
+
+          <div class="sep"></div>
+          <div class="small mono" id="audit">Aguardando carga…</div>
+          <div class="filtersHint small" style="margin-top:10px;">Dica: use <b>Enter</b> no campo de busca para aplicar.</div>
         </div>
-      </div>
 
-      <div class="tablewrap" style="margin-top:12px;">
-        <table>
-          <thead id="thead"></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+        <div class="filtersCollapsedHint">Filtros minimizados.<br/>Clique no <b>≡</b> para expandir.</div>
+      </aside>
+
+      <main style="min-width:0;">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Total</div>
+            <div id="kTotal" class="value">0</div>
+            <small>Atividades carregadas</small>
+          </div>
+          <div class="kpi">
+            <div class="label">Concluídas</div>
+            <div id="kOk" class="value">0</div>
+            <small>Status class: ok</small>
+          </div>
+          <div class="kpi">
+            <div class="label">Atrasadas</div>
+            <div id="kBad" class="value">0</div>
+            <small>Status class: bad</small>
+          </div>
+          <div class="kpi">
+            <div class="label">Em andamento / Outros</div>
+            <div id="kWarn" class="value">0</div>
+            <small>Status class: warn</small>
+          </div>
+          <div class="kpi">
+            <div class="label">Janela</div>
+            <div id="kWindow" class="value" style="font-size:14px">—</div>
+            <small>Min início → Max término</small>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <div class="rowL">
+            <span class="pill">Exibição</span>
+            <span id="kFiltered" class="pill">0 exibidos</span>
+            <span id="chipOk" class="tag ok">ok: 0</span>
+            <span id="chipWarn" class="tag warn">warn: 0</span>
+            <span id="chipBad" class="tag bad">bad: 0</span>
+          </div>
+          <div class="small">Lista e Gantt refletem o mesmo conjunto filtrado (VIEW).</div>
+        </div>
+
+        <section id="panelLista" class="tablewrap" style="margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>edt</th>
+                <th>atividade</th>
+                <th>status_raw</th>
+                <th>status_class</th>
+                <th>% concluído</th>
+                <th>início</th>
+                <th>término</th>
+                <th>responsável</th>
+                <th>predecessoras</th>
+                <th>anotações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </section>
+
+        <section id="panelGantt" class="ganttWrap hidden" style="margin-top:10px;">
+          <div class="ganttTopbar">
+            <div class="rowL">
+              <span class="pill">Gantt</span>
+              <span id="gInfo" class="pill">—</span>
+              <span class="pill">Modelo: canônico</span>
+            </div>
+            <div class="rowL">
+              <span class="tag ok">ok</span>
+              <span class="tag warn">warn</span>
+              <span class="tag bad">bad</span>
+            </div>
+          </div>
+
+          <div class="ganttBody">
+            <div id="gLeft" class="ganttLeft"></div>
+            <div id="gRight" class="ganttRight">
+              <div class="ganttAxis">
+                <div id="axisMonths" class="axisMonths"></div>
+                <div id="axisDays" class="axisDays"></div>
+              </div>
+              <div id="gCanvas"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="small" style="margin-top:8px;">Critério de aceite: Gantt bate 1:1 com a Lista (datas e status), sem divergência.</div>
+      </main>
+    </div>
+  </section>
 </div>
 
-<div id="loadOverlay"><div class="notice">
-  <div style="font-weight:950;margin-bottom:6px;">Carregando Cronograma (CSV)…</div>
-  <div style="color:var(--muted);font-size:12px;font-weight:800;">Se der erro: confirme se o CSV está publicado na web e acessível.</div>
-  <pre id="debugBox">--</pre>
-</div></div>
+<div id="tooltip" class="tooltip">
+  <div id="ttTitle" class="t">—</div>
+  <div id="ttBody" class="kv">—</div>
+</div>
 
 <script>
-  // ===== State =====
-  let RAW = [];           // raw objects
-  let ROWS = [];          // normalized
-  let HEADERS = [];       // for table
-  let DATE_KEYS = null;   // {startKey,endKey}
-  let ACTIVE_TAB = "gantt";
+(() => {
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
 
-  // ===== Utils =====
-  function nowBR(){ return new Date().toLocaleString("pt-BR"); }
-  function debug(msg){ document.getElementById("debugBox").textContent = msg; }
-  function showLoad(on){ document.getElementById("loadOverlay").style.display = on ? "flex" : "none"; }
-  function setLastUpdate(){ document.getElementById("lastUpdate").textContent = nowBR(); }
-  function setPill(text){ document.getElementById("pillResumo").textContent = text; }
-  function uniq(arr){ return Array.from(new Set(arr.filter(v=>String(v||"").trim()!==""))).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')); }
+  const els = {
+    pillStatus: document.getElementById("pillStatus"),
+    pillInfo: document.getElementById("pillInfo"),
+    pillMeta: document.getElementById("pillMeta"),
+    pillCount: document.getElementById("pillCount"),
+    kTotal: document.getElementById("kTotal"),
+    kOk: document.getElementById("kOk"),
+    kBad: document.getElementById("kBad"),
+    kWarn: document.getElementById("kWarn"),
+    kWindow: document.getElementById("kWindow"),
+    kFiltered: document.getElementById("kFiltered"),
+    chipOk: document.getElementById("chipOk"),
+    chipWarn: document.getElementById("chipWarn"),
+    chipBad: document.getElementById("chipBad"),
+    tbody: document.getElementById("tbody"),
+    audit: document.getElementById("audit"),
+    q: document.getElementById("q"),
+    fStatus: document.getElementById("fStatus"),
+    fResp: document.getElementById("fResp"),
+    dIni: document.getElementById("dIni"),
+    dFim: document.getElementById("dFim"),
+    sortBy: document.getElementById("sortBy"),
+    btnLoad: document.getElementById("btnLoad"),
+    btnApply: document.getElementById("btnApply"),
+    btnExport: document.getElementById("btnExport"),
+    btnResetAll: document.getElementById("btnResetAll"),
+    btnClearFilters: document.getElementById("btnClearFilters"),
+    btnToggleFilters: document.getElementById("btnToggleFilters"),
+    tabLista: document.getElementById("tabLista"),
+    tabGantt: document.getElementById("tabGantt"),
+    panelLista: document.getElementById("panelLista"),
+    panelGantt: document.getElementById("panelGantt"),
+    zoomSel: document.getElementById("zoomSel"),
+    chkToday: document.getElementById("chkToday"),
+    gLeft: document.getElementById("gLeft"),
+    gRight: document.getElementById("gRight"),
+    axisMonths: document.getElementById("axisMonths"),
+    axisDays: document.getElementById("axisDays"),
+    gCanvas: document.getElementById("gCanvas"),
+    gInfo: document.getElementById("gInfo"),
+    tooltip: document.getElementById("tooltip"),
+    ttTitle: document.getElementById("ttTitle"),
+    ttBody: document.getElementById("ttBody"),
+  };
 
-  function parseCSV(text){
-  // Normalize newlines without regex and detect delimiter from first non-empty line
-  const norm = String(text||"").replaceAll("
-", "");
-  const firstLine = (norm.split("
-").find(l=>l.trim()!=="") || "");
-  const commaCount = (firstLine.split(",").length-1);
-  const semiCount  = (firstLine.split(";").length-1);
-  const DELIM = semiCount > commaCount ? ";" : ",";
+  let DATA = [];
+  let VIEW = [];
+  let META = { contentType: "", size: 0, rows: 0, cols: 0, delim: "," };
 
-  const rows=[];
-  let row=[], cur="", inQ=false;
-  for(let i=0;i<norm.length;i++){
-    const ch=norm[i], nx=norm[i+1];
-    if(inQ){
-      if(ch === '"' && nx === '"'){ cur += '"'; i++; }
-      else if(ch === '"'){ inQ=false; }
-      else cur += ch;
-    }else{
-      if(ch === '"') inQ=true;
-      else if(ch === DELIM){ row.push(cur); cur=""; }
-      else if(ch === "
-"){ row.push(cur); rows.push(row); row=[]; cur=""; }
-      else cur += ch;
-    }
-  }
-  if(cur.length || row.length){ row.push(cur); rows.push(row); }
-  return rows.filter(r => r.some(c => String(c).trim() !== ""));
-}
-else if (ch === '"') inQ=false;
-        else cur += ch;
-      } else {
-        if (ch === '"') inQ=true;
-        else if (ch === ',') { row.push(cur); cur=""; }
-        else if (ch === '\n') { row.push(cur); rows.push(row); row=[]; cur=""; }
-        else if (ch === '\r') {}
-        else cur += ch;
+  const setPill = (el, text, kind) => {
+    el.classList.remove("ok","bad","warn");
+    if(kind) el.classList.add(kind);
+    el.textContent = text;
+  };
+
+  const detectDelimiter = (firstLine) => {
+    const comma = firstLine.split(",").length - 1;
+    const semi  = firstLine.split(";").length - 1;
+    return semi > comma ? ";" : ",";
+  };
+
+  const parseCSV = (text) => {
+    const norm = String(text || "").split("\r").join("");
+    const firstLine = (norm.split("\n").find(l => l.trim() !== "") || "");
+    const DELIM = detectDelimiter(firstLine);
+
+    const rows = [];
+    let row = [], cur = "", inQ = false;
+
+    for(let i=0;i<norm.length;i++){
+      const ch = norm[i];
+      const nx = norm[i+1];
+
+      if(inQ){
+        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
+        else if(ch === '"'){ inQ = false; }
+        else { cur += ch; }
+      }else{
+        if(ch === '"'){ inQ = true; }
+        else if(ch === DELIM){ row.push(cur); cur = ""; }
+        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        else { cur += ch; }
       }
     }
-    if (cur.length || row.length) { row.push(cur); rows.push(row); }
-    return rows.filter(r => r.some(c => String(c).trim() !== ""));
-  }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    return { rows: rows.filter(r => r.some(c => String(c).trim() !== "")), delim: DELIM };
+  };
 
-  function normalizeHeaders(headers){
-    const seen={};
-    return headers.map(h=>{
-      const name=String(h||"").trim() || "(vazio)";
-      if(seen[name]===undefined){ seen[name]=0; return name; }
-      seen[name]++; return `${name} (${seen[name]})`;
-    });
-  }
+  const idxOf = (headers, name) => {
+    const n = String(name||"").trim().toLowerCase();
+    for(let i=0;i<headers.length;i++){
+      const h = String(headers[i]||"").trim().toLowerCase();
+      if(h === n) return i;
+    }
+    return -1;
+  };
 
-  function toISODateMaybe(v){
-  let s = String(v||"").trim();
-  if(!s) return "";
-  // remove weekday prefix like "qua." "ter." etc
-  const parts = s.split(" ");
-  if(parts.length>=2 && parts[0].endsWith(".")){
-    s = parts.slice(1).join(" ").trim();
-  }
-  // Accept dd/MM/yy or dd/MM/yyyy
-  if(s.includes("/") && s.length>=8){
-    const seg = s.split("/");
-    if(seg.length>=3){
-      const dd = String(seg[0]).padStart(2,"0");
-      const mm = String(seg[1]).padStart(2,"0");
-      let yy = String(seg[2]).trim();
-      // remove any trailing time/text
-      yy = yy.split(" ")[0];
-      if(yy.length===2) yy = "20"+yy;
-      if(yy.length===4){
-        return `${yy}-${mm}-${dd}`;
+  const toPct = (v) => {
+    const s = String(v||"").trim();
+    if(!s) return null;
+    const t = s.split("%").join("").trim();
+    const parts = t.split(",");
+    const main = parts[0];
+    const num = parseInt(main, 10);
+    return isNaN(num) ? null : num;
+  };
+
+  const stripWeekdayPrefix = (s) => {
+    const t = String(s||"").trim();
+    if(!t) return "";
+    const parts = t.split(" ");
+    if(parts.length >= 2 && parts[0].endsWith(".")) return parts.slice(1).join(" ").trim();
+    return t;
+  };
+
+  const toISODateMaybe = (v) => {
+    let s = stripWeekdayPrefix(v);
+    if(!s) return "";
+    if(s.includes("/")){
+      const seg = s.split("/");
+      if(seg.length >= 3){
+        const dd = String(seg[0]).padStart(2, "0");
+        const mm = String(seg[1]).padStart(2, "0");
+        let yy = String(seg[2]).trim().split(" ")[0];
+        if(yy.length === 2) yy = "20" + yy;
+        if(yy.length === 4) return yy + "-" + mm + "-" + dd;
       }
     }
-  }
-  // Accept yyyy-mm-dd
-  if(s.length>=10 && s[4]==="-" && s[7]==="-"){
-    return s.slice(0,10);
-  }
-  return "";
-}
+    if(s.length >= 10 && s[4] === "-" && s[7] === "-") return s.slice(0,10);
+    return "";
+  };
 
-function parseDateISO(v){
-  const iso = toISODateMaybe(v);
-  if(!iso) return null;
-  const d = new Date(iso+"T00:00:00");
-  return isNaN(d)?null:d;
-}
--\d{2}-\d{2}$/.test(s)) return null;
-    const d=new Date(s+"T00:00:00");
-    return isNaN(d)?null:d;
-  }
+  const toEpoch = (iso) => {
+    if(!iso) return null;
+    const d = new Date(iso + "T00:00:00");
+    return isNaN(d) ? null : d.getTime();
+  };
 
-  function detectDateKeys(headers){
-    const h = headers.map(x=>String(x).toLowerCase());
-    const findKey = (cands)=>{
-      for (const c of cands){
-        const idx = h.findIndex(v=>v.includes(c));
-        if(idx>=0) return headers[idx];
-      }
-      return null;
-    };
-    const startKey = findKey(["data início","data inicio","início","inicio","start","inicial","inicio previsto","início previsto","prevista início","prevista inicio"]);
-    const endKey   = findKey(["data fim","fim","end","final","término","termino","fim previsto","término previsto","conclusão prevista","conclusao prevista","prevista fim"]);
-    return {startKey, endKey};
-  }
+  const statusClass = (s) => {
+    const t = String(s||"").toLowerCase();
+    if(t.includes("concl")) return "ok";
+    if(t.includes("atras")) return "bad";
+    return "warn";
+  };
 
-  function statusClass(status){
-    const s=String(status||"").toLowerCase();
-    if (s.includes("concl") || s.includes("final") || s.includes("ok")) return "ok";
-    if (s.includes("andam") || s.includes("exec") || s.includes("wip")) return "warn";
-    if (s.includes("atras") || s.includes("bloq") || s.includes("crít") || s.includes("crit")) return "bad";
-    return "muted";
-  }
+  const fmtISOToBR = (iso) => {
+    if(!iso) return "";
+    return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
+  };
 
-  function buildRows(rows2d){
-    const headers = normalizeHeaders(rows2d[0]);
-    const out=[];
-    for (let i=1;i<rows2d.length;i++){
-      const r=rows2d[i];
-      if(!r || !r.length) continue;
-      const obj={};
-      headers.forEach((h,idx)=>obj[h]= (r[idx]!==undefined ? String(r[idx]).trim() : ""));
+  const normalize = (rows) => {
+    const headers = rows[0] || [];
+    const req = ["edt","status","atividade","início","término"];
+    const missing = req.filter(r => idxOf(headers, r) === -1);
+    if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
+
+    const iEDT = idxOf(headers, "edt");
+    const iConc = idxOf(headers, "% concluída");
+    const iStatus = idxOf(headers, "status");
+    const iAtiv = idxOf(headers, "atividade");
+    const iIni = idxOf(headers, "início");
+    const iFim = idxOf(headers, "término");
+    const iPred = idxOf(headers, "predecessoras");
+    const iResp = idxOf(headers, "responsável");
+    const iAnot = idxOf(headers, "anotações");
+
+    const out = [];
+    for(let r=1; r<rows.length; r++){
+      const row = rows[r] || [];
+      const obj = {
+        edt: row[iEDT] ?? "",
+        pct_concluido: toPct(row[iConc]),
+        status_raw: row[iStatus] ?? "",
+        atividade: row[iAtiv] ?? "",
+        responsavel: row[iResp] ?? "",
+        predecessoras: row[iPred] ?? "",
+        anotacoes: row[iAnot] ?? "",
+        inicio_raw: row[iIni] ?? "",
+        termino_raw: row[iFim] ?? "",
+      };
+      obj.inicio_iso = toISODateMaybe(obj.inicio_raw);
+      obj.termino_iso = toISODateMaybe(obj.termino_raw);
+      obj.inicio_ts = toEpoch(obj.inicio_iso);
+      obj.termino_ts = toEpoch(obj.termino_iso);
+      obj.status_class = statusClass(obj.status_raw);
+
+      if(obj.inicio_ts !== null && obj.termino_ts === null){ obj.termino_ts = obj.inicio_ts; obj.termino_iso = obj.inicio_iso; }
+      if(obj.inicio_ts === null && obj.termino_ts !== null){ obj.inicio_ts = obj.termino_ts; obj.inicio_iso = obj.termino_iso; }
       out.push(obj);
     }
-    return {headers, out};
-  }
+    return out;
+  };
 
-  function bestField(obj, candidates){
-    const keys = Object.keys(obj);
-    const lower = keys.map(k=>[k,k.toLowerCase()]);
-    for (const c of candidates){
-      const hit = lower.find(([k,kl])=>kl.includes(c));
-      if (hit) return hit[0];
+  const fetchCSV = async (url) => {
+    const res = await fetch(url, { cache: "no-store" });
+    return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text: await res.text() };
+  };
+
+  const guardNotHTML = (text) => {
+    const head = String(text||"").slice(0,200).toLowerCase();
+    if(head.includes("<html") || head.includes("<!doctype")) throw new Error("Resposta veio HTML, não CSV.");
+  };
+
+  const escapeHtml = (s) => String(s||"")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  const uniqueSorted = (arr) => {
+    const set = new Set(arr.map(x => String(x||"").trim()).filter(x => x));
+    return Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  };
+
+  const fillResponsaveis = () => {
+    const resps = uniqueSorted(DATA.map(d => d.responsavel));
+    els.fResp.innerHTML = '<option value="">(todos)</option>' +
+      resps.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("");
+  };
+
+  const countByClass = (list) => {
+    let ok=0,warn=0,bad=0;
+    list.forEach(o => { if(o.status_class==="ok") ok++; else if(o.status_class==="bad") bad++; else warn++; });
+    return { ok, warn, bad, total: list.length };
+  };
+
+  const renderTable = () => {
+    const max = Math.min(VIEW.length, 1200);
+    let rows = "";
+    for(let i=0;i<max;i++){
+      const o = VIEW[i];
+      rows += "<tr>" +
+        "<td>"+escapeHtml(o.edt)+"</td>" +
+        "<td>"+escapeHtml(o.atividade)+"</td>" +
+        "<td>"+escapeHtml(o.status_raw)+"</td>" +
+        "<td><span class=\"tag "+o.status_class+"\">"+escapeHtml(o.status_class)+"</span></td>" +
+        "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
+        "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
+        "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
+        "<td>"+escapeHtml(o.responsavel)+"</td>" +
+        "<td>"+escapeHtml(o.predecessoras)+"</td>" +
+        "<td>"+escapeHtml(o.anotacoes)+"</td>" +
+      "</tr>";
     }
-    return null;
-  }
+    els.tbody.innerHTML = rows;
+  };
 
-  function normalizeRow(obj){
-    const titleKey = bestField(obj, ["atividade","tarefa","descr","nome","item"]);
-    const faseKey  = bestField(obj, ["fase","etapa","macro","gate"]);
-    const respKey  = bestField(obj, ["respons","owner","dono"]);
-    const statusKey= bestField(obj, ["status","situação","situacao"]);
-    const startKey = DATE_KEYS.startKey || bestField(obj, ["início","inicio","start"]);
-    const endKey   = DATE_KEYS.endKey   || bestField(obj, ["fim","end","término","termino","final"]);
+  const isGanttVisible = () => !els.panelGantt.classList.contains("hidden");
 
-    const start = parseDateISO(obj[startKey]);
-    const end = parseDateISO(obj[endKey]);
+  const renderAll = () => {
+    const all = countByClass(DATA);
+    const cur = countByClass(VIEW);
 
-    return {
-      _titleKey:titleKey, _faseKey:faseKey, _respKey:respKey, _statusKey:statusKey,
-      title: obj[titleKey] || "",
-      fase: obj[faseKey] || "",
-      resp: obj[respKey] || "",
-      status: obj[statusKey] || "",
-      startRaw: obj[startKey] || "",
-      endRaw: obj[endKey] || "",
-      start,
-      end,
-      raw: obj
-    };
-  }
+    els.kTotal.textContent = String(all.total);
+    els.kOk.textContent = String(all.ok);
+    els.kWarn.textContent = String(all.warn);
+    els.kBad.textContent = String(all.bad);
 
-  function setEnvPill(){
-    const host = location.host || "local";
-    document.getElementById("envPill").textContent = "ENV: " + host;
-  }
+    els.kFiltered.textContent = String(cur.total) + " exibidos";
+    els.pillCount.textContent = String(cur.total) + " itens";
+    els.chipOk.textContent = "ok: " + cur.ok;
+    els.chipWarn.textContent = "warn: " + cur.warn;
+    els.chipBad.textContent = "bad: " + cur.bad;
 
-  // ===== Filtering =====
-  function getFiltered(){
-    const q=(document.getElementById("q").value||"").trim().toLowerCase();
-    const fs=document.getElementById("fStatus").value;
-    const fr=document.getElementById("fResp").value;
-    const ff=document.getElementById("fFase").value;
-    const dIni=parseDateISO(document.getElementById("dIni").value);
-    const dFim=parseDateISO(document.getElementById("dFim").value);
+    if(DATA.length){
+      const mins = DATA.map(o=>o.inicio_ts).filter(v=>v!==null);
+      const maxs = DATA.map(o=>o.termino_ts).filter(v=>v!==null);
+      if(mins.length && maxs.length){
+        const minTS = Math.min(...mins), maxTS = Math.max(...maxs);
+        const minISO = new Date(minTS).toISOString().slice(0,10);
+        const maxISO = new Date(maxTS).toISOString().slice(0,10);
+        els.kWindow.textContent = fmtISOToBR(minISO) + " → " + fmtISOToBR(maxISO);
+      }else els.kWindow.textContent = "—";
+    }else els.kWindow.textContent = "—";
 
-    return ROWS.filter(r=>{
-      const text = Object.values(r.raw).join(" ").toLowerCase();
-      if(q && !text.includes(q)) return false;
-      if(fs && String(r.status||"").trim()!==fs) return false;
-      if(fr && String(r.resp||"").trim()!==fr) return false;
-      if(ff && String(r.fase||"").trim()!==ff) return false;
+    renderTable();
+    if(isGanttVisible()) renderGantt();
+  };
 
-      if(dIni || dFim){
-        const s=r.start, e=r.end;
-        if(!s || !e) return false;
-        const end = dFim ? new Date(dFim.getTime()+86400000-1) : null;
-        if(dIni && e < dIni) return false;
-        if(end && s > end) return false;
-      }
-      return true;
+  const applyFilters = () => {
+    const q = String(els.q.value||"").trim().toLowerCase();
+    const st = els.fStatus.value;
+    const resp = els.fResp.value;
+    const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
+    const dFim = els.dFim.value ? new Date(els.dFim.value + "T00:00:00").getTime() : null;
+    const sort = els.sortBy.value;
+    const desc = sort.startsWith("-");
+    const key = desc ? sort.slice(1) : sort;
+
+    let out = DATA.slice();
+    if(q){
+      out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes).toLowerCase().includes(q));
+    }
+    if(st) out = out.filter(o => o.status_class === st);
+    if(resp) out = out.filter(o => String(o.responsavel||"") === resp);
+    if(dIni !== null) out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
+    if(dFim !== null) out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
+
+    out.sort((a,b)=>{
+      const va=a[key], vb=b[key];
+      if(va===null && vb===null) return 0;
+      if(va===null) return 1;
+      if(vb===null) return -1;
+      if(typeof va==="number" && typeof vb==="number") return va-vb;
+      return String(va).localeCompare(String(vb),"pt-BR");
     });
-  }
+    if(desc) out.reverse();
 
-  // ===== Render =====
-  function renderAll(){
-    const rows = getFiltered();
-    document.getElementById("rowCount").textContent = rows.length;
-    document.getElementById("countPill").textContent = rows.length + " itens";
+    VIEW = out;
+    renderAll();
+  };
 
-    // KPIs
-    const total = rows.length;
-    const done = rows.filter(r=>statusClass(r.status)==="ok").length;
-    const wip = rows.filter(r=>statusClass(r.status)==="warn").length;
+  const showLista = () => {
+    els.tabLista.classList.add("active");
+    els.tabGantt.classList.remove("active");
+    els.panelLista.classList.remove("hidden");
+    els.panelGantt.classList.add("hidden");
+  };
 
-    const today = new Date(); today.setHours(0,0,0,0);
-    const late = rows.filter(r=>{
-      if(statusClass(r.status)==="ok") return false;
-      if(!r.end) return false;
-      return r.end < today;
-    }).length;
+  const showGantt = () => {
+    els.tabGantt.classList.add("active");
+    els.tabLista.classList.remove("active");
+    els.panelGantt.classList.remove("hidden");
+    els.panelLista.classList.add("hidden");
+    renderGantt();
+  };
 
-    document.getElementById("kTotal").textContent = total;
-    document.getElementById("kDone").textContent = done;
-    document.getElementById("kWip").textContent = wip;
-    document.getElementById("kLate").textContent = late;
+  const exportCSV = () => {
+    if(!VIEW.length){ alert("Nada para exportar (lista vazia)."); return; }
+    const headers = ["edt","atividade","status_raw","status_class","pct_concluido","inicio_iso","termino_iso","responsavel","predecessoras","anotacoes"];
+    const lines = [headers.join(",")];
+    VIEW.forEach(o => {
+      const row = headers.map(k => {
+        const v = String(o[k] ?? "");
+        const q = v.replaceAll('"','""');
+        if(q.includes(",") || q.includes("\n") || q.includes('"')) return '"' + q + '"';
+        return q;
+      });
+      lines.push(row.join(","));
+    });
+    const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cronograma_view.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
-    document.getElementById("kTotalS").textContent = total ? "Base atual do filtro" : "—";
-    document.getElementById("kDoneS").textContent  = total ? Math.round((done/total)*100) + "% do total" : "—";
-    document.getElementById("kWipS").textContent   = total ? Math.round((wip/total)*100) + "% do total" : "—";
-    document.getElementById("kLateS").textContent  = total ? Math.round((late/total)*100) + "% do total" : "—";
+  const setDayWidth = (px) => document.documentElement.style.setProperty("--dayW", px + "px");
+  const daysBetween = (tsA, tsB) => Math.round((tsB - tsA) / (24*60*60*1000));
+  const addDays = (ts, n) => ts + n*(24*60*60*1000);
+  const isoFromTs = (ts) => new Date(ts).toISOString().slice(0,10);
+  const monthKey = (ts) => {
+    const d = new Date(ts);
+    return d.getUTCFullYear() + "-" + String(d.getUTCMonth()+1).padStart(2,"0");
+  };
+  const monthLabel = (ts) => {
+    const d = new Date(ts);
+    const m = d.toLocaleString("pt-BR", { month: "short", timeZone: "UTC" }).replace(".", "");
+    return m.charAt(0).toUpperCase() + m.slice(1) + " " + d.getUTCFullYear();
+  };
 
-    setPill(`Total: ${total} • Concluídas: ${done} • Atrasadas: ${late} • Atualizado: ${nowBR()}`);
+  const moveTooltip = (ev) => {
+    const pad = 14;
+    const box = els.tooltip.getBoundingClientRect();
+    let x = ev.clientX + pad;
+    let y = ev.clientY + pad;
+    if(x + box.width > window.innerWidth - 10) x = ev.clientX - box.width - pad;
+    if(y + box.height > window.innerHeight - 10) y = ev.clientY - box.height - pad;
+    els.tooltip.style.left = x + "px";
+    els.tooltip.style.top = y + "px";
+  };
 
-    // Window range for gantt
-    const dated = rows.filter(r=>r.start && r.end);
-    let minD=null, maxD=null;
-    for (const r of dated){
-      if(!minD || r.start < minD) minD=r.start;
-      if(!maxD || r.end > maxD) maxD=r.end;
-    }
-    if(!minD || !maxD){
-      document.getElementById("rangePill").textContent = "Janela: sem datas válidas";
-    } else {
-      const fmt = (d)=> d.toLocaleDateString("pt-BR");
-      document.getElementById("rangePill").textContent = `Janela: ${fmt(minD)} → ${fmt(maxD)}`;
-    }
+  const showTooltip = (ev, o) => {
+    const pct = (o.pct_concluido ?? "");
+    const body =
+      "<div><b>EDT:</b> " + escapeHtml(o.edt) + "</div>" +
+      "<div><b>Status:</b> " + escapeHtml(o.status_raw) + " (" + escapeHtml(o.status_class) + ")</div>" +
+      "<div><b>Progresso:</b> " + escapeHtml(pct) + "%</div>" +
+      "<div><b>Início:</b> " + escapeHtml(fmtISOToBR(o.inicio_iso)) + "</div>" +
+      "<div><b>Término:</b> " + escapeHtml(fmtISOToBR(o.termino_iso)) + "</div>" +
+      (o.responsavel ? "<div><b>Resp.:</b> " + escapeHtml(o.responsavel) + "</div>" : "") +
+      (o.predecessoras ? "<div><b>Pred.:</b> " + escapeHtml(o.predecessoras) + "</div>" : "");
+    els.ttTitle.textContent = o.atividade || "(sem atividade)";
+    els.ttBody.innerHTML = body;
+    els.tooltip.style.display = "block";
+    moveTooltip(ev);
+  };
 
-    renderTable(rows);
-    renderGantt(rows, minD, maxD);
-  }
+  const hideTooltip = () => { els.tooltip.style.display = "none"; };
 
-  function renderTable(rows){
-    const thead = document.getElementById("thead");
-    if(!thead.dataset.built){
-      const tr=document.createElement("tr");
-      for (const h of HEADERS){
-        const th=document.createElement("th");
-        th.textContent = h;
-        tr.appendChild(th);
-      }
-      thead.appendChild(tr);
-      thead.dataset.built="1";
-    }
-
-    const tb=document.getElementById("tbody");
-    tb.innerHTML="";
-    for (const r of rows){
-      const tr=document.createElement("tr");
-      for (const h of HEADERS){
-        const td=document.createElement("td");
-        td.textContent = r.raw[h] ?? "";
-        tr.appendChild(td);
-      }
-      tb.appendChild(tr);
-    }
-  }
-
-  function renderGantt(rows, minD, maxD){
-    const gantt = document.getElementById("gantt");
-    gantt.innerHTML="";
-
-    if(!minD || !maxD){
-      gantt.innerHTML = `<div style="padding:12px;color:var(--muted);font-weight:900;">Sem datas válidas para montar o Gantt (verifique colunas Início/Fim no CSV).</div>`;
+  const renderGantt = () => {
+    if(!VIEW.length){
+      els.gLeft.innerHTML = '<div style="padding:12px;color:var(--muted)">Sem itens no filtro atual.</div>';
+      els.gCanvas.innerHTML = "";
+      els.axisMonths.innerHTML = "";
+      els.axisDays.innerHTML = "";
+      els.gInfo.textContent = "—";
       return;
     }
 
-    const monthStart = new Date(minD.getFullYear(), minD.getMonth(), 1);
-    const monthEnd = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
-    const months=[];
-    let cur = new Date(monthStart);
-    while(cur <= monthEnd){
-      months.push(new Date(cur));
-      cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    const starts = VIEW.map(o=>o.inicio_ts).filter(v=>v!==null);
+    const ends = VIEW.map(o=>o.termino_ts).filter(v=>v!==null);
+    if(!starts.length || !ends.length){
+      els.gInfo.textContent = "Datas insuficientes no filtro.";
+      return;
     }
-    const totalMs = (maxD - minD) || 1;
 
-    const head = document.createElement("div");
-    head.className="gantt-head";
-    head.innerHTML = `
-      <div class="left">Atividade / Responsável / Status</div>
-      <div class="right">
-        <div class="timeline" style="width:100%;">
-          ${months.map(d=>`<div class="tick"><span>${d.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}</span></div>`).join("")}
-        </div>
-      </div>
-    `;
-    gantt.appendChild(head);
+    let minTS = new Date(isoFromTs(Math.min(...starts)) + "T00:00:00Z").getTime();
+    let maxTS = new Date(isoFromTs(Math.max(...ends)) + "T00:00:00Z").getTime();
+    minTS = addDays(minTS, -2);
+    maxTS = addDays(maxTS,  2);
 
-    const sorted = [...rows].sort((a,b)=>{
-      const as=a.start ? a.start.getTime() : 0;
-      const bs=b.start ? b.start.getTime() : 0;
-      return as - bs;
-    });
+    const totalDays = Math.max(1, daysBetween(minTS, maxTS) + 1);
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dayW"), 10) || 12;
+    const canvasW = totalDays * dayW;
 
-    for (const r of sorted){
-      const row = document.createElement("div");
-      row.className="gantt-row";
+    els.gInfo.textContent = totalDays + " dias | " + fmtISOToBR(isoFromTs(minTS)) + " → " + fmtISOToBR(isoFromTs(maxTS)) + " | itens: " + VIEW.length;
 
-      const meta = document.createElement("div");
-      meta.className="meta";
+    const dayStep = dayW <= 6 ? 10 : dayW <= 12 ? 7 : dayW <= 18 ? 5 : 3;
+    els.axisDays.innerHTML = Array.from({length: totalDays}).map((_,i)=>{
+      const ts = addDays(minTS, i);
+      const day = new Date(ts).getUTCDate();
+      const show = (i % dayStep) === 0;
+      return '<div class="d" title="' + isoFromTs(ts) + '">' + (show ? String(day) : "") + '</div>';
+    }).join("");
 
-      const left = document.createElement("div");
-      const title = document.createElement("div");
-      title.className="task-title";
-      title.textContent = r.title || "(sem título)";
-
-      const sub = document.createElement("div");
-      sub.className="task-sub";
-      const stClass = statusClass(r.status);
-      const tag = `<span class="tag ${stClass}">${r.status || "Sem status"}</span>`;
-      sub.innerHTML = `${r.fase ? `<span class="tag muted">${r.fase}</span>` : ""} ${r.resp ? `<span class="tag muted">${r.resp}</span>` : ""} ${tag}`;
-
-      left.appendChild(title);
-      left.appendChild(sub);
-
-      const startCol = document.createElement("div");
-      startCol.innerHTML = `<small>Início</small><div style="font-weight:950;margin-top:4px;">${r.startRaw || "—"}</div>`;
-
-      const endCol = document.createElement("div");
-      endCol.innerHTML = `<small>Fim</small><div style="font-weight:950;margin-top:4px;">${r.endRaw || "—"}</div>`;
-
-      meta.appendChild(left);
-      meta.appendChild(startCol);
-      meta.appendChild(endCol);
-
-      const barcell = document.createElement("div");
-      barcell.className="barcell";
-
-      const track = document.createElement("div");
-      track.className="bar-track";
-
-      if (r.start && r.end){
-        const leftPct = ((r.start - minD) / totalMs) * 100;
-        const widthPct = (Math.max(1, (r.end - r.start) / totalMs) * 100);
-
-        const bar = document.createElement("div");
-        bar.className = "bar " + stClass;
-        bar.style.left = `${Math.max(0,leftPct)}%`;
-        bar.style.width = `${Math.min(100,widthPct)}%`;
-        track.appendChild(bar);
-
-        const lbl = document.createElement("div");
-        lbl.className="barlabel";
-        const days = Math.max(1, Math.round((r.end - r.start)/86400000)+1);
-        lbl.textContent = `${days}d`;
-        barcell.appendChild(lbl);
+    const months = [];
+    let curKey = monthKey(minTS), curStart = 0;
+    for(let i=0;i<totalDays;i++){
+      const k = monthKey(addDays(minTS,i));
+      if(k !== curKey){
+        months.push({ key: curKey, start: curStart, end: i-1 });
+        curKey = k; curStart = i;
       }
-
-      barcell.appendChild(track);
-
-      row.appendChild(meta);
-      row.appendChild(barcell);
-      gantt.appendChild(row);
     }
-  }
+    months.push({ key: curKey, start: curStart, end: totalDays-1 });
+    els.axisMonths.innerHTML = months.map(m => {
+      const ts = addDays(minTS, m.start);
+      const w = (m.end - m.start + 1) * dayW;
+      return '<div class="m" style="width:' + w + 'px" title="' + m.key + '">' + monthLabel(ts) + '</div>';
+    }).join("");
 
-  // ===== Load + Init =====
-  function getCsvUrl(){ return (localStorage.getItem(CSV_LS_KEY) || DEFAULT_CSV_URL).trim(); }
+    els.gLeft.innerHTML = VIEW.map(o => (
+      '<div class="ganttRowL" title="' + escapeHtml(o.atividade) + '">' +
+        '<div class="edt">' + escapeHtml(o.edt) + '</div>' +
+        '<div class="name">' + escapeHtml(o.atividade) + '</div>' +
+      '</div>'
+    )).join("");
 
-  function fillCsvEditor(){
-    document.getElementById("csvEditor").value = getCsvUrl();
-  }
+    els.gCanvas.innerHTML = '<div id="gRows" style="position:relative; width:' + canvasW + 'px">' +
+      VIEW.map(()=> '<div class="ganttRowR" style="width:' + canvasW + 'px"></div>').join("") +
+    '</div>';
 
-  async function loadCsv(){
-    showLoad(true);
-    try{
-      const url = getCsvUrl();
-      debug("Carregando CSV...\n" + url);
-      const res = await fetch(url, {cache:"no-store"});
-      if(!res.ok) throw new Error("HTTP " + res.status + " ao buscar CSV");
-      const text = await res.text();
+    const gRowsEl = document.getElementById("gRows");
+    const rowH = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH"), 10) || 42;
 
-      const rows2d = parseCSV(text);
-      if(!rows2d.length) throw new Error("CSV vazio ou sem linhas");
+    VIEW.forEach((o,i)=>{
+      if(o.inicio_ts === null || o.termino_ts === null) return;
+      const sTS = new Date(isoFromTs(o.inicio_ts) + "T00:00:00Z").getTime();
+      const eTS = new Date(isoFromTs(o.termino_ts) + "T00:00:00Z").getTime();
+      const startIdx = Math.max(0, daysBetween(minTS, sTS));
+      const endIdx = Math.max(0, daysBetween(minTS, eTS));
+      const left = startIdx * dayW;
+      const width = Math.max(8, (endIdx - startIdx + 1) * dayW);
+      const top = i * rowH + (rowH/2);
 
-      const built = buildRows(rows2d);
-      HEADERS = built.headers;
-      RAW = built.out;
+      const pct = Math.min(100, Math.max(0, (o.pct_concluido ?? 0)));
+      const bar = document.createElement("div");
+      bar.className = "bar " + o.status_class;
+      bar.style.left = left + "px";
+      bar.style.width = width + "px";
+      bar.style.top = top + "px";
+      bar.innerHTML = '<div class="fill" style="width:' + pct + '%"></div>' +
+        '<div class="pct">' + (o.pct_concluido !== null ? String(o.pct_concluido) + "%" : "") + '</div>';
 
-      DATE_KEYS = detectDateKeys(HEADERS);
+      bar.addEventListener("mouseenter", (ev)=> showTooltip(ev, o));
+      bar.addEventListener("mousemove", (ev)=> { if(els.tooltip.style.display==="block") moveTooltip(ev); });
+      bar.addEventListener("mouseleave", hideTooltip);
+      gRowsEl.appendChild(bar);
+    });
 
-      ROWS = RAW.map(o=>{
-        const obj={...o};
-        for (const k of Object.keys(obj)){ obj[k] = String(obj[k]||"").trim(); }
-        return normalizeRow(obj);
-      });
-
-      const statusVals = uniq(ROWS.map(r=>String(r.status||"").trim()));
-      const respVals = uniq(ROWS.map(r=>String(r.resp||"").trim()));
-      const faseVals = uniq(ROWS.map(r=>String(r.fase||"").trim()));
-
-      const fStatus = document.getElementById("fStatus");
-      const fResp = document.getElementById("fResp");
-      const fFase = document.getElementById("fFase");
-
-      function setOptions(sel, values){
-        const keep = sel.value;
-        sel.innerHTML = '<option value="">(todos)</option>' + values.map(v=>`<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
-        if(values.includes(keep)) sel.value = keep;
+    const old = els.gRight.querySelector(".todayLine");
+    if(old) old.remove();
+    if(els.chkToday.checked){
+      const todayISO = new Date().toISOString().slice(0,10);
+      const todayTS = new Date(todayISO + "T00:00:00Z").getTime();
+      const idx = daysBetween(minTS, todayTS);
+      if(idx >= 0 && idx <= totalDays){
+        const line = document.createElement("div");
+        line.className = "todayLine";
+        line.style.left = (idx * dayW) + "px";
+        els.gRight.appendChild(line);
       }
-      setOptions(fStatus, statusVals);
-      setOptions(fResp, respVals);
-      setOptions(fFase, faseVals);
-
-      setEnvPill();
-      setLastUpdate();
-      setPill(`Total: ${ROWS.length} • Atualizado: ${nowBR()}`);
-      document.getElementById("countPill").textContent = ROWS.length + " itens";
-
-      // reset table header build
-      document.getElementById("thead").innerHTML = "";
-      document.getElementById("thead").dataset.built = "";
-
-      renderAll();
-      showLoad(false);
-
-    } catch(e){
-      console.error(e);
-      debug("ERRO:\n" + String(e) + "\n\nCSV:\n" + getCsvUrl());
-      showLoad(true);
     }
-  }
 
-  function bindUI(){
-    ["q","fStatus","fResp","fFase","dIni","dFim"].forEach(id=>{
-      document.getElementById(id).addEventListener("input", ()=>renderAll());
-      document.getElementById(id).addEventListener("change", ()=>renderAll());
-    });
-
-    document.getElementById("btnReset").addEventListener("click", ()=>{
-      document.getElementById("q").value="";
-      document.getElementById("fStatus").value="";
-      document.getElementById("fResp").value="";
-      document.getElementById("fFase").value="";
-      document.getElementById("dIni").value="";
-      document.getElementById("dFim").value="";
-      renderAll();
-    });
-
-    document.getElementById("btnReload").addEventListener("click", ()=>loadCsv());
-
-// Aplicar Aba/Range (metadados exibidos no cabeçalho)
-const btnApply = document.getElementById("btnApplySource");
-if(btnApply){
-  btnApply.addEventListener("click", ()=>{
-    const sheet = (document.getElementById("sheetEditor")?.value || "").trim() || "Cronograma";
-    const range = (document.getElementById("rangeEditor")?.value || "").trim() || "A1:Z999";
-    document.getElementById("sheetInfo").textContent = sheet;
-    document.getElementById("rangeInfo").textContent = range;
-    document.getElementById("sheetStrong").textContent = sheet;
-    try{ localStorage.setItem("spdm_crono_meta", JSON.stringify({sheet, range})); }catch(e){}
-  });
-}
-// Carrega metadados salvos
-try{
-  const meta = JSON.parse(localStorage.getItem("spdm_crono_meta")||"null");
-  if(meta){
-    document.getElementById("sheetEditor").value = meta.sheet || "Cronograma";
-    document.getElementById("rangeEditor").value = meta.range || "A1:Z999";
-    document.getElementById("sheetInfo").textContent = meta.sheet || "Cronograma";
-    document.getElementById("rangeInfo").textContent = meta.range || "A1:Z999";
-    document.getElementById("sheetStrong").textContent = meta.sheet || "Cronograma";
-  }
-}catch(e){}
-
-// Auto refresh
-const sel = document.getElementById("autoRefreshSel");
-if(sel){
-  const saved = localStorage.getItem("spdm_crono_auto_refresh_sec");
-  if(saved !== null) sel.value = saved;
-  let t = null;
-  const resetTimer = ()=>{
-    if(t) clearInterval(t);
-    const sec = parseInt(sel.value||"0",10);
-    localStorage.setItem("spdm_crono_auto_refresh_sec", String(sec));
-    if(sec>0) t = setInterval(()=>loadCsv(), sec*1000);
+    els.gRight.onscroll = () => { els.gLeft.scrollTop = els.gRight.scrollTop; };
+    els.gLeft.onscroll = () => { els.gRight.scrollTop = els.gLeft.scrollTop; };
   };
-  sel.addEventListener("change", resetTimer);
-  resetTimer();
-}
 
-    document.getElementById("btnApplyCsv").addEventListener("click", ()=>{
-      const v=(document.getElementById("csvEditor").value||"").trim();
-      if(v) localStorage.setItem(CSV_LS_KEY, v);
-      fillCsvEditor();
-      loadCsv();
-    });
-
-    document.getElementById("btnToggleSidebar").addEventListener("click", ()=>{
-      document.body.classList.toggle("sidebar-collapsed");
-      localStorage.setItem("spdm_crono_sidebar", document.body.classList.contains("sidebar-collapsed") ? "1":"0");
-    });
-    if(localStorage.getItem("spdm_crono_sidebar")==="1") document.body.classList.add("sidebar-collapsed");
-
-    document.querySelectorAll(".tab").forEach(t=>{
-      t.addEventListener("click", ()=>{
-        document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-        t.classList.add("active");
-        ACTIVE_TAB = t.dataset.tab;
-        document.getElementById("panelGantt").style.display = (ACTIVE_TAB==="gantt") ? "" : "none";
-        document.getElementById("panelLista").style.display = (ACTIVE_TAB==="lista") ? "" : "none";
-      });
-    });
-
-    function exportXlsx(filename){
-      const rows = getFiltered().map(r=>r.raw);
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Cronograma");
-      XLSX.writeFile(wb, filename);
-    }
-    document.getElementById("btnExportXlsx").addEventListener("click", ()=>exportXlsx("cronograma_prj_spdm.xlsx"));
-    document.getElementById("btnListaXlsx").addEventListener("click", ()=>exportXlsx("cronograma_prj_spdm_lista.xlsx"));
-  }
-
-  // init
-  fillCsvEditor();
-  bindUI();
-  loadCsv();
-</script>
-
-<script id="nav-menu-active">
-  (function(){
+  const load = async () => {
     try{
-      const p=(window.location.pathname||"").toLowerCase();
-      const aP=document.getElementById("navPainel");
-      const aC=document.getElementById("navCronograma");
-      if(aP&&aC){
-        if(p.includes("cronograma")){ aP.classList.remove("active"); aC.classList.add("active"); }
-        else{ aP.classList.add("active"); aC.classList.remove("active"); }
-      }
-    }catch(e){}
-  })();
+      setPill(els.pillStatus, "Status: Carregando…", "warn");
+      setPill(els.pillInfo, "Buscando CSV e normalizando…", "warn");
+      els.audit.textContent = "Iniciando carga…";
+      DATA=[]; VIEW=[]; els.tbody.innerHTML="";
+      setPill(els.pillMeta, "—");
+
+      const out = await fetchCSV(CSV_URL);
+      guardNotHTML(out.text);
+      if(!out.ok) throw new Error("Fetch não OK: " + out.status + " " + out.statusText);
+
+      const parsed = parseCSV(out.text);
+      META = { contentType: out.ctype, size: out.text.length, rows: parsed.rows.length, cols: (parsed.rows[0]||[]).length, delim: parsed.delim };
+      setPill(els.pillMeta, "CT: " + (META.contentType||"—") + " | linhas: " + META.rows + " | colunas: " + META.cols, "ok");
+
+      DATA = normalize(parsed.rows);
+      VIEW = DATA.slice();
+      fillResponsaveis();
+      applyFilters();
+
+      setPill(els.pillStatus, "Status: OK (Cronograma operacional)", "ok");
+      setPill(els.pillInfo, "Lista + Gantt consistentes (VIEW).", "ok");
+      els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
+    }catch(e){
+      setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
+      setPill(els.pillInfo, "Falha no carregamento. Ver auditoria.", "bad");
+      els.audit.textContent = "ERRO: " + String(e);
+      console.error(e);
+    }
+  };
+
+  const resetFilters = () => {
+    els.q.value=""; els.fStatus.value=""; els.fResp.value=""; els.dIni.value=""; els.dFim.value=""; els.sortBy.value="inicio_ts";
+    applyFilters();
+  };
+
+  const resetAll = () => {
+    DATA=[]; VIEW=[]; els.tbody.innerHTML="";
+    els.fResp.innerHTML = '<option value="">(todos)</option>';
+    setPill(els.pillMeta, "—");
+    els.audit.textContent = "Aguardando carga…";
+    setPill(els.pillStatus, "Status: Aguardando");
+    setPill(els.pillInfo, "—");
+    showLista();
+    resetFilters();
+    renderAll();
+  };
+
+  const LS_COLLAPSE = "cronograma_filters_collapsed";
+  const setCollapsed = (on) => {
+    document.body.classList.toggle("filters-collapsed", on);
+    localStorage.setItem(LS_COLLAPSE, on ? "1" : "0");
+  };
+
+  els.btnLoad.addEventListener("click", load);
+  els.btnApply.addEventListener("click", applyFilters);
+  els.btnExport.addEventListener("click", exportCSV);
+  els.btnResetAll.addEventListener("click", resetAll);
+  els.btnClearFilters.addEventListener("click", resetFilters);
+  els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
+
+  els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
+  els.tabLista.addEventListener("click", showLista);
+  els.tabGantt.addEventListener("click", showGantt);
+
+  els.zoomSel.addEventListener("change", () => {
+    setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
+    if(isGanttVisible()) renderGantt();
+  });
+  els.chkToday.addEventListener("change", () => { if(isGanttVisible()) renderGantt(); });
+
+  setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
+  setCollapsed(localStorage.getItem(LS_COLLAPSE) === "1");
+  resetAll();
+})();
 </script>
 </body>
-
 </html>
