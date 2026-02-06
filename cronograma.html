@@ -355,22 +355,36 @@
   }
 
   function toISODateMaybe(v){
-    const s=String(v||"").trim();
-    if(!s) return "";
-    const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-    if(m){
-      const dd=String(m[1]).padStart(2,'0');
-      const mm=String(m[2]).padStart(2,'0');
-      const yy=m[3].length===2 ? ('20'+m[3]) : m[3];
-      return `${yy}-${mm}-${dd}`;
+  const s0 = String(v||"").trim();
+  if(!s0) return "";
+  // Remove weekday prefix like "qua." / "ter." etc and extra spaces
+  const s = s0.replace(/^[A-Za-zÀ-ÿ]{2,4}\.\s*/,"").trim();
+
+  // dd/MM/yy or dd/MM/yyyy
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    const dd = String(m[1]).padStart(2,"0");
+    const mm = String(m[2]).padStart(2,"0");
+    let yy = m[3];
+    if(yy.length===2){
+      yy = "20"+yy;
     }
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
-    return s;
+    return `${yy}-${mm}-${dd}`;
   }
 
-  function parseDateISO(v){
-    const s=toISODateMaybe(v);
-    if(!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  // yyyy-MM-dd...
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+
+  return "";
+}
+
+function parseDateISO(v){
+  const iso = toISODateMaybe(v);
+  if(!iso) return null;
+  const d = new Date(iso+"T00:00:00");
+  return isNaN(d)?null:d;
+}
+-\d{2}-\d{2}$/.test(s)) return null;
     const d=new Date(s+"T00:00:00");
     return isNaN(d)?null:d;
   }
@@ -390,12 +404,13 @@
   }
 
   function statusClass(status){
-    const s=String(status||"").toLowerCase();
-    if (s.includes("concl") || s.includes("final") || s.includes("ok")) return "ok";
-    if (s.includes("andam") || s.includes("exec") || s.includes("wip")) return "warn";
-    if (s.includes("atras") || s.includes("bloq") || s.includes("crít") || s.includes("crit")) return "bad";
-    return "muted";
-  }
+  const s=String(status||"").toLowerCase();
+  if (s.includes("concl")) return "ok";
+  if (s.includes("atras")) return "bad";
+  if (s.includes("andam") || s.includes("exec")) return "warn";
+  if (s.includes("bloq") || s.includes("crít") || s.includes("crit")) return "bad";
+  return "muted";
+}
 
   function buildRows(rows2d){
     const headers = normalizeHeaders(rows2d[0]);
@@ -673,6 +688,9 @@ debug("CSV recebido. Processando…");
       if(!rows2d.length) throw new Error("CSV vazio ou sem linhas");
 
       const built = buildRows(rows2d);
+
+// Debug de estrutura (sem expor URL)
+debug("CSV recebido: " + rows2d.length + " linhas. Colunas: " + rows2d[0].slice(0,12).join(" | "));
       HEADERS = built.headers;
       RAW = built.out;
 
