@@ -3,177 +3,864 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DEBUG | Cronograma CSV Smoke Test</title>
+  <title>PRJ-SPDM | Cronograma - Painel Executivo</title>
+
+  <!-- XLSX export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
-    :root{--bg:#0b1220;--panel:#111a2e;--line:#223054;--text:#e6edf7;--muted:#a7b3d1;--ok:#22c55e;--bad:#ef4444;}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --brand:#6366f1;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow: 0 18px 50px rgba(2,6,23,.08);
+      --radius: 18px;
+    }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
-    header{padding:16px 18px;border-bottom:1px solid var(--line);background:rgba(17,26,46,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:2;}
-    h1{margin:0;font-size:16px;letter-spacing:.2px}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden;}
+    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);
+      border-bottom:1px solid rgba(226,232,240,.9);}
+    .wrap{max-width:1600px;margin:0 auto;padding:14px 18px;}
+    h1{margin:0;font-size:18px;letter-spacing:.2px;}
     .sub{margin-top:6px;color:var(--muted);font-size:12px}
-    .wrap{max-width:1400px;margin:0 auto;padding:14px 18px}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:800;}
-    .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.4)}
-    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.4)}
-    .btn{cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:9px 12px;border-radius:12px;font-weight:900;}
-    .btn:hover{border-color:#2e3d66}
-    pre{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--muted);font-size:12px;line-height:1.35}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
-    th,td{text-align:left;padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
-    thead th{position:sticky;top:0;background:rgba(17,26,46,.95);z-index:1}
-    .tablewrap{overflow:auto;border-radius:12px;border:1px solid var(--line)}
-  </style>
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .btn{cursor:pointer;border:1px solid rgba(226,232,240,.95);background:#fff;color:var(--text);
+      padding:10px 12px;border-radius:14px;font-weight:900;}
+    .btn:hover{border-color:#cbd5e1;}
+    .iconbtn{cursor:pointer;border:1px solid rgba(226,232,240,.95);background:#fff;color:var(--text);
+      width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;
+      font-weight:900;line-height:1;}
+    .iconbtn:hover{border-color:#cbd5e1;}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
+      color:var(--muted);font-size:12px;background:#fff;font-weight:900;}
+
+    .grid{display:grid;grid-template-columns:minmax(320px, 420px) minmax(0, 1fr);gap:14px;padding:14px 18px;align-items:start;}
+    body.sidebar-collapsed .grid{grid-template-columns:64px 1fr;}
+
+    .card{background:var(--card);border:1px solid rgba(226,232,240,.9);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+
+    /* Sidebar */
+    .sidebar{position:sticky;top:86px;max-height:calc(100vh - 110px);overflow:auto;
+      background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(236,72,153,.08));}
+    .sidebar .collapsebar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-14px -14px 10px -14px;
+      padding:10px 12px;background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(236,72,153,.10));
+      border-bottom:1px solid rgba(226,232,240,.9);border-radius:18px 18px 14px 14px;position:sticky;top:0;z-index:3;}
+    .sidebar .title{font-weight:950;font-size:16px;}
+    body.sidebar-collapsed .sidebar{padding:10px 8px;}
+    body.sidebar-collapsed .sidebar .title,
+    body.sidebar-collapsed .sidebar .filters-body,
+    body.sidebar-collapsed .sidebar .subhint{display:none;}
+    body.sidebar-collapsed .sidebar .collapsebar{justify-content:center;margin-bottom:0;}
+
+    .filters-body{background: rgba(255,255,255,.85);border:1px solid rgba(226,232,240,.9);border-radius:18px;padding:14px;
+      box-shadow:0 10px 24px rgba(2,6,23,.06);}
+    .label{display:flex;align-items:center;gap:10px;font-size:12px;color:#334155;font-weight:950;margin:14px 0 8px;}
+    .label:before{content:"";width:10px;height:10px;border-radius:999px;background: linear-gradient(90deg,#22c55e,#06b6d4,#6366f1);
+      box-shadow: 0 4px 10px rgba(99,102,241,.18);}
+    input, select{width:100%;padding:12px 12px;border-radius:14px;border:1px solid rgba(226,232,240,.95);background:rgba(255,255,255,.96);
+      color:var(--text);box-shadow: inset 0 1px 0 rgba(255,255,255,.7);font-weight:800;}
+    input:focus, select:focus{outline:none;border-color: rgba(99,102,241,.55);box-shadow:0 0 0 4px rgba(99,102,241,.14);}
+    .subhint{color:var(--muted);font-size:11px;word-break:break-all;margin-top:10px;}
+
+    /* Content */
+    .content{display:grid;grid-template-columns:1fr;gap:14px;min-width:0;}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;}
+    .kpi{border:1px solid rgba(226,232,240,.9);border-radius:16px;padding:14px;background: radial-gradient(900px 900px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
+      radial-gradient(700px 700px at 110% 0%, rgba(236,72,153,.10), transparent 45%), #ffffff;box-shadow:0 8px 18px rgba(2,6,23,.06);}
+    .kpi .k{color:var(--muted);font-size:12px;font-weight:950;}
+    .kpi .v{font-size:24px;font-weight:950;margin-top:6px;}
+    .kpi .s{margin-top:6px;color:var(--muted);font-size:11px;font-weight:800;}
+
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+    .tab{cursor:pointer;padding:10px 12px;border-radius:999px;border:1px solid rgba(226,232,240,.95);background:#fff;font-weight:950;color:#0f172a;}
+    .tab.active{border-color: rgba(99,102,241,.55);box-shadow:0 0 0 4px rgba(99,102,241,.12);}
+
+    /* Table */
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(226,232,240,.9);background:#fff;}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
+    thead th{position:sticky;top:0;background:#fbfcff;z-index:5;border-bottom:1px solid rgba(226,232,240,.95);white-space:nowrap;}
+    th,td{text-align:left;padding:10px 10px;font-size:12px;border-bottom:1px solid #eef2f7;vertical-align:top;}
+    tbody tr:hover{background:#f8fafc;}
+
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
+      background:#fff;font-weight:950;font-size:12px;}
+    .tag.ok{border-color:rgba(34,197,94,.35);color:var(--ok);}
+    .tag.warn{border-color:rgba(245,158,11,.40);color:var(--warn);}
+    .tag.bad{border-color:rgba(239,68,68,.35);color:var(--bad);}
+    .tag.muted{color:var(--muted);}
+
+    /* Gantt */
+    .ganttwrap{overflow:auto;border-radius:14px;border:1px solid rgba(226,232,240,.9);background:#fff;}
+    .gantt{min-width:1100px;}
+    .gantt-head{display:grid;grid-template-columns:520px 1fr;position:sticky;top:0;background:#fbfcff;border-bottom:1px solid rgba(226,232,240,.95);z-index:4;}
+    .gantt-head .left{padding:10px;font-weight:950;font-size:12px;white-space:nowrap;}
+    .gantt-head .right{padding:10px;display:flex;gap:8px;align-items:center;overflow:hidden;}
+    .timeline{display:flex;gap:0;align-items:center;width:100%;}
+    .tick{flex:1;border-left:1px solid rgba(226,232,240,.7);height:20px;position:relative;}
+    .tick:first-child{border-left:none;}
+    .tick span{position:absolute;top:-2px;left:6px;font-size:11px;color:var(--muted);font-weight:900;white-space:nowrap;}
+
+    .gantt-row{display:grid;grid-template-columns:520px 1fr;border-bottom:1px solid #eef2f7;}
+    .gantt-row:hover{background:#f8fafc;}
+    .gantt-row .meta{padding:10px;display:grid;grid-template-columns:1fr 120px 120px;gap:10px;align-items:start;}
+    .task-title{font-weight:950;font-size:12px;}
+    .task-sub{margin-top:4px;color:var(--muted);font-size:11px;font-weight:800;}
+    .meta small{color:var(--muted);font-weight:800;}
+    .gantt-row .barcell{padding:10px;position:relative;}
+    .bar-track{height:18px;border-radius:999px;background:rgba(226,232,240,.75);position:relative;overflow:hidden;}
+    .bar{height:100%;border-radius:999px;background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(99,102,241,.95));
+      position:absolute;left:0;top:0;}
+    .bar.ok{background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,197,94,.75));}
+    .bar.warn{background:linear-gradient(90deg, rgba(245,158,11,.95), rgba(245,158,11,.75));}
+    .bar.bad{background:linear-gradient(90deg, rgba(239,68,68,.95), rgba(239,68,68,.75));}
+    .barlabel{position:absolute;top:-2px;right:10px;font-size:11px;color:var(--muted);font-weight:950;}
+
+    #loadOverlay{display:flex;position:fixed;inset:0;background:rgba(15,23,42,.22);z-index:9998;align-items:center;justify-content:center;}
+    .notice{border:1px dashed #cbd5e1;background:#fff;border-radius:14px;padding:14px 16px;max-width:980px;box-shadow:var(--shadow);}
+    .notice pre{white-space:pre-wrap;word-break:break-word;margin:10px 0 0 0;font-size:11px;color:#334155;}
+
+    @media (max-width:1200px){.grid{grid-template-columns:1fr;} header .wrap{padding:14px 12px;} .wrap{padding:12px 12px;}}
+  
+
+/* ===== MENU PRINCIPAL (PAINEL / CRONOGRAMA) ===== */
+.nav-main{display:flex;gap:12px;margin-top:12px;}
+.nav-item{
+  text-decoration:none;padding:10px 18px;border-radius:999px;border:1px solid rgba(226,232,240,.95);
+  background:linear-gradient(135deg,#ffffff,#f8fafc);font-weight:950;letter-spacing:.3px;color:#0f172a;
+  box-shadow:0 6px 16px rgba(2,6,23,.08);transition:all .15s ease;display:inline-flex;align-items:center;gap:8px;
+}
+.nav-item:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(2,6,23,.14);border-color:rgba(99,102,241,.55);}
+.nav-item.active{
+  background:linear-gradient(135deg,#6366f1,#22c55e);color:#ffffff;border-color:transparent;box-shadow:0 12px 28px rgba(99,102,241,.35);
+}
+
+</style>
+
+  <script>
+    // ===== CONFIG (EDITÁVEL) =====
+    const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+    const CSV_LS_KEY = "spdm_cronograma_csv_url";
+  </script>
 </head>
+
 <body>
 <header>
-  <div class="row" style="justify-content:space-between;">
-    <div>
-      <h1>DEBUG | Cronograma — Smoke Test de Leitura CSV</h1>
-      <div class="sub">Objetivo: validar fetch + parsing + renderização (sem filtros / sem Gantt).</div>
+  <div class="wrap">
+    <div class="row" style="justify-content: space-between;">
+      <div>
+        <h1>MIT045 | Cronograma - Painel Gerencial (Live)</h1>
+        <div class="sub">Fonte: Google Sheets • Aba: <strong id="sheetStrong">Cronograma</strong> • CSV: publicado • Última atualização: <span id="lastUpdate">--</span></div>
+      </div>
+      <div class="row">
+        <span id="pillResumo" class="pill">Carregando…</span>
+        <span class="pill" title="Auto refresh">Auto:
+          <select id="autoRefreshSel" style="border: none; background: transparent; font-weight: 800; color: #0f172a; outline: none;">
+            <option value="0">OFF</option>
+            <option value="60">1 min</option>
+            <option selected="selected" value="300">5 min</option>
+            <option value="900">15 min</option>
+          </select>
+        </span>
+        <button id="btnReload" class="iconbtn" title="Recarregar dados agora">↻</button>
+        <button id="btnExportXlsx" class="iconbtn" title="Exportar Excel (XLSX)">⤓</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row wrap" style="font-size: 12px; color: #64748b; margin-top: 6px; justify-content: space-between;">
+    <div class="row" style="gap: 10px;">
+      <div>Fonte de dados: Google Sheets · Aba <strong id="sheetInfo">Cronograma</strong> · Range <strong id="rangeInfo">A1:Z999</strong></div>
+      <span class="pill" title="Editar aba (metadado)">Aba:
+        <input id="sheetEditor" value="Cronograma" style="width: 220px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
+      </span>
+      <span class="pill" title="Editar range (metadado)">Range:
+        <input id="rangeEditor" value="A1:Z999" style="width: 140px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(226,232,240,.95); background: rgba(255,255,255,.96); font-weight: 800; color: #0f172a;" type="text">
+      </span>
+      <button id="btnApplySource" class="btn" style="padding: 8px 10px;">Aplicar</button>
     </div>
     <div class="row">
-      <span class="pill" id="pStatus">Status: —</span>
-      <button class="btn" id="btnRun">Rodar teste</button>
+      <button id="btnToggleSidebar" class="iconbtn" title="Expandir/Recolher filtros">☰</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="nav-main" aria-label="Navegação principal">
+      <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
+      <a href="cronograma.html" class="nav-item active" id="navCronograma">🗓️ CRONOGRAMA</a>
     </div>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <span class="pill">URL CSV (oculta na UI do cronograma):</span>
-        <span class="pill" id="pUrlHint">Configurada</span>
-      </div>
-      <div class="row">
-        <span class="pill" id="pType">Content-Type: —</span>
-        <span class="pill" id="pLen">Tamanho: —</span>
-        <span class="pill" id="pRows">Linhas: —</span>
-        <span class="pill" id="pCols">Colunas: —</span>
-      </div>
+<div class="grid wrap" id="captureArea">
+  <aside class="card sidebar" id="sidebar">
+    <div class="collapsebar">
+      <div class="title">Filtros</div>
+      <span class="pill" id="countPill">0 itens</span>
     </div>
-    <div style="margin-top:12px;">
-      <div class="pill">Log</div>
-      <pre id="log" style="margin-top:8px;">Aguardando…</pre>
-    </div>
-  </div>
 
-  <div class="card" style="margin-top:14px;">
-    <div class="row" style="justify-content:space-between;">
-      <div class="pill">Prévia da Tabela (primeiras 50 linhas)</div>
-      <div class="pill" id="pDelim">Delimitador: —</div>
+    <div class="filters-body">
+      <div class="label">Busca (texto livre)</div>
+      <input id="q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
+
+      <div class="label">Status</div>
+      <select id="fStatus">
+        <option value="">(todos)</option>
+      </select>
+
+      <div class="label">Responsável</div>
+      <select id="fResp">
+        <option value="">(todos)</option>
+      </select>
+
+      <div class="label">Fase / Etapa</div>
+      <select id="fFase">
+        <option value="">(todas)</option>
+      </select>
+
+      <div class="label">Período (data)</div>
+      <div class="row" style="gap:10px;">
+        <input id="dIni" type="date" />
+        <input id="dFim" type="date" />
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+
+      <div class="subhint" style="margin-top:12px;">
+        Dica: o Gantt usa as colunas de data que ele encontrar (Prioridade: Início/Fim, depois Prevista/Real).
+      </div>
     </div>
-    <div class="tablewrap" style="margin-top:10px;">
-      <table>
-        <thead id="thead"></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
+  </aside>
+
+  <main class="content">
+    <section class="card" id="panelResumo">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:950;">Snapshot Executivo do Cronograma</div>
+        <span class="pill" id="rangePill">Janela: --</span>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="k">Total de Atividades</div><div class="v" id="kTotal">0</div><div class="s" id="kTotalS">—</div></div>
+        <div class="kpi"><div class="k">Concluídas</div><div class="v" id="kDone">0</div><div class="s" id="kDoneS">—</div></div>
+        <div class="kpi"><div class="k">Em Andamento</div><div class="v" id="kWip">0</div><div class="s" id="kWipS">—</div></div>
+        <div class="kpi"><div class="k">Atrasadas</div><div class="v" id="kLate">0</div><div class="s" id="kLateS">—</div></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="gantt">Gantt</div>
+        <div class="tab" data-tab="lista">Lista</div>
+      </div>
+    </section>
+
+    <section class="card" id="panelGantt">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:950;">Gantt (visão resumida)</div>
+        <div class="row">
+          <span class="pill">Legenda:</span>
+          <span class="tag ok">OK</span>
+          <span class="tag warn">Atenção</span>
+          <span class="tag bad">Crítico</span>
+        </div>
+      </div>
+      <div class="ganttwrap" style="margin-top:12px;">
+        <div class="gantt" id="gantt"></div>
+      </div>
+    </section>
+
+    <section class="card" id="panelLista" style="display:none;">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:950;">Lista do Cronograma</div>
+        <div class="row">
+          <span class="pill"><span id="rowCount">0</span> registros</span>
+          <button class="iconbtn" id="btnListaXlsx" title="Exportar Lista (XLSX)">⤓</button>
+        </div>
+      </div>
+
+      <div class="tablewrap" style="margin-top:12px;">
+        <table>
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </div>
 
+<div id="loadOverlay"><div class="notice">
+  <div style="font-weight:950;margin-bottom:6px;">Carregando Cronograma (CSV)…</div>
+  <div style="color:var(--muted);font-size:12px;font-weight:800;">Se der erro: confirme se o CSV está publicado na web e acessível.</div>
+  <pre id="debugBox">--</pre>
+</div></div>
+
 <script>
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+  // ===== State =====
+  let RAW = [];           // raw objects
+  let ROWS = [];          // normalized
+  let HEADERS = [];       // for table
+  let DATE_KEYS = null;   // {startKey,endKey}
+  let ACTIVE_TAB = "gantt";
 
-  function setPill(id, text, kind){
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.classList.remove("ok","bad");
-    if(kind) el.classList.add(kind);
-    el.textContent=text;
-  }
-
-  function log(msg){
-    const el=document.getElementById("log");
-    el.textContent = msg;
-  }
-
-  function detectDelimiter(firstLine){
-    const comma=(firstLine.match(/,/g)||[]).length;
-    const semi=(firstLine.match(/;/g)||[]).length;
-    return semi>comma ? ";" : ",";
-  }
+  // ===== Utils =====
+  function nowBR(){ return new Date().toLocaleString("pt-BR"); }
+  function debug(msg){ document.getElementById("debugBox").textContent = msg; }
+  function showLoad(on){ document.getElementById("loadOverlay").style.display = on ? "flex" : "none"; }
+  function setLastUpdate(){ document.getElementById("lastUpdate").textContent = nowBR(); }
+  function setPill(text){ document.getElementById("pillResumo").textContent = text; }
+  function uniq(arr){ return Array.from(new Set(arr.filter(v=>String(v||"").trim()!==""))).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')); }
 
   function parseCSV(text){
-    const firstLine = (text.split(/\r?\n/).find(l=>l.trim()!=="") || "");
-    const DELIM = detectDelimiter(firstLine);
-    setPill("pDelim","Delimitador: "+DELIM);
+  // Normalize newlines without regex and detect delimiter from first non-empty line
+  const norm = String(text||"").replaceAll("
+", "");
+  const firstLine = (norm.split("
+").find(l=>l.trim()!=="") || "");
+  const commaCount = (firstLine.split(",").length-1);
+  const semiCount  = (firstLine.split(";").length-1);
+  const DELIM = semiCount > commaCount ? ";" : ",";
 
-    const rows=[];
-    let row=[], cur="", inQ=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i], nx=text[i+1];
-      if(inQ){
-        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
-        else if(ch === '"') inQ=false;
+  const rows=[];
+  let row=[], cur="", inQ=false;
+  for(let i=0;i<norm.length;i++){
+    const ch=norm[i], nx=norm[i+1];
+    if(inQ){
+      if(ch === '"' && nx === '"'){ cur += '"'; i++; }
+      else if(ch === '"'){ inQ=false; }
+      else cur += ch;
+    }else{
+      if(ch === '"') inQ=true;
+      else if(ch === DELIM){ row.push(cur); cur=""; }
+      else if(ch === "
+"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else cur += ch;
+    }
+  }
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+else if (ch === '"') inQ=false;
         else cur += ch;
       } else {
-        if(ch === '"') inQ=true;
-        else if(ch === DELIM){ row.push(cur); cur=""; }
-        else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
-        else if(ch === '\r'){ /*skip*/ }
+        if (ch === '"') inQ=true;
+        else if (ch === ',') { row.push(cur); cur=""; }
+        else if (ch === '\n') { row.push(cur); rows.push(row); row=[]; cur=""; }
+        else if (ch === '\r') {}
         else cur += ch;
       }
     }
-    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    if (cur.length || row.length) { row.push(cur); rows.push(row); }
     return rows.filter(r => r.some(c => String(c).trim() !== ""));
   }
 
-  function renderTable(rows){
-    const thead=document.getElementById("thead");
-    const tbody=document.getElementById("tbody");
-    thead.innerHTML=""; tbody.innerHTML="";
-    const headers = rows[0] || [];
-    const trh=document.createElement("tr");
-    headers.forEach(h=>{ const th=document.createElement("th"); th.textContent=h; trh.appendChild(th); });
-    thead.appendChild(trh);
+  function normalizeHeaders(headers){
+    const seen={};
+    return headers.map(h=>{
+      const name=String(h||"").trim() || "(vazio)";
+      if(seen[name]===undefined){ seen[name]=0; return name; }
+      seen[name]++; return `${name} (${seen[name]})`;
+    });
+  }
 
-    const max = Math.min(rows.length-1, 50);
-    for(let i=1;i<=max;i++){
+  function toISODateMaybe(v){
+  let s = String(v||"").trim();
+  if(!s) return "";
+  // remove weekday prefix like "qua." "ter." etc
+  const parts = s.split(" ");
+  if(parts.length>=2 && parts[0].endsWith(".")){
+    s = parts.slice(1).join(" ").trim();
+  }
+  // Accept dd/MM/yy or dd/MM/yyyy
+  if(s.includes("/") && s.length>=8){
+    const seg = s.split("/");
+    if(seg.length>=3){
+      const dd = String(seg[0]).padStart(2,"0");
+      const mm = String(seg[1]).padStart(2,"0");
+      let yy = String(seg[2]).trim();
+      // remove any trailing time/text
+      yy = yy.split(" ")[0];
+      if(yy.length===2) yy = "20"+yy;
+      if(yy.length===4){
+        return `${yy}-${mm}-${dd}`;
+      }
+    }
+  }
+  // Accept yyyy-mm-dd
+  if(s.length>=10 && s[4]==="-" && s[7]==="-"){
+    return s.slice(0,10);
+  }
+  return "";
+}
+
+function parseDateISO(v){
+  const iso = toISODateMaybe(v);
+  if(!iso) return null;
+  const d = new Date(iso+"T00:00:00");
+  return isNaN(d)?null:d;
+}
+-\d{2}-\d{2}$/.test(s)) return null;
+    const d=new Date(s+"T00:00:00");
+    return isNaN(d)?null:d;
+  }
+
+  function detectDateKeys(headers){
+    const h = headers.map(x=>String(x).toLowerCase());
+    const findKey = (cands)=>{
+      for (const c of cands){
+        const idx = h.findIndex(v=>v.includes(c));
+        if(idx>=0) return headers[idx];
+      }
+      return null;
+    };
+    const startKey = findKey(["data início","data inicio","início","inicio","start","inicial","inicio previsto","início previsto","prevista início","prevista inicio"]);
+    const endKey   = findKey(["data fim","fim","end","final","término","termino","fim previsto","término previsto","conclusão prevista","conclusao prevista","prevista fim"]);
+    return {startKey, endKey};
+  }
+
+  function statusClass(status){
+    const s=String(status||"").toLowerCase();
+    if (s.includes("concl") || s.includes("final") || s.includes("ok")) return "ok";
+    if (s.includes("andam") || s.includes("exec") || s.includes("wip")) return "warn";
+    if (s.includes("atras") || s.includes("bloq") || s.includes("crít") || s.includes("crit")) return "bad";
+    return "muted";
+  }
+
+  function buildRows(rows2d){
+    const headers = normalizeHeaders(rows2d[0]);
+    const out=[];
+    for (let i=1;i<rows2d.length;i++){
+      const r=rows2d[i];
+      if(!r || !r.length) continue;
+      const obj={};
+      headers.forEach((h,idx)=>obj[h]= (r[idx]!==undefined ? String(r[idx]).trim() : ""));
+      out.push(obj);
+    }
+    return {headers, out};
+  }
+
+  function bestField(obj, candidates){
+    const keys = Object.keys(obj);
+    const lower = keys.map(k=>[k,k.toLowerCase()]);
+    for (const c of candidates){
+      const hit = lower.find(([k,kl])=>kl.includes(c));
+      if (hit) return hit[0];
+    }
+    return null;
+  }
+
+  function normalizeRow(obj){
+    const titleKey = bestField(obj, ["atividade","tarefa","descr","nome","item"]);
+    const faseKey  = bestField(obj, ["fase","etapa","macro","gate"]);
+    const respKey  = bestField(obj, ["respons","owner","dono"]);
+    const statusKey= bestField(obj, ["status","situação","situacao"]);
+    const startKey = DATE_KEYS.startKey || bestField(obj, ["início","inicio","start"]);
+    const endKey   = DATE_KEYS.endKey   || bestField(obj, ["fim","end","término","termino","final"]);
+
+    const start = parseDateISO(obj[startKey]);
+    const end = parseDateISO(obj[endKey]);
+
+    return {
+      _titleKey:titleKey, _faseKey:faseKey, _respKey:respKey, _statusKey:statusKey,
+      title: obj[titleKey] || "",
+      fase: obj[faseKey] || "",
+      resp: obj[respKey] || "",
+      status: obj[statusKey] || "",
+      startRaw: obj[startKey] || "",
+      endRaw: obj[endKey] || "",
+      start,
+      end,
+      raw: obj
+    };
+  }
+
+  function setEnvPill(){
+    const host = location.host || "local";
+    document.getElementById("envPill").textContent = "ENV: " + host;
+  }
+
+  // ===== Filtering =====
+  function getFiltered(){
+    const q=(document.getElementById("q").value||"").trim().toLowerCase();
+    const fs=document.getElementById("fStatus").value;
+    const fr=document.getElementById("fResp").value;
+    const ff=document.getElementById("fFase").value;
+    const dIni=parseDateISO(document.getElementById("dIni").value);
+    const dFim=parseDateISO(document.getElementById("dFim").value);
+
+    return ROWS.filter(r=>{
+      const text = Object.values(r.raw).join(" ").toLowerCase();
+      if(q && !text.includes(q)) return false;
+      if(fs && String(r.status||"").trim()!==fs) return false;
+      if(fr && String(r.resp||"").trim()!==fr) return false;
+      if(ff && String(r.fase||"").trim()!==ff) return false;
+
+      if(dIni || dFim){
+        const s=r.start, e=r.end;
+        if(!s || !e) return false;
+        const end = dFim ? new Date(dFim.getTime()+86400000-1) : null;
+        if(dIni && e < dIni) return false;
+        if(end && s > end) return false;
+      }
+      return true;
+    });
+  }
+
+  // ===== Render =====
+  function renderAll(){
+    const rows = getFiltered();
+    document.getElementById("rowCount").textContent = rows.length;
+    document.getElementById("countPill").textContent = rows.length + " itens";
+
+    // KPIs
+    const total = rows.length;
+    const done = rows.filter(r=>statusClass(r.status)==="ok").length;
+    const wip = rows.filter(r=>statusClass(r.status)==="warn").length;
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const late = rows.filter(r=>{
+      if(statusClass(r.status)==="ok") return false;
+      if(!r.end) return false;
+      return r.end < today;
+    }).length;
+
+    document.getElementById("kTotal").textContent = total;
+    document.getElementById("kDone").textContent = done;
+    document.getElementById("kWip").textContent = wip;
+    document.getElementById("kLate").textContent = late;
+
+    document.getElementById("kTotalS").textContent = total ? "Base atual do filtro" : "—";
+    document.getElementById("kDoneS").textContent  = total ? Math.round((done/total)*100) + "% do total" : "—";
+    document.getElementById("kWipS").textContent   = total ? Math.round((wip/total)*100) + "% do total" : "—";
+    document.getElementById("kLateS").textContent  = total ? Math.round((late/total)*100) + "% do total" : "—";
+
+    setPill(`Total: ${total} • Concluídas: ${done} • Atrasadas: ${late} • Atualizado: ${nowBR()}`);
+
+    // Window range for gantt
+    const dated = rows.filter(r=>r.start && r.end);
+    let minD=null, maxD=null;
+    for (const r of dated){
+      if(!minD || r.start < minD) minD=r.start;
+      if(!maxD || r.end > maxD) maxD=r.end;
+    }
+    if(!minD || !maxD){
+      document.getElementById("rangePill").textContent = "Janela: sem datas válidas";
+    } else {
+      const fmt = (d)=> d.toLocaleDateString("pt-BR");
+      document.getElementById("rangePill").textContent = `Janela: ${fmt(minD)} → ${fmt(maxD)}`;
+    }
+
+    renderTable(rows);
+    renderGantt(rows, minD, maxD);
+  }
+
+  function renderTable(rows){
+    const thead = document.getElementById("thead");
+    if(!thead.dataset.built){
       const tr=document.createElement("tr");
-      (rows[i]||[]).forEach(v=>{ const td=document.createElement("td"); td.textContent=v; tr.appendChild(td); });
-      tbody.appendChild(tr);
+      for (const h of HEADERS){
+        const th=document.createElement("th");
+        th.textContent = h;
+        tr.appendChild(th);
+      }
+      thead.appendChild(tr);
+      thead.dataset.built="1";
+    }
+
+    const tb=document.getElementById("tbody");
+    tb.innerHTML="";
+    for (const r of rows){
+      const tr=document.createElement("tr");
+      for (const h of HEADERS){
+        const td=document.createElement("td");
+        td.textContent = r.raw[h] ?? "";
+        tr.appendChild(td);
+      }
+      tb.appendChild(tr);
     }
   }
 
-  async function run(){
-    setPill("pStatus","Status: carregando…");
-    log("Iniciando fetch do CSV…");
-    try{
-      const r = await fetch(CSV_URL, {cache:"no-store"});
-      setPill("pStatus", "Status: "+r.status+" "+r.statusText, r.ok ? "ok":"bad");
-      setPill("pType","Content-Type: "+(r.headers.get("content-type")||"—"));
-      const t = await r.text();
-      setPill("pLen","Tamanho: "+t.length);
+  function renderGantt(rows, minD, maxD){
+    const gantt = document.getElementById("gantt");
+    gantt.innerHTML="";
 
-      const head = t.slice(0,200).toLowerCase();
-      if(head.includes("<!doctype html") || head.includes("<html")){
-        throw new Error("Recebi HTML em vez de CSV. (Publicação/permissão incorreta no ambiente web)");
+    if(!minD || !maxD){
+      gantt.innerHTML = `<div style="padding:12px;color:var(--muted);font-weight:900;">Sem datas válidas para montar o Gantt (verifique colunas Início/Fim no CSV).</div>`;
+      return;
+    }
+
+    const monthStart = new Date(minD.getFullYear(), minD.getMonth(), 1);
+    const monthEnd = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+    const months=[];
+    let cur = new Date(monthStart);
+    while(cur <= monthEnd){
+      months.push(new Date(cur));
+      cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    }
+    const totalMs = (maxD - minD) || 1;
+
+    const head = document.createElement("div");
+    head.className="gantt-head";
+    head.innerHTML = `
+      <div class="left">Atividade / Responsável / Status</div>
+      <div class="right">
+        <div class="timeline" style="width:100%;">
+          ${months.map(d=>`<div class="tick"><span>${d.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}</span></div>`).join("")}
+        </div>
+      </div>
+    `;
+    gantt.appendChild(head);
+
+    const sorted = [...rows].sort((a,b)=>{
+      const as=a.start ? a.start.getTime() : 0;
+      const bs=b.start ? b.start.getTime() : 0;
+      return as - bs;
+    });
+
+    for (const r of sorted){
+      const row = document.createElement("div");
+      row.className="gantt-row";
+
+      const meta = document.createElement("div");
+      meta.className="meta";
+
+      const left = document.createElement("div");
+      const title = document.createElement("div");
+      title.className="task-title";
+      title.textContent = r.title || "(sem título)";
+
+      const sub = document.createElement("div");
+      sub.className="task-sub";
+      const stClass = statusClass(r.status);
+      const tag = `<span class="tag ${stClass}">${r.status || "Sem status"}</span>`;
+      sub.innerHTML = `${r.fase ? `<span class="tag muted">${r.fase}</span>` : ""} ${r.resp ? `<span class="tag muted">${r.resp}</span>` : ""} ${tag}`;
+
+      left.appendChild(title);
+      left.appendChild(sub);
+
+      const startCol = document.createElement("div");
+      startCol.innerHTML = `<small>Início</small><div style="font-weight:950;margin-top:4px;">${r.startRaw || "—"}</div>`;
+
+      const endCol = document.createElement("div");
+      endCol.innerHTML = `<small>Fim</small><div style="font-weight:950;margin-top:4px;">${r.endRaw || "—"}</div>`;
+
+      meta.appendChild(left);
+      meta.appendChild(startCol);
+      meta.appendChild(endCol);
+
+      const barcell = document.createElement("div");
+      barcell.className="barcell";
+
+      const track = document.createElement("div");
+      track.className="bar-track";
+
+      if (r.start && r.end){
+        const leftPct = ((r.start - minD) / totalMs) * 100;
+        const widthPct = (Math.max(1, (r.end - r.start) / totalMs) * 100);
+
+        const bar = document.createElement("div");
+        bar.className = "bar " + stClass;
+        bar.style.left = `${Math.max(0,leftPct)}%`;
+        bar.style.width = `${Math.min(100,widthPct)}%`;
+        track.appendChild(bar);
+
+        const lbl = document.createElement("div");
+        lbl.className="barlabel";
+        const days = Math.max(1, Math.round((r.end - r.start)/86400000)+1);
+        lbl.textContent = `${days}d`;
+        barcell.appendChild(lbl);
       }
 
-      const rows = parseCSV(t);
-      setPill("pRows","Linhas: "+rows.length, "ok");
-      setPill("pCols","Colunas: "+((rows[0]||[]).length), "ok");
+      barcell.appendChild(track);
 
-      log(
-        "OK. CSV carregado.\n" +
-        "Primeiras colunas: " + (rows[0]||[]).slice(0,12).join(" | ") + "\n" +
-        "Primeira linha de dados (parcial): " + (rows[1]||[]).slice(0,8).join(" | ")
-      );
-
-      renderTable(rows);
-    }catch(e){
-      setPill("pStatus","Status: ERRO", "bad");
-      log("ERRO: "+String(e));
-      console.error(e);
+      row.appendChild(meta);
+      row.appendChild(barcell);
+      gantt.appendChild(row);
     }
   }
 
-  document.getElementById("btnRun").addEventListener("click", run);
-  // auto-run once
-  run();
+  // ===== Load + Init =====
+  function getCsvUrl(){ return (localStorage.getItem(CSV_LS_KEY) || DEFAULT_CSV_URL).trim(); }
+
+  function fillCsvEditor(){
+    document.getElementById("csvEditor").value = getCsvUrl();
+  }
+
+  async function loadCsv(){
+    showLoad(true);
+    try{
+      const url = getCsvUrl();
+      debug("Carregando CSV...\n" + url);
+      const res = await fetch(url, {cache:"no-store"});
+      if(!res.ok) throw new Error("HTTP " + res.status + " ao buscar CSV");
+      const text = await res.text();
+
+      const rows2d = parseCSV(text);
+      if(!rows2d.length) throw new Error("CSV vazio ou sem linhas");
+
+      const built = buildRows(rows2d);
+      HEADERS = built.headers;
+      RAW = built.out;
+
+      DATE_KEYS = detectDateKeys(HEADERS);
+
+      ROWS = RAW.map(o=>{
+        const obj={...o};
+        for (const k of Object.keys(obj)){ obj[k] = String(obj[k]||"").trim(); }
+        return normalizeRow(obj);
+      });
+
+      const statusVals = uniq(ROWS.map(r=>String(r.status||"").trim()));
+      const respVals = uniq(ROWS.map(r=>String(r.resp||"").trim()));
+      const faseVals = uniq(ROWS.map(r=>String(r.fase||"").trim()));
+
+      const fStatus = document.getElementById("fStatus");
+      const fResp = document.getElementById("fResp");
+      const fFase = document.getElementById("fFase");
+
+      function setOptions(sel, values){
+        const keep = sel.value;
+        sel.innerHTML = '<option value="">(todos)</option>' + values.map(v=>`<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
+        if(values.includes(keep)) sel.value = keep;
+      }
+      setOptions(fStatus, statusVals);
+      setOptions(fResp, respVals);
+      setOptions(fFase, faseVals);
+
+      setEnvPill();
+      setLastUpdate();
+      setPill(`Total: ${ROWS.length} • Atualizado: ${nowBR()}`);
+      document.getElementById("countPill").textContent = ROWS.length + " itens";
+
+      // reset table header build
+      document.getElementById("thead").innerHTML = "";
+      document.getElementById("thead").dataset.built = "";
+
+      renderAll();
+      showLoad(false);
+
+    } catch(e){
+      console.error(e);
+      debug("ERRO:\n" + String(e) + "\n\nCSV:\n" + getCsvUrl());
+      showLoad(true);
+    }
+  }
+
+  function bindUI(){
+    ["q","fStatus","fResp","fFase","dIni","dFim"].forEach(id=>{
+      document.getElementById(id).addEventListener("input", ()=>renderAll());
+      document.getElementById(id).addEventListener("change", ()=>renderAll());
+    });
+
+    document.getElementById("btnReset").addEventListener("click", ()=>{
+      document.getElementById("q").value="";
+      document.getElementById("fStatus").value="";
+      document.getElementById("fResp").value="";
+      document.getElementById("fFase").value="";
+      document.getElementById("dIni").value="";
+      document.getElementById("dFim").value="";
+      renderAll();
+    });
+
+    document.getElementById("btnReload").addEventListener("click", ()=>loadCsv());
+
+// Aplicar Aba/Range (metadados exibidos no cabeçalho)
+const btnApply = document.getElementById("btnApplySource");
+if(btnApply){
+  btnApply.addEventListener("click", ()=>{
+    const sheet = (document.getElementById("sheetEditor")?.value || "").trim() || "Cronograma";
+    const range = (document.getElementById("rangeEditor")?.value || "").trim() || "A1:Z999";
+    document.getElementById("sheetInfo").textContent = sheet;
+    document.getElementById("rangeInfo").textContent = range;
+    document.getElementById("sheetStrong").textContent = sheet;
+    try{ localStorage.setItem("spdm_crono_meta", JSON.stringify({sheet, range})); }catch(e){}
+  });
+}
+// Carrega metadados salvos
+try{
+  const meta = JSON.parse(localStorage.getItem("spdm_crono_meta")||"null");
+  if(meta){
+    document.getElementById("sheetEditor").value = meta.sheet || "Cronograma";
+    document.getElementById("rangeEditor").value = meta.range || "A1:Z999";
+    document.getElementById("sheetInfo").textContent = meta.sheet || "Cronograma";
+    document.getElementById("rangeInfo").textContent = meta.range || "A1:Z999";
+    document.getElementById("sheetStrong").textContent = meta.sheet || "Cronograma";
+  }
+}catch(e){}
+
+// Auto refresh
+const sel = document.getElementById("autoRefreshSel");
+if(sel){
+  const saved = localStorage.getItem("spdm_crono_auto_refresh_sec");
+  if(saved !== null) sel.value = saved;
+  let t = null;
+  const resetTimer = ()=>{
+    if(t) clearInterval(t);
+    const sec = parseInt(sel.value||"0",10);
+    localStorage.setItem("spdm_crono_auto_refresh_sec", String(sec));
+    if(sec>0) t = setInterval(()=>loadCsv(), sec*1000);
+  };
+  sel.addEventListener("change", resetTimer);
+  resetTimer();
+}
+
+    document.getElementById("btnApplyCsv").addEventListener("click", ()=>{
+      const v=(document.getElementById("csvEditor").value||"").trim();
+      if(v) localStorage.setItem(CSV_LS_KEY, v);
+      fillCsvEditor();
+      loadCsv();
+    });
+
+    document.getElementById("btnToggleSidebar").addEventListener("click", ()=>{
+      document.body.classList.toggle("sidebar-collapsed");
+      localStorage.setItem("spdm_crono_sidebar", document.body.classList.contains("sidebar-collapsed") ? "1":"0");
+    });
+    if(localStorage.getItem("spdm_crono_sidebar")==="1") document.body.classList.add("sidebar-collapsed");
+
+    document.querySelectorAll(".tab").forEach(t=>{
+      t.addEventListener("click", ()=>{
+        document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+        t.classList.add("active");
+        ACTIVE_TAB = t.dataset.tab;
+        document.getElementById("panelGantt").style.display = (ACTIVE_TAB==="gantt") ? "" : "none";
+        document.getElementById("panelLista").style.display = (ACTIVE_TAB==="lista") ? "" : "none";
+      });
+    });
+
+    function exportXlsx(filename){
+      const rows = getFiltered().map(r=>r.raw);
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Cronograma");
+      XLSX.writeFile(wb, filename);
+    }
+    document.getElementById("btnExportXlsx").addEventListener("click", ()=>exportXlsx("cronograma_prj_spdm.xlsx"));
+    document.getElementById("btnListaXlsx").addEventListener("click", ()=>exportXlsx("cronograma_prj_spdm_lista.xlsx"));
+  }
+
+  // init
+  fillCsvEditor();
+  bindUI();
+  loadCsv();
+</script>
+
+<script id="nav-menu-active">
+  (function(){
+    try{
+      const p=(window.location.pathname||"").toLowerCase();
+      const aP=document.getElementById("navPainel");
+      const aC=document.getElementById("navCronograma");
+      if(aP&&aC){
+        if(p.includes("cronograma")){ aP.classList.remove("active"); aC.classList.add("active"); }
+        else{ aP.classList.add("active"); aC.classList.remove("active"); }
+      }
+    }catch(e){}
+  })();
 </script>
 </body>
+
 </html>
