@@ -742,6 +742,7 @@ div:has(#pillSource), div:has(#pillCT) { display:none !important; }
   let META = { contentType: "", size: 0, rows: 0, cols: 0, delim: "," };
 
   const setPill = (el, text, kind) => {
+    if(!el) return;
     el.classList.remove("ok","bad","warn");
     if(kind) el.classList.add(kind);
     el.textContent = text;
@@ -1013,7 +1014,7 @@ div:has(#pillSource), div:has(#pillCT) { display:none !important; }
   });
 };
 
-  const isGanttVisible = () => !els.panelGantt.classList.contains("hidden");
+  const isGanttVisible = () => (els.panelGantt ? !els.panelGantt.classList.contains("hidden") : false);
 
   const renderAll = () => {
     const all = countByClass(DATA);
@@ -1159,17 +1160,17 @@ const applyQuickPeriod = (key) => {
   };
 
   const showLista = () => {
-    els.tabLista.classList.add("active");
-    els.tabGantt.classList.remove("active");
-    els.panelLista.classList.remove("hidden");
-    els.panelGantt.classList.add("hidden");
+    if(els.tabLista) els.tabLista.classList.add("active");
+    if(els.tabGantt) els.tabGantt.classList.remove("active");
+    if(els.panelLista) els.panelLista.classList.remove("hidden");
+    if(els.panelGantt) els.panelGantt.classList.add("hidden");
   };
 
   const showGantt = () => {
-    els.tabGantt.classList.add("active");
-    els.tabLista.classList.remove("active");
-    els.panelGantt.classList.remove("hidden");
-    els.panelLista.classList.add("hidden");
+    if(els.tabGantt) els.tabGantt.classList.add("active");
+    if(els.tabLista) els.tabLista.classList.remove("active");
+    if(els.panelGantt) els.panelGantt.classList.remove("hidden");
+    if(els.panelLista) els.panelLista.classList.add("hidden");
     renderGantt();
   };
 
