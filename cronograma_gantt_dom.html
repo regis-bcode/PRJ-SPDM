@@ -153,7 +153,7 @@ select{
     .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
     .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
 
-    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    .tablewrap{overflow:scroll; scrollbar-gutter: stable both-edges;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
     table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
     th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
     thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
@@ -463,12 +463,21 @@ div:has(#pillSource), div:has(#pillCT) { display:none !important; }
   --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
 }
 html[data-theme="light"]{
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --panel2: #fbfcff;
-  --stroke: rgba(2,6,23,.10);
-  --text: #0f172a;
-  --muted: #475569;
+  --bg:#f6f7fb;
+  --bg2:#eef2ff;
+  --panel:#ffffff;
+  --panel2:#fbfcff;
+  --stroke: rgba(15,23,42,.12);
+  --stroke2: rgba(15,23,42,.18);
+  --text:#0f172a;
+  --muted:#64748b;
+  --shadow: 0 18px 40px rgba(2,6,23,.10);
+  --shadow2: 0 10px 22px rgba(2,6,23,.08);
+  --accent1:#6366f1;
+  --accent2:#22c55e;
+  --good:#16a34a;
+  --warn:#d97706;
+  --bad:#dc2626;
 }
 
 /* ===== Light theme (match Painel style) ===== */
@@ -999,330 +1008,35 @@ html[data-theme="light"] #tableWrap::-webkit-scrollbar-thumb{
   let HSCROLL_TARGET = null;
   let _hsSync = false;
   function getActiveHScrollTarget(){
-    // Lista usa panelLista; Gantt usa ganttViewport (se existir e tiver overflow).
-    if(!els) return null;
-    if(els.panelLista && !els.panelLista.classList.contains('hidden')) return els.panelLista;
-    if(els.ganttViewport && !els.panelGantt.classList.contains('hidden')) return els.ganttViewport;
-    return els.panelLista || null;
-  }
+  // Lista usa o container do painel de lista (overflow: scroll).
+  if (VIEW === "lista") return els.panelLista;
+  // Gantt usa o viewport de rolagem horizontal.
+  if (VIEW === "gantt") return els.ganttViewport;
+  return null;
+}
   function updateHScrollDock(){
-    const dock = document.getElementById('hScrollDock');
-    const inner = document.getElementById('hScrollInner');
-    if(!dock || !inner) return;
-    HSCROLL_TARGET = getActiveHScrollTarget();
-    if(!HSCROLL_TARGET){ dock.style.display='none'; return; }
-    // Ajusta largura do inner para refletir o scrollWidth do alvo
-    const sw = HSCROLL_TARGET.scrollWidth || 0;
-    inner.style.width = sw + 'px';
-    const need = sw > (HSCROLL_TARGET.clientWidth + 2);
-    dock.style.display = need ? 'block' : 'none';
-    // sincroniza posição
-    dock.scrollLeft = HSCROLL_TARGET.scrollLeft;
-  }
-  function bindHScrollDock(){
-    const dock = document.getElementById('hScrollDock');
-    if(!dock) return;
-    dock.addEventListener('scroll', ()=>{
-      if(_hsSync) return;
-      if(!HSCROLL_TARGET) return;
-      _hsSync = true;
-      HSCROLL_TARGET.scrollLeft = dock.scrollLeft;
-      _hsSync = false;
-    });
-    // alvo -> dock
-    const hookTarget = ()=>{
-      const t = getActiveHScrollTarget();
-      if(!t) return;
-      t.addEventListener('scroll', ()=>{
-        if(_hsSync) return;
-        _hsSync = true;
-        dock.scrollLeft = t.scrollLeft;
-        _hsSync = false;
-      });
-    };
-    hookTarget();
-    window.addEventListener('resize', ()=> setTimeout(updateHScrollDock, 50));
+  const dock = els.hScrollDock;
+  const inner = els.hScrollInner;
+  const target = getActiveHScrollTarget();
+  if (!dock || !inner){ return; }
+  if (!target){
+    dock.style.display = "none";
+    HSCROLL_TARGET = null;
+    return;
   }
 
-  let DATA = [];
-  let TREE = { children:new Map(), hasChildren:new Set() }; // built from normalized DATA
-  let COLLAPSED = new Set(); // edt keys collapsed
-  const COLLAPSE_LS = 'cronograma_collapsed_v1';
+  // O dock deve ficar SEMPRE visível quando há possibilidade de rolagem horizontal.
+  // Mesmo se o conteúdo "caber" por poucos pixels, mantemos o dock para UX (barra fixa).
+  const sw = target.scrollWidth || 0;
+  const cw = target.clientWidth || 0;
 
-  let VIEW = [];
-  let META = { contentType: "", size: 0, rows: 0, cols: 0, delim: "," };
+  // Força um mínimo > cw para manter o thumb/arraste disponível
+  const innerW = Math.max(sw, cw + 1);
 
-  const setPill = (el, text, kind) => {
-    if(!el) return;
-    el.classList.remove("ok","bad","warn");
-    if(kind) el.classList.add(kind);
-    el.textContent = text;
-  };
-
-  const detectDelimiter = (firstLine) => {
-    const comma = firstLine.split(",").length - 1;
-    const semi  = firstLine.split(";").length - 1;
-    return semi > comma ? ";" : ",";
-  };
-
-  const parseCSV = (text) => {
-    const norm = String(text || "").split("\r").join("");
-    const firstLine = (norm.split("\n").find(l => l.trim() !== "") || "");
-    const DELIM = detectDelimiter(firstLine);
-
-    const rows = [];
-    let row = [], cur = "", inQ = false;
-
-    for(let i=0;i<norm.length;i++){
-      const ch = norm[i];
-      const nx = norm[i+1];
-
-      if(inQ){
-        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
-        else if(ch === '"'){ inQ = false; }
-        else { cur += ch; }
-      }else{
-        if(ch === '"'){ inQ = true; }
-        else if(ch === DELIM){ row.push(cur); cur = ""; }
-        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
-        else { cur += ch; }
-      }
-    }
-    if(cur.length || row.length){ row.push(cur); rows.push(row); }
-    return { rows: rows.filter(r => r.some(c => String(c).trim() !== "")), delim: DELIM };
-  };
-
-  const idxOf = (headers, name) => {
-    const n = String(name||"").trim().toLowerCase();
-    for(let i=0;i<headers.length;i++){
-      const h = String(headers[i]||"").trim().toLowerCase();
-      if(h === n) return i;
-    }
-    return -1;
-  };
-
-  const toPct = (v) => {
-    const s = String(v||"").trim();
-    if(!s) return null;
-    const t = s.split("%").join("").trim();
-    const parts = t.split(",");
-    const main = parts[0];
-    const num = parseInt(main, 10);
-    return isNaN(num) ? null : num;
-  };
-
-  const stripWeekdayPrefix = (s) => {
-    const t = String(s||"").trim();
-    if(!t) return "";
-    const parts = t.split(" ");
-    if(parts.length >= 2 && parts[0].endsWith(".")) return parts.slice(1).join(" ").trim();
-    return t;
-  };
-
-  const toISODateMaybe = (v) => {
-    let s = stripWeekdayPrefix(v);
-    if(!s) return "";
-    if(s.includes("/")){
-      const seg = s.split("/");
-      if(seg.length >= 3){
-        const dd = String(seg[0]).padStart(2, "0");
-        const mm = String(seg[1]).padStart(2, "0");
-        let yy = String(seg[2]).trim().split(" ")[0];
-        if(yy.length === 2) yy = "20" + yy;
-        if(yy.length === 4) return yy + "-" + mm + "-" + dd;
-      }
-    }
-    if(s.length >= 10 && s[4] === "-" && s[7] === "-") return s.slice(0,10);
-    return "";
-  };
-
-  const toEpoch = (iso) => {
-    if(!iso) return null;
-    const d = new Date(iso + "T00:00:00");
-    return isNaN(d) ? null : d.getTime();
-  };
-
-  const statusClass = (s) => {
-    const t = String(s||"").toLowerCase();
-    if(t.includes("concl")) return "ok";
-    if(t.includes("atras")) return "bad";
-    return "warn";
-  };
-
-  const fmtISOToBR = (iso) => {
-    if(!iso) return "";
-    return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
-  };
-
-      const edtParts = (edt) => String(edt||"").trim().split(".").filter(Boolean);
-  const edtParent = (edt) => {
-    const p = edtParts(edt);
-    if(p.length <= 1) return "";
-    p.pop();
-    return p.join(".");
-  };
-  const edtLevel = (edt) => Math.max(0, edtParts(edt).length - 1);
-
-  const normalize = (rows) => {
-    const headers = rows[0] || [];
-    const req = ["edt","status","atividade","início","término"];
-    const missing = req.filter(r => idxOf(headers, r) === -1);
-    if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
-
-    const iEDT  = idxOf(headers, "edt");
-    const iInd  = idxOf(headers, "indicador");
-    const iPlan = idxOf(headers, "% planejado");
-    const iConc = idxOf(headers, "% concluída");
-    const iStatus = idxOf(headers, "status");
-    const iAtiv = idxOf(headers, "atividade");
-    const iDur  = idxOf(headers, "duração");
-    const iIni  = idxOf(headers, "início");
-    const iFim  = idxOf(headers, "término");
-    const iMarco = idxOf(headers, "marco");
-    const iPred = idxOf(headers, "predecessoras");
-    const iResp = idxOf(headers, "responsável");
-    const iAnot = idxOf(headers, "anotações");
-
-    const out = [];
-    for(let r=1; r<rows.length; r++){
-      const row = rows[r] || [];
-      const edt = row[iEDT] ?? "";
-      const obj = {
-        _idx: r, // ordem original da planilha (linha no CSV)
-        edt: edt,
-        edt_parent: edtParent(edt),
-        edt_level: edtLevel(edt),
-
-        indicador: row[iInd] ?? "",
-        pct_planejado: toPct(row[iPlan]),
-        pct_concluido: toPct(row[iConc]),
-        status_raw: row[iStatus] ?? "",
-        atividade: row[iAtiv] ?? "",
-        duracao_raw: row[iDur] ?? "",
-        marco: row[iMarco] ?? "",
-        responsavel: row[iResp] ?? "",
-        predecessoras: row[iPred] ?? "",
-        anotacoes: row[iAnot] ?? "",
-        inicio_raw: row[iIni] ?? "",
-        termino_raw: row[iFim] ?? "",
-      };
-      obj.inicio_iso = toISODateMaybe(obj.inicio_raw);
-      obj.termino_iso = toISODateMaybe(obj.termino_raw);
-      obj.inicio_ts = toEpoch(obj.inicio_iso);
-      obj.termino_ts = toEpoch(obj.termino_iso);
-      obj.status_class = statusClass(obj.status_raw);
-
-      if(obj.inicio_ts !== null && obj.termino_ts === null){ obj.termino_ts = obj.inicio_ts; obj.termino_iso = obj.inicio_iso; }
-      if(obj.inicio_ts === null && obj.termino_ts !== null){ obj.inicio_ts = obj.termino_ts; obj.inicio_iso = obj.termino_iso; }
-      out.push(obj);
-    }
-    return out;
-  };
-
-  const fetchCSV = async (url) => {
-    const res = await fetch(url, { cache: "no-store" });
-    return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text: await res.text() };
-  };
-
-  const guardNotHTML = (text) => {
-    const head = String(text||"").slice(0,200).toLowerCase();
-    if(head.includes("<html") || head.includes("<!doctype")) throw new Error("Resposta veio HTML, não CSV.");
-  };
-
-  const escapeHtml = (s) => String(s||"")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-
-  const uniqueSorted = (arr) => {
-    const set = new Set(arr.map(x => String(x||"").trim()).filter(x => x));
-    return Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-  };
-
-  const fillResponsaveis = () => {
-    const resps = uniqueSorted(DATA.map(d => d.responsavel));
-    els.fResp.innerHTML = '<option value="">(todos)</option>' +
-      resps.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("");
-  };
-
-  const countByClass = (list) => {
-    let ok=0,warn=0,bad=0;
-    list.forEach(o => { if(o.status_class==="ok") ok++; else if(o.status_class==="bad") bad++; else warn++; });
-    return { ok, warn, bad, total: list.length };
-  };
-
-      const renderTable = () => {
-  const max = Math.min(VIEW.length, 2000);
-  let rows = "";
-  for(let i=0;i<max;i++){
-    const o = VIEW[i];
-
-    const edtKey = String(o.edt||"").trim();
-    const hasKids = TREE.hasChildren && TREE.hasChildren.has(edtKey);
-    const isCollapsed = COLLAPSED.has(edtKey);
-
-    // EDT indentation (sem botão aqui)
-    const indentPx = Math.min(8 + (o.edt_level||0)*16, 120);
-    const edtCell = `<div class="treeCell"><span class="indent" style="width:${indentPx}px"></span><span>${escapeHtml(o.edt)}</span></div>`;
-
-    // Indicador: (1) se indicador negativo -> bullet vermelho; (2) se % concluída = 100 -> bullet verde; senão valor normal
-    const indNum = parseFloat(String(o.indicador ?? "").replace(",", "."));
-    const concNum = parseFloat(String(o.pct_concluido ?? "").replace(",", "."));
-
-    let indicadorCell = escapeHtml(o.indicador);
-    if(!isNaN(indNum) && indNum < 0){
-      indicadorCell = '<span class="negBullet" title="Indicador negativo">●</span>';
-    } else if(!isNaN(concNum) && concNum >= 100){
-      indicadorCell = '<span class="okBullet" title="Concluído (100%)">●</span>';
-    }
-
-    // Marco: Sim -> bandeira
-    const marcoTxt = String(o.marco || "").trim().toLowerCase();
-    const marcoCell = (marcoTxt === "sim" || marcoTxt === "yes" || marcoTxt === "true" || marcoTxt === "1")
-      ? '<span class="flag" title="Marco do projeto"><span class="flagIcon">⚑</span> Marco</span>'
-      : escapeHtml(o.marco);
-
-    // Atividade com indentação e botão expand/collapse no nível pai
-    const actIndent = Math.min(8 + (o.edt_level||0)*16, 140);
-    const twisty = hasKids
-      ? `<span class="twisty tri" data-edt="${escapeAttr(edtKey)}" data-state="${isCollapsed ? "closed" : "open"}" title="Abrir/fechar subtarefas"></span>`
-      : `<span class="twisty tri blank"></span>`;
-    const atividadeCell =
-      `<div class="activityCell"><span class="indent" style="width:${actIndent}px"></span>${twisty}<span class="taskName">${escapeHtml(o.atividade)}</span></div>`;
-
-    // Linha atrasada
-    const isLate = String(o.status_raw||"").toLowerCase().includes("atrasad");
-    const trClass = isLate ? ' class="rowLate"' : "";
-
-    rows += `<tr${trClass}>` +
-      "<td>"+edtCell+"</td>" +
-      "<td>"+indicadorCell+"</td>" +
-      "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
-      "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
-      "<td>"+escapeHtml(o.status_raw)+"</td>" +
-      "<td>"+atividadeCell+"</td>" +
-      "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
-      "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
-      "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
-      "<td>"+marcoCell+"</td>" +
-      "<td>"+escapeHtml(o.predecessoras)+"</td>" +
-      "<td>"+escapeHtml(o.responsavel)+"</td>" +
-      "<td>"+escapeHtml(o.anotacoes)+"</td>" +
-    "</tr>";
-  }
-  els.tbody.innerHTML = rows;
-
-  // bind toggles (somente nos pais)
-  els.tbody.querySelectorAll(".twisty[data-edt]").forEach(el=>{
-    el.addEventListener("click", (ev)=>{
-      ev.stopPropagation();
-      const k = el.getAttribute("data-edt");
-      if(!k) return;
-      if(COLLAPSED.has(k)) COLLAPSED.delete(k); else COLLAPSED.add(k);
-      saveCollapsed();
-      applyFilters();
-      if(isGanttVisible()) renderGantt();
-    });
-  });
+  inner.style.width = innerW + "px";
+  dock.style.display = "block";
+  dock.scrollLeft = target.scrollLeft;
+  HSCROLL_TARGET = target;
 };
 
   const isGanttVisible = () => (els.panelGantt ? !els.panelGantt.classList.contains("hidden") : false);
