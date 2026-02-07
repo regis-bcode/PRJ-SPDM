@@ -346,6 +346,35 @@ select{
   color: var(--text) !important;
   background-color: rgba(15,25,48,.98) !important;
 }
+  /* === Hierarquia EDT (pai/filho) === */
+.treeCell{display:flex; align-items:center; gap:8px; min-width:180px;}
+.twisty{
+  width:18px; height:18px; border-radius:8px;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; user-select:none;
+  background: rgba(148,163,184,.10);
+  border: 1px solid rgba(148,163,184,.28);
+  color: rgba(255,255,255,.92);
+  font-weight: 950;
+  line-height: 1;
+}
+.twisty:hover{border-color: rgba(99,102,241,.55);}
+.twisty.blank{opacity:.0; cursor:default; border-color: transparent; background: transparent;}
+.indent{display:inline-block; width:0px; height:1px;}
+.taskName{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 520px;}
+.pctBadge{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:14px; height:14px; border-radius:999px;
+  font-weight: 950; line-height:1;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(148,163,184,.10);
+  color: rgba(255,255,255,.92);
+}
+.pctBadge.ok{
+  background: rgba(34,197,94,.14);
+  border-color: rgba(34,197,94,.45);
+  color: var(--ok);
+}
   </style>
 </head>
 <body>
@@ -464,13 +493,12 @@ select{
 
           <label>Ordenação</label>
           <select id="sortBy">
-            <option value="inicio_ts">Início (asc)</option>
-            <option value="-inicio_ts">Início (desc)</option>
-            <option value="termino_ts">Término (asc)</option>
-            <option value="-termino_ts">Término (desc)</option>
-            <option value="edt">EDT (asc)</option>
-            <option value="status_class">Status (asc)</option>
-          </select>
+  <option value="sheet" selected>Ordem da planilha</option>
+  <option value="inicio_ts">Início (asc)</option>
+  <option value="termino_ts">Término (asc)</option>
+  <option value="status_class">Status (class)</option>
+  <option value="responsavel">Responsável (A→Z)</option>
+</select>
 
           <div class="rowL" style="margin-top:12px;">
             <button id="btnClearFilters" class="btn ghost">Limpar filtros</button>
@@ -635,6 +663,10 @@ select{
   };
 
   let DATA = [];
+  let TREE = { children:new Map(), hasChildren:new Set() }; // built from normalized DATA
+  let COLLAPSED = new Set(); // edt keys collapsed
+  const COLLAPSE_LS = 'cronograma_collapsed_v1';
+
   let VIEW = [];
   let META = { contentType: "", size: 0, rows: 0, cols: 0, delim: "," };
 
@@ -739,7 +771,16 @@ select{
     return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
   };
 
-    const normalize = (rows) => {
+      const edtParts = (edt) => String(edt||"").trim().split(".").filter(Boolean);
+  const edtParent = (edt) => {
+    const p = edtParts(edt);
+    if(p.length <= 1) return "";
+    p.pop();
+    return p.join(".");
+  };
+  const edtLevel = (edt) => Math.max(0, edtParts(edt).length - 1);
+
+  const normalize = (rows) => {
     const headers = rows[0] || [];
     const req = ["edt","status","atividade","início","término"];
     const missing = req.filter(r => idxOf(headers, r) === -1);
@@ -762,8 +803,13 @@ select{
     const out = [];
     for(let r=1; r<rows.length; r++){
       const row = rows[r] || [];
+      const edt = row[iEDT] ?? "";
       const obj = {
-        edt: row[iEDT] ?? "",
+        _idx: r, // ordem original da planilha (linha no CSV)
+        edt: edt,
+        edt_parent: edtParent(edt),
+        edt_level: edtLevel(edt),
+
         indicador: row[iInd] ?? "",
         pct_planejado: toPct(row[iPlan]),
         pct_concluido: toPct(row[iConc]),
@@ -822,39 +868,71 @@ select{
   };
 
       const renderTable = () => {
-    const max = Math.min(VIEW.length, 1600);
-    let rows = "";
-    for(let i=0;i<max;i++){
-      const o = VIEW[i];
+  const max = Math.min(VIEW.length, 2000);
+  let rows = "";
+  for(let i=0;i<max;i++){
+    const o = VIEW[i];
 
-      const indNum = parseFloat(String(o.indicador ?? "").replace(",", "."));
-      const indicadorCell = (!isNaN(indNum) && indNum < 0)
-        ? '<span class="negBullet" title="Indicador negativo">●</span>'
-        : escapeHtml(o.indicador);
+    // EDT tree
+    const edtKey = String(o.edt||"").trim();
+    const hasKids = TREE.hasChildren && TREE.hasChildren.has(edtKey);
+    const isCollapsed = COLLAPSED.has(edtKey);
+    const twisty = hasKids
+      ? `<span class="twisty" data-edt="${escapeAttr(edtKey)}" title="Abrir/fechar subtarefas">${isCollapsed ? "+" : "−"}</span>`
+      : `<span class="twisty blank">•</span>`;
+    const indentPx = Math.min(8 + (o.edt_level||0)*16, 120);
+    const edtCell = `<div class="treeCell"><span class="indent" style="width:${indentPx}px"></span>${twisty}<span>${escapeHtml(o.edt)}</span></div>`;
 
-      const marcoTxt = String(o.marco || "").trim().toLowerCase();
-      const marcoCell = (marcoTxt === "sim" || marcoTxt === "yes" || marcoTxt === "true" || marcoTxt === "1")
-        ? '<span class="flag" title="Marco do projeto"><span class="flagIcon">⚑</span> Marco</span>'
-        : escapeHtml(o.marco);
+    // Indicador negativo -> bullet vermelho
+    const indNum = parseFloat(String(o.indicador ?? "").replace(",", "."));
+    const indicadorCell = (!isNaN(indNum) && indNum < 0)
+      ? '<span class="negBullet" title="Indicador negativo">●</span>'
+      : escapeHtml(o.indicador);
 
-      rows += "<tr>" +
-        "<td>"+escapeHtml(o.edt)+"</td>" +
-        "<td>"+indicadorCell+"</td>" +
-        "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
-        "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
-        "<td>"+escapeHtml(o.status_raw)+"</td>" +
-        "<td>"+escapeHtml(o.atividade)+"</td>" +
-        "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
-        "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
-        "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
-        "<td>"+marcoCell+"</td>" +
-        "<td>"+escapeHtml(o.predecessoras)+"</td>" +
-        "<td>"+escapeHtml(o.responsavel)+"</td>" +
-        "<td>"+escapeHtml(o.anotacoes)+"</td>" +
-      "</tr>";
-    }
-    els.tbody.innerHTML = rows;
-  };
+    // % concluída: se 100 -> bullet verde
+    const conc = (o.pct_concluido ?? "");
+    const concNum = parseFloat(String(conc).replace(",", "."));
+    const conclCell = (!isNaN(concNum) && concNum >= 100)
+      ? '<span class="pctBadge ok" title="100% concluído">●</span>'
+      : escapeHtml(conc);
+
+    // Marco: Sim -> bandeira
+    const marcoTxt = String(o.marco || "").trim().toLowerCase();
+    const marcoCell = (marcoTxt === "sim" || marcoTxt === "yes" || marcoTxt === "true" || marcoTxt === "1")
+      ? '<span class="flag" title="Marco do projeto"><span class="flagIcon">⚑</span> Marco</span>'
+      : escapeHtml(o.marco);
+
+    rows += "<tr>" +
+      "<td>"+edtCell+"</td>" +
+      "<td>"+indicadorCell+"</td>" +
+      "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
+      "<td>"+conclCell+"</td>" +
+      "<td>"+escapeHtml(o.status_raw)+"</td>" +
+      "<td>"+escapeHtml(o.atividade)+"</td>" +
+      "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
+      "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
+      "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
+      "<td>"+marcoCell+"</td>" +
+      "<td>"+escapeHtml(o.predecessoras)+"</td>" +
+      "<td>"+escapeHtml(o.responsavel)+"</td>" +
+      "<td>"+escapeHtml(o.anotacoes)+"</td>" +
+    "</tr>";
+  }
+  els.tbody.innerHTML = rows;
+
+  // bind toggles
+  els.tbody.querySelectorAll(".twisty[data-edt]").forEach(el=>{
+    el.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      const k = el.getAttribute("data-edt");
+      if(!k) return;
+      if(COLLAPSED.has(k)) COLLAPSED.delete(k); else COLLAPSED.add(k);
+      saveCollapsed();
+      applyFilters();
+      if(isGanttVisible()) renderGantt();
+    });
+  });
+};
 
   const isGanttVisible = () => !els.panelGantt.classList.contains("hidden");
 
@@ -967,6 +1045,8 @@ const applyQuickPeriod = (key) => {
 };
 
   const applyFilters = () => {
+    if(!TREE || !TREE.hasChildren){ TREE = buildTree(DATA||[]); }
+
     const q = String(els.q.value||"").trim().toLowerCase();
     const st = els.fStatus.value;
     const resp = els.fResp.value;
@@ -1227,7 +1307,7 @@ const applyQuickPeriod = (key) => {
   };
 
   const resetFilters = () => {
-    els.q.value=""; els.fStatus.value=""; els.fResp.value=""; els.dIni.value=""; els.dFim.value=""; els.sortBy.value="inicio_ts";
+    els.q.value=""; els.fStatus.value=""; els.fResp.value=""; els.dIni.value=""; els.dFim.value=""; els.sortBy.value="sheet";
     if(els.quickPeriod) els.quickPeriod.value="";
     applyFilters();
   };
