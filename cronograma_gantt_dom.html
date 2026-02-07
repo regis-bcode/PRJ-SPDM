@@ -408,7 +408,31 @@ tr.rowLate td{ border-bottom-color: rgba(239,68,68,.18) !important; }
   font-weight: 950;
   line-height: 1;
 }
-  </style>
+  /* === Ocultar chips técnicos (Fonte/CT) sem remover funcionalidade === */
+.hideOnUI{display:none !important;}
+  /* === Header layout (executivo) === */
+header.top{position:sticky; top:0; z-index:30; padding:14px 18px; background:rgba(2,6,23,.86); backdrop-filter: blur(10px); border-bottom:1px solid rgba(148,163,184,.16);}
+.wrapTop{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; max-width: 1900px; margin:0 auto;}
+.leftTop{display:flex; flex-direction:column; gap:6px; min-width: 520px;}
+.titleRow{display:flex; flex-direction:column; gap:6px;}
+.h1{font-size:18px; font-weight:950; letter-spacing:.2px; color:rgba(255,255,255,.92);}
+.badgesRow{display:flex; flex-wrap:wrap; gap:10px;}
+.badgePill{display:inline-flex; align-items:center; padding:8px 12px; border-radius:999px; border:1px solid rgba(148,163,184,.22); background:rgba(148,163,184,.10); font-weight:900; font-size:12px;}
+.badgePill.ok{border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); color: rgba(187,247,208,.95);}
+.subRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.muted{color:rgba(148,163,184,.85); font-size:12px;}
+.rightTop{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+.btnPrimary{cursor:pointer; border:none; padding:10px 14px; border-radius:12px; font-weight:950; color:#0b1220;
+  background: linear-gradient(90deg, rgba(99,102,241,1), rgba(34,197,94,1)); box-shadow: 0 10px 24px rgba(0,0,0,.25);}
+.btnPrimary:hover{filter:brightness(1.04);}
+.btn{cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:950; color:rgba(255,255,255,.92);
+  background: rgba(15,25,48,.75); border:1px solid rgba(148,163,184,.22);}
+.btn:hover{border-color: rgba(99,102,241,.55);}
+@media (max-width: 980px){
+  .wrapTop{flex-direction:column; align-items:stretch;}
+  .rightTop{justify-content:flex-start;}
+}
+</style>
 </head>
 <body>
 <header>
@@ -674,7 +698,7 @@ tr.rowLate td{ border-bottom-color: rgba(239,68,68,.18) !important; }
     quickPeriod: document.getElementById("quickPeriod"),
     btnLoad: document.getElementById("btnLoad"),
     btnApply: document.getElementById("btnApply"),
-    btnExport: document.getElementById("btnExport"),
+    btnExport: document.getElementById("btnExportCsv"),
     btnResetAll: document.getElementById("btnResetAll"),
     btnClearFilters: document.getElementById("btnClearFilters"),
     btnToggleFilters: document.getElementById("btnToggleFilters"),
