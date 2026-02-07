@@ -445,6 +445,11 @@ header{position:sticky;top:0;z-index:50;background:rgba(2,6,23,.86);backdrop-fil
   .topbar{flex-direction:column;align-items:stretch;}
   .actions{justify-content:flex-start;}
 }
+/* === Layout fix: remover faixa técnica intermediária (Fonte/CT + botões duplicados) === */
+#techStrip, #sourceStrip, #midStrip, .sourceStrip, .midStrip, .topStrip, .toolbarTop, .rowTopMeta { display:none !important; }
+.pillMetaRow, .metaRow { display:none !important; }
+/* hide any row that contains pillSource or pillCT if still rendered outside header */
+div:has(#pillSource), div:has(#pillCT) { display:none !important; }
 </style>
 </head>
 <body>
@@ -476,17 +481,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(2,6,23,.86);backdrop-fil
 
 <div class="grid wrap">
   <section class="card">
-    <div class="row">
-      <div class="rowL">
-        <span class="pill">Fonte: CSV publicado (oculto)</span>
-        <span id="pillMeta" class="pill">—</span>
-      </div>
-      <div class="rowL">
-        <button id="btnLoad" class="btn primary">Carregar & Normalizar</button>
-        <button id="btnExport" class="btn">Exportar (CSV)</button>
-        <button id="btnResetAll" class="btn ghost">Reset</button>
-      </div>
-    </div>
+    
 
     <div class="sep"></div>
 
