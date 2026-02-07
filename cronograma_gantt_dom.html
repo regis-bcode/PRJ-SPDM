@@ -111,10 +111,6 @@
     }
 
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
-    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
-    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
-
     .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
     .kpi{
       border:1px solid rgba(34,48,84,.9);
@@ -142,12 +138,6 @@
     .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
     .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
 
-    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
-    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
-    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
-    tbody tr:hover{background:rgba(255,255,255,.04)}
-
     .small{font-size:11px;color:var(--muted)}
     .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
     .hidden{display:none !important;}
@@ -172,6 +162,11 @@
       background:linear-gradient(135deg, rgba(99,102,241,.92), rgba(34,197,94,.78));
     }
 
+    /* ===== Layout (maximiza laterais) ===== */
+    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
+    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
+    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
+
     /* ===== Filters collapse ===== */
     .filtersCard{padding:12px;}
     .filtersHead{
@@ -187,6 +182,13 @@
     body.filters-collapsed .filtersCollapsedHint{display:block;}
     .filtersCollapsedHint{display:none; color:rgba(167,179,209,.75); font-size:11px; text-align:center; margin-top:10px;}
     .filtersSticky{position: sticky; top: 88px;}
+
+    /* ===== Lista ===== */
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
+    tbody tr:hover{background:rgba(255,255,255,.04)}
 
     /* ===== GANTT ===== */
     .ganttWrap{
@@ -803,36 +805,72 @@
   };
 
   const applyFilters = () => {
-    const q = String(els.q.value||"").trim().toLowerCase();
-    const st = els.fStatus.value;
-    const resp = els.fResp.value;
-    const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
-    const dFim = els.dFim.value ? new Date(els.dFim.value + "T00:00:00").getTime() : null;
-    const sort = els.sortBy.value;
-    const desc = sort.startsWith("-");
-    const key = desc ? sort.slice(1) : sort;
+    try{
+      if(!DATA || !DATA.length){
+        els.audit.textContent = "Apply: sem dados carregados. Clique em 'Carregar & Normalizar'.";
+        return;
+      }
 
-    let out = DATA.slice();
-    if(q){
-      out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes).toLowerCase().includes(q));
+      const q = String(els.q.value||"").trim().toLowerCase();
+      const st = String(els.fStatus.value||"").trim();
+      const resp = String(els.fResp.value||"").trim();
+
+      // Datas: considera o dia inteiro no término (<= 23:59:59)
+      const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
+      const dFim = els.dFim.value ? (new Date(els.dFim.value + "T23:59:59").getTime()) : null;
+
+      const sort = String(els.sortBy.value||"inicio_ts");
+      const desc = sort.startsWith("-");
+      const key = desc ? sort.slice(1) : sort;
+
+      let out = DATA.slice();
+
+      if(q){
+        out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes)
+          .toLowerCase()
+          .includes(q));
+      }
+      if(st){
+        out = out.filter(o => String(o.status_class||"").trim() === st);
+      }
+      if(resp){
+        out = out.filter(o => String(o.responsavel||"").trim() === resp.trim());
+      }
+      if(dIni !== null){
+        out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
+      }
+      if(dFim !== null){
+        out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
+      }
+
+      // Ordenação
+      out.sort((a,b)=>{
+        const va=a[key], vb=b[key];
+        if(va===null && vb===null) return 0;
+        if(va===null) return 1;
+        if(vb===null) return -1;
+        if(typeof va==="number" && typeof vb==="number") return va-vb;
+        return String(va).localeCompare(String(vb),"pt-BR");
+      });
+      if(desc) out.reverse();
+
+      VIEW = out;
+
+      // Auditoria rápida
+      els.audit.textContent =
+        "Apply OK. VIEW=" + VIEW.length +
+        " | q=" + (q?('"'+q+'"'):"—") +
+        " | status=" + (st||"—") +
+        " | resp=" + (resp||"—") +
+        " | ini≥" + (els.dIni.value||"—") +
+        " | fim≤" + (els.dFim.value||"—") +
+        " | sort=" + sort;
+
+      renderAll();
+    }catch(e){
+      els.audit.textContent = "ERRO no Apply: " + String(e);
+      console.error(e);
     }
-    if(st) out = out.filter(o => o.status_class === st);
-    if(resp) out = out.filter(o => String(o.responsavel||"") === resp);
-    if(dIni !== null) out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
-    if(dFim !== null) out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
-
-    out.sort((a,b)=>{
-      const va=a[key], vb=b[key];
-      if(va===null && vb===null) return 0;
-      if(va===null) return 1;
-      if(vb===null) return -1;
-      if(typeof va==="number" && typeof vb==="number") return va-vb;
-      return String(va).localeCompare(String(vb),"pt-BR");
-    });
-    if(desc) out.reverse();
-
-    VIEW = out;
-    renderAll();
   };
 
   const showLista = () => {
@@ -1087,6 +1125,15 @@
   els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
 
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
+  // Auto-apply quando trocar selects/datas/ordenação
+  ["change"].forEach(evt=>{
+    els.fStatus.addEventListener(evt, applyFilters);
+    els.fResp.addEventListener(evt, applyFilters);
+    els.dIni.addEventListener(evt, applyFilters);
+    els.dFim.addEventListener(evt, applyFilters);
+    els.sortBy.addEventListener(evt, applyFilters);
+  });
+
   els.tabLista.addEventListener("click", showLista);
   els.tabGantt.addEventListener("click", showGantt);
 
