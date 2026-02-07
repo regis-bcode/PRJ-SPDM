@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PRJ-SPDM | Gate D — Cronograma (Gantt DOM/CSS)</title>
+  <title>PRJ-SPDM | Cronograma (Gantt DOM/CSS)</title>
   <style>
     :root{
       --bg:#0b1220; --panel:#111a2e; --line:#223054;
@@ -13,7 +13,8 @@
       --radius: 18px;
       --dayW: 12px;
       --rowH: 42px;
-      --leftW: 380px;
+      --filtersW: 430px;
+      --filtersWCollapsed: 72px;
     }
     *{box-sizing:border-box}
     body{
@@ -26,22 +27,22 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
     header{
-      padding:18px 20px;
+      padding:16px 18px;
       border-bottom:1px solid rgba(34,48,84,.9);
       position:sticky; top:0; z-index:10;
       background:rgba(11,18,32,.78);
       backdrop-filter: blur(10px);
     }
-    .wrap{max-width:1700px;margin:0 auto;}
+    .wrap{max-width:100%; margin:0 auto;}
     h1{margin:0;font-size:18px;letter-spacing:.2px}
     .sub{margin-top:6px;color:var(--muted);font-size:12px}
-    .grid{display:grid;grid-template-columns: 1fr; gap:14px; padding:16px 20px;}
+    .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:12px 12px;}
     .card{
       background:linear-gradient(180deg, rgba(17,26,46,.96), rgba(15,25,48,.92));
       border:1px solid rgba(34,48,84,.9);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:14px;
+      padding:12px;
     }
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
     .rowL{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -58,6 +59,7 @@
     .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.45)}
     .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.45)}
     .pill.warn{color:var(--warn);border-color:rgba(245,158,11,.45)}
+
     .btn{
       cursor:pointer;
       border:1px solid rgba(34,48,84,.95);
@@ -67,6 +69,7 @@
       border-radius:14px;
       font-weight:950;
       letter-spacing:.2px;
+      user-select:none;
     }
     .btn:hover{border-color:rgba(99,102,241,.65); box-shadow:0 10px 24px rgba(0,0,0,.25)}
     .btn.primary{
@@ -79,23 +82,39 @@
       border-color:transparent;
       background:linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,197,94,.75));
     }
-    label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:8px 0 6px}
+    .btn.icon{
+      width:40px; height:40px; padding:0;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:12px;
+      font-weight:950;
+    }
+
+    label{display:block;color:rgba(203,213,225,.95);font-size:12px;font-weight:950;margin:8px 0 6px}
     input, select{
       width:100%;
       padding:12px 12px;
       border-radius:14px;
       border:1px solid rgba(34,48,84,.95);
-      background:rgba(255,255,255,.04);
+      background:rgba(255,255,255,.05);
       color:var(--text);
       outline:none;
     }
+    input::placeholder{color:rgba(167,179,209,.70)}
     input:focus, select:focus{
       border-color:rgba(99,102,241,.75);
       box-shadow:0 0 0 4px rgba(99,102,241,.18);
     }
+    /* Corrige opções do select (evita branco no branco) */
+    select, option{
+      background: rgba(15,25,48,.98);
+      color: var(--text);
+    }
+
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .two{display:grid;grid-template-columns: 1fr; gap:12px}
-    @media (min-width: 1180px){ .two{grid-template-columns: 430px 1fr;} }
+    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
+    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
+    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
+
     .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
     .kpi{
       border:1px solid rgba(34,48,84,.9);
@@ -110,6 +129,7 @@
     .kpi .label{color:var(--muted);font-weight:950;font-size:12px;letter-spacing:.2px}
     .kpi .value{font-weight:950;font-size:22px;margin-top:6px}
     .kpi small{color:var(--muted)}
+
     .tag{
       display:inline-flex;align-items:center;justify-content:center;
       min-width:52px;
@@ -121,16 +141,54 @@
     .tag.ok{color:var(--ok);border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
     .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
     .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
+
     .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
     table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
     th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
     thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
     tbody tr:hover{background:rgba(255,255,255,.04)}
+
     .small{font-size:11px;color:var(--muted)}
     .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
-    .right{justify-content:flex-end}
     .hidden{display:none !important;}
 
+    /* ===== Nav (PAINEL/CRONOGRAMA) ===== */
+    .nav{display:flex; gap:10px; align-items:center; margin-top:10px;}
+    .nav a{
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:10px;
+      padding:12px 16px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,84,.95);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      font-weight:950;
+      letter-spacing:.2px;
+      box-shadow:0 12px 26px rgba(0,0,0,.18);
+    }
+    .nav a:hover{border-color:rgba(99,102,241,.65);}
+    .nav a.active{
+      border-color:transparent;
+      background:linear-gradient(135deg, rgba(99,102,241,.92), rgba(34,197,94,.78));
+    }
+
+    /* ===== Filters collapse ===== */
+    .filtersCard{padding:12px;}
+    .filtersHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    body.filters-collapsed .filtersBody{display:none;}
+    body.filters-collapsed .filtersCard{padding:10px; display:flex; flex-direction:column; align-items:center;}
+    body.filters-collapsed .filtersHead{width:100%; justify-content:center;}
+    body.filters-collapsed #pillCount{display:none;}
+    body.filters-collapsed #btnApply{display:none;}
+    body.filters-collapsed .filtersHint{display:none;}
+    body.filters-collapsed .filtersCollapsedHint{display:block;}
+    .filtersCollapsedHint{display:none; color:rgba(167,179,209,.75); font-size:11px; text-align:center; margin-top:10px;}
+    .filtersSticky{position: sticky; top: 88px;}
+
+    /* ===== GANTT ===== */
     .ganttWrap{
       border:1px solid rgba(34,48,84,.95);
       border-radius:16px;
@@ -144,44 +202,27 @@
       background:rgba(15,25,48,.98);
       border-bottom:1px solid rgba(34,48,84,.75);
     }
-    .ganttBody{
-      display:grid;
-      grid-template-columns: var(--leftW) 1fr;
-      min-height: 520px;
-    }
+    .ganttBody{display:grid;grid-template-columns: 380px 1fr;min-height: 520px;}
+    @media (max-width: 1180px){ .ganttBody{grid-template-columns: 1fr;} }
     .ganttLeft{
       border-right:1px solid rgba(34,48,84,.75);
       background:linear-gradient(180deg, rgba(15,25,48,.70), rgba(15,25,48,.55));
-      overflow:auto;
-      max-height: 70vh;
+      overflow:auto; max-height: 70vh;
     }
     .ganttRight{
-      overflow:auto;
-      max-height: 70vh;
+      overflow:auto; max-height: 70vh;
       background: radial-gradient(900px 400px at 20% 0%, rgba(99,102,241,.10), transparent 60%);
       position:relative;
     }
-    .ganttAxis{
-      position:sticky; top:0; z-index:5;
-      background:rgba(15,25,48,.98);
-      border-bottom:1px solid rgba(34,48,84,.75);
-    }
-    .axisMonths{
-      display:flex;
-      height:28px;
-      border-bottom:1px solid rgba(34,48,84,.55);
-    }
+    .ganttAxis{position:sticky; top:0; z-index:5;background:rgba(15,25,48,.98);border-bottom:1px solid rgba(34,48,84,.75);}
+    .axisMonths{display:flex;height:28px;border-bottom:1px solid rgba(34,48,84,.55);}
     .axisMonths .m{
       display:flex; align-items:center; justify-content:center;
       font-size:11px; color:var(--muted); font-weight:950;
       border-right:1px solid rgba(34,48,84,.35);
-      padding:0 8px;
-      white-space:nowrap;
+      padding:0 8px; white-space:nowrap;
     }
-    .axisDays{
-      display:flex;
-      height:26px;
-    }
+    .axisDays{display:flex;height:26px;}
     .axisDays .d{
       width:var(--dayW);
       border-right:1px solid rgba(34,48,84,.20);
@@ -229,11 +270,7 @@
     .bar.ok{background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(16,185,129,.80));}
     .bar.warn{background:linear-gradient(90deg, rgba(245,158,11,.92), rgba(251,191,36,.75));}
     .bar.bad{background:linear-gradient(90deg, rgba(239,68,68,.92), rgba(244,63,94,.75));}
-    .bar .fill{
-      height:100%;
-      background:rgba(0,0,0,.22);
-      mix-blend-mode: overlay;
-    }
+    .bar .fill{height:100%;background:rgba(0,0,0,.22);mix-blend-mode: overlay;}
     .bar .pct{
       position:absolute; right:8px; top:50%;
       transform:translateY(-50%);
@@ -271,9 +308,14 @@
 <header>
   <div class="wrap">
     <div class="row">
-      <div>
-        <h1>MIT045 | Cronograma — Painel Gerencial (Gate D)</h1>
+      <div style="min-width:320px">
+        <h1>MIT045 | Cronograma — Painel Gerencial (Live)</h1>
         <div class="sub">Gantt em HTML puro (DOM/CSS). Sem dependências externas. Fonte CSV publicada (oculta).</div>
+
+        <div class="nav" aria-label="Navegação">
+          <a id="navPainel" href="index.html">📊 PAINEL</a>
+          <a class="active" href="cronograma.html">🗓️ CRONOGRAMA</a>
+        </div>
       </div>
       <div class="rowL">
         <span id="pillStatus" class="pill">Status: Aguardando</span>
@@ -318,65 +360,71 @@
 
     <div class="sep"></div>
 
-    <div class="two">
-      <aside class="card" style="padding:12px;">
-        <div class="row">
+    <div class="layout">
+      <aside class="card filtersCard filtersSticky" style="min-width:0;">
+        <div class="filtersHead">
           <div class="rowL">
             <span class="pill">Filtros</span>
             <span id="pillCount" class="pill">0 itens</span>
           </div>
-          <div class="rowL right">
+          <div class="rowL">
             <button id="btnApply" class="btn">Aplicar</button>
+            <button id="btnToggleFilters" class="btn icon" title="Minimizar/Expandir filtros">≡</button>
           </div>
         </div>
 
-        <label>Busca (texto livre)</label>
-        <input id="q" type="text" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
+        <div class="filtersBody">
+          <label>Busca (texto livre)</label>
+          <input id="q" type="text" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
 
-        <label>Status (classificado)</label>
-        <select id="fStatus">
-          <option value="">(todos)</option>
-          <option value="ok">ok (Concluída)</option>
-          <option value="warn">warn (Em andamento / outros)</option>
-          <option value="bad">bad (Atrasada)</option>
-        </select>
+          <label>Status (classificado)</label>
+          <select id="fStatus">
+            <option value="">(todos)</option>
+            <option value="ok">ok (Concluída)</option>
+            <option value="warn">warn (Em andamento / outros)</option>
+            <option value="bad">bad (Atrasada)</option>
+          </select>
 
-        <label>Responsável</label>
-        <select id="fResp">
-          <option value="">(todos)</option>
-        </select>
+          <label>Responsável</label>
+          <select id="fResp">
+            <option value="">(todos)</option>
+          </select>
 
-        <label>Período (início ≥ / término ≤)</label>
-        <div class="rowL" style="gap:10px;">
-          <div style="flex:1">
-            <input id="dIni" type="date" />
-            <div class="small">Início mínimo</div>
+          <label>Período (início ≥ / término ≤)</label>
+          <div class="rowL" style="gap:10px;">
+            <div style="flex:1">
+              <input id="dIni" type="date" />
+              <div class="small">Início mínimo</div>
+            </div>
+            <div style="flex:1">
+              <input id="dFim" type="date" />
+              <div class="small">Término máximo</div>
+            </div>
           </div>
-          <div style="flex:1">
-            <input id="dFim" type="date" />
-            <div class="small">Término máximo</div>
+
+          <label>Ordenação</label>
+          <select id="sortBy">
+            <option value="inicio_ts">Início (asc)</option>
+            <option value="-inicio_ts">Início (desc)</option>
+            <option value="termino_ts">Término (asc)</option>
+            <option value="-termino_ts">Término (desc)</option>
+            <option value="edt">EDT (asc)</option>
+            <option value="status_class">Status (asc)</option>
+          </select>
+
+          <div class="rowL" style="margin-top:12px;">
+            <button id="btnClearFilters" class="btn ghost">Limpar filtros</button>
           </div>
+
+          <div class="sep"></div>
+          <div class="small mono" id="audit">Aguardando carga…</div>
+          <div class="filtersHint small" style="margin-top:10px;">Dica: use <b>Enter</b> no campo de busca para aplicar.</div>
         </div>
 
-        <label>Ordenação</label>
-        <select id="sortBy">
-          <option value="inicio_ts">Início (asc)</option>
-          <option value="-inicio_ts">Início (desc)</option>
-          <option value="termino_ts">Término (asc)</option>
-          <option value="-termino_ts">Término (desc)</option>
-          <option value="edt">EDT (asc)</option>
-          <option value="status_class">Status (asc)</option>
-        </select>
-
-        <div class="rowL" style="margin-top:12px;">
-          <button id="btnClearFilters" class="btn ghost">Limpar filtros</button>
-        </div>
-
-        <div class="sep"></div>
-        <div class="small mono" id="audit">Aguardando carga…</div>
+        <div class="filtersCollapsedHint">Filtros minimizados.<br/>Clique no <b>≡</b> para expandir.</div>
       </aside>
 
-      <main>
+      <main style="min-width:0;">
         <div class="kpis">
           <div class="kpi">
             <div class="label">Total</div>
@@ -462,7 +510,7 @@
           </div>
         </section>
 
-        <div class="small" style="margin-top:8px;">Critério de aceite Gate D: Gantt bate 1:1 com a Lista (datas e status), sem divergência.</div>
+        <div class="small" style="margin-top:8px;">Critério de aceite: Gantt bate 1:1 com a Lista (datas e status), sem divergência.</div>
       </main>
     </div>
   </section>
@@ -504,6 +552,7 @@
     btnExport: document.getElementById("btnExport"),
     btnResetAll: document.getElementById("btnResetAll"),
     btnClearFilters: document.getElementById("btnClearFilters"),
+    btnToggleFilters: document.getElementById("btnToggleFilters"),
     tabLista: document.getElementById("tabLista"),
     tabGantt: document.getElementById("tabGantt"),
     panelLista: document.getElementById("panelLista"),
@@ -817,13 +866,12 @@
     const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "cronograma_gateD_view.csv";
+    a.download = "cronograma_view.csv";
     document.body.appendChild(a);
     a.click();
     a.remove();
   };
 
-  // ===== Gantt helpers =====
   const setDayWidth = (px) => document.documentElement.style.setProperty("--dayW", px + "px");
   const daysBetween = (tsA, tsB) => Math.round((tsB - tsA) / (24*60*60*1000));
   const addDays = (ts, n) => ts + n*(24*60*60*1000);
@@ -980,7 +1028,7 @@
     try{
       setPill(els.pillStatus, "Status: Carregando…", "warn");
       setPill(els.pillInfo, "Buscando CSV e normalizando…", "warn");
-      els.audit.textContent = "Iniciando Gate D…";
+      els.audit.textContent = "Iniciando carga…";
       DATA=[]; VIEW=[]; els.tbody.innerHTML="";
       setPill(els.pillMeta, "—");
 
@@ -997,12 +1045,12 @@
       fillResponsaveis();
       applyFilters();
 
-      setPill(els.pillStatus, "Status: OK (Gate D operacional)", "ok");
+      setPill(els.pillStatus, "Status: OK (Cronograma operacional)", "ok");
       setPill(els.pillInfo, "Lista + Gantt consistentes (VIEW).", "ok");
-      els.audit.textContent = "Gate D carregado. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
+      els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
     }catch(e){
       setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
-      setPill(els.pillInfo, "Falha no Gate. Ver auditoria.", "bad");
+      setPill(els.pillInfo, "Falha no carregamento. Ver auditoria.", "bad");
       els.audit.textContent = "ERRO: " + String(e);
       console.error(e);
     }
@@ -1025,11 +1073,19 @@
     renderAll();
   };
 
+  const LS_COLLAPSE = "cronograma_filters_collapsed";
+  const setCollapsed = (on) => {
+    document.body.classList.toggle("filters-collapsed", on);
+    localStorage.setItem(LS_COLLAPSE, on ? "1" : "0");
+  };
+
   els.btnLoad.addEventListener("click", load);
   els.btnApply.addEventListener("click", applyFilters);
   els.btnExport.addEventListener("click", exportCSV);
   els.btnResetAll.addEventListener("click", resetAll);
   els.btnClearFilters.addEventListener("click", resetFilters);
+  els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
+
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
   els.tabLista.addEventListener("click", showLista);
   els.tabGantt.addEventListener("click", showGantt);
@@ -1041,6 +1097,7 @@
   els.chkToday.addEventListener("change", () => { if(isGanttVisible()) renderGantt(); });
 
   setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
+  setCollapsed(localStorage.getItem(LS_COLLAPSE) === "1");
   resetAll();
 })();
 </script>
