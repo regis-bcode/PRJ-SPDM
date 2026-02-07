@@ -313,6 +313,39 @@ select{
     .tooltip .t{font-weight:950; font-size:12px; margin-bottom:6px}
     .tooltip .kv{font-size:11px;color:var(--muted);line-height:1.35}
     .kbd{font-size:11px;color:rgba(167,179,209,.85);padding:6px 10px;border-radius:999px;border:1px solid rgba(34,48,84,.65);background:rgba(255,255,255,.03);}
+  /* === Indicators / milestone icons === */
+.negBullet{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:14px; height:14px; border-radius:999px;
+  background: rgba(239,68,68,.16);
+  border: 1px solid rgba(239,68,68,.55);
+  color: var(--bad);
+  font-weight: 950;
+  line-height: 1;
+}
+.flag{
+  display:inline-flex; align-items:center; gap:8px;
+  font-weight: 950;
+  color: rgba(255,255,255,.92);
+}
+.flagIcon{
+  width:18px; height:18px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:8px;
+  background: rgba(34,197,94,.14);
+  border: 1px solid rgba(34,197,94,.45);
+  color: var(--ok);
+  font-size: 12px;
+}
+/* === FIX: dropdown options (Chrome) === */
+select option{
+  background-color: rgba(15,25,48,.98) !important;
+  color: var(--text) !important;
+}
+select{
+  color: var(--text) !important;
+  background-color: rgba(15,25,48,.98) !important;
+}
   </style>
 </head>
 <body>
@@ -412,6 +445,22 @@ select{
               <div class="small">Término máximo</div>
             </div>
           </div>
+
+          
+          <label>Atalhos de período (base: hoje)</label>
+          <select id="quickPeriod">
+            <option value="">(nenhum)</option>
+            <option value="this_week">Essa semana</option>
+            <option value="next_week">Próxima semana</option>
+            <option value="last_week">Semana passada</option>
+            <option value="next_15">Próximos 15 dias</option>
+            <option value="last_15">15 dias atrás</option>
+            <option value="this_month">Este mês</option>
+            <option value="next_month">Próximo mês</option>
+            <option value="last_month">Mês passado</option>
+            <option value="this_year">Este ano</option>
+            <option value="last_year">Ano passado</option>
+          </select>
 
           <label>Ordenação</label>
           <select id="sortBy">
@@ -561,6 +610,7 @@ select{
     dIni: document.getElementById("dIni"),
     dFim: document.getElementById("dFim"),
     sortBy: document.getElementById("sortBy"),
+    quickPeriod: document.getElementById("quickPeriod"),
     btnLoad: document.getElementById("btnLoad"),
     btnApply: document.getElementById("btnApply"),
     btnExport: document.getElementById("btnExport"),
@@ -771,14 +821,25 @@ select{
     return { ok, warn, bad, total: list.length };
   };
 
-    const renderTable = () => {
+      const renderTable = () => {
     const max = Math.min(VIEW.length, 1600);
     let rows = "";
     for(let i=0;i<max;i++){
       const o = VIEW[i];
+
+      const indNum = parseFloat(String(o.indicador ?? "").replace(",", "."));
+      const indicadorCell = (!isNaN(indNum) && indNum < 0)
+        ? '<span class="negBullet" title="Indicador negativo">●</span>'
+        : escapeHtml(o.indicador);
+
+      const marcoTxt = String(o.marco || "").trim().toLowerCase();
+      const marcoCell = (marcoTxt === "sim" || marcoTxt === "yes" || marcoTxt === "true" || marcoTxt === "1")
+        ? '<span class="flag" title="Marco do projeto"><span class="flagIcon">⚑</span> Marco</span>'
+        : escapeHtml(o.marco);
+
       rows += "<tr>" +
         "<td>"+escapeHtml(o.edt)+"</td>" +
-        "<td>"+escapeHtml(o.indicador)+"</td>" +
+        "<td>"+indicadorCell+"</td>" +
         "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
         "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
         "<td>"+escapeHtml(o.status_raw)+"</td>" +
@@ -786,7 +847,7 @@ select{
         "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
         "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
         "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
-        "<td>"+escapeHtml(o.marco)+"</td>" +
+        "<td>"+marcoCell+"</td>" +
         "<td>"+escapeHtml(o.predecessoras)+"</td>" +
         "<td>"+escapeHtml(o.responsavel)+"</td>" +
         "<td>"+escapeHtml(o.anotacoes)+"</td>" +
@@ -826,6 +887,84 @@ select{
     renderTable();
     if(isGanttVisible()) renderGantt();
   };
+
+const startOfWeekMonday = (d) => {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = x.getDay(); // 0=Sun
+  const diff = (day === 0 ? -6 : 1 - day); // Monday
+  x.setDate(x.getDate() + diff);
+  x.setHours(0,0,0,0);
+  return x;
+};
+
+const endOfWeekSunday = (d) => {
+  const s = startOfWeekMonday(d);
+  const e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  e.setHours(0,0,0,0);
+  return e;
+};
+
+const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth()+1, 0);
+const startOfYear = (d) => new Date(d.getFullYear(), 0, 1);
+const endOfYear = (d) => new Date(d.getFullYear(), 11, 31);
+
+const fmtInputDate = (d) => {
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${yy}-${mm}-${dd}`;
+};
+
+const applyQuickPeriod = (key) => {
+  if(!key){ return; }
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  let ini=null, fim=null;
+
+  if(key === "this_week"){
+    ini = startOfWeekMonday(today);
+    fim = endOfWeekSunday(today);
+  } else if(key === "next_week"){
+    const t = new Date(today); t.setDate(t.getDate()+7);
+    ini = startOfWeekMonday(t); fim = endOfWeekSunday(t);
+  } else if(key === "last_week"){
+    const t = new Date(today); t.setDate(t.getDate()-7);
+    ini = startOfWeekMonday(t); fim = endOfWeekSunday(t);
+  } else if(key === "next_15"){
+    ini = new Date(today);
+    fim = new Date(today); fim.setDate(fim.getDate()+15);
+  } else if(key === "last_15"){
+    ini = new Date(today); ini.setDate(ini.getDate()-15);
+    fim = new Date(today);
+  } else if(key === "this_month"){
+    ini = startOfMonth(today);
+    fim = endOfMonth(today);
+  } else if(key === "next_month"){
+    const t = new Date(today.getFullYear(), today.getMonth()+1, 1);
+    ini = startOfMonth(t);
+    fim = endOfMonth(t);
+  } else if(key === "last_month"){
+    const t = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    ini = startOfMonth(t);
+    fim = endOfMonth(t);
+  } else if(key === "this_year"){
+    ini = startOfYear(today);
+    fim = endOfYear(today);
+  } else if(key === "last_year"){
+    const t = new Date(today.getFullYear()-1, 0, 1);
+    ini = startOfYear(t);
+    fim = endOfYear(t);
+  }
+
+  if(ini && fim){
+    els.dIni.value = fmtInputDate(ini);
+    els.dFim.value = fmtInputDate(fim);
+    applyFilters();
+  }
+};
 
   const applyFilters = () => {
     const q = String(els.q.value||"").trim().toLowerCase();
@@ -1089,6 +1228,7 @@ select{
 
   const resetFilters = () => {
     els.q.value=""; els.fStatus.value=""; els.fResp.value=""; els.dIni.value=""; els.dFim.value=""; els.sortBy.value="inicio_ts";
+    if(els.quickPeriod) els.quickPeriod.value="";
     applyFilters();
   };
 
@@ -1115,6 +1255,11 @@ select{
   els.btnExport.addEventListener("click", exportCSV);
   els.btnResetAll.addEventListener("click", resetAll);
   els.btnClearFilters.addEventListener("click", resetFilters);
+  if(els.quickPeriod){
+    els.quickPeriod.addEventListener("change", ()=>{
+      applyQuickPeriod(els.quickPeriod.value);
+    });
+  }
   els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
 
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
@@ -1126,6 +1271,9 @@ select{
     if(isGanttVisible()) renderGantt();
   });
   els.chkToday.addEventListener("change", () => { if(isGanttVisible()) renderGantt(); });
+
+  els.dIni.addEventListener("change", ()=>{ if(els.quickPeriod) els.quickPeriod.value=""; });
+  els.dFim.addEventListener("change", ()=>{ if(els.quickPeriod) els.quickPeriod.value=""; });
 
   setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
   setCollapsed(localStorage.getItem(LS_COLLAPSE) === "1");
