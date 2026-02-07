@@ -110,7 +110,22 @@
       color: var(--text);
     }
 
+/* === FIX: dropdown options (Chrome) === */
+select option{
+  background-color: rgba(15,25,48,.98) !important;
+  color: var(--text) !important;
+}
+/* Some browsers ignore option bg; ensure select itself is readable */
+select{
+  color: var(--text) !important;
+  background-color: rgba(15,25,48,.98) !important;
+}
+
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
+    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
+    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
+
     .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
     .kpi{
       border:1px solid rgba(34,48,84,.9);
@@ -138,6 +153,12 @@
     .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
     .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
 
+    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
+    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
+    tbody tr:hover{background:rgba(255,255,255,.04)}
+
     .small{font-size:11px;color:var(--muted)}
     .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
     .hidden{display:none !important;}
@@ -162,11 +183,6 @@
       background:linear-gradient(135deg, rgba(99,102,241,.92), rgba(34,197,94,.78));
     }
 
-    /* ===== Layout (maximiza laterais) ===== */
-    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
-    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
-    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
-
     /* ===== Filters collapse ===== */
     .filtersCard{padding:12px;}
     .filtersHead{
@@ -182,13 +198,6 @@
     body.filters-collapsed .filtersCollapsedHint{display:block;}
     .filtersCollapsedHint{display:none; color:rgba(167,179,209,.75); font-size:11px; text-align:center; margin-top:10px;}
     .filtersSticky{position: sticky; top: 88px;}
-
-    /* ===== Lista ===== */
-    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
-    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
-    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
-    tbody tr:hover{background:rgba(255,255,255,.04)}
 
     /* ===== GANTT ===== */
     .ganttWrap{
@@ -468,22 +477,25 @@
 
         <section id="panelLista" class="tablewrap" style="margin-top:10px;">
           <table>
-            <thead>
-              <tr>
-                <th>edt</th>
-                <th>atividade</th>
-                <th>status_raw</th>
-                <th>status_class</th>
-                <th>% concluído</th>
-                <th>início</th>
-                <th>término</th>
-                <th>responsável</th>
-                <th>predecessoras</th>
-                <th>anotações</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
+  <thead>
+    <tr>
+      <th>EDT</th>
+      <th>Indicador</th>
+      <th>% Planejado</th>
+      <th>% concluída</th>
+      <th>Status</th>
+      <th>Atividade</th>
+      <th>Duração</th>
+      <th>Início</th>
+      <th>Término</th>
+      <th>Marco</th>
+      <th>Predecessoras</th>
+      <th>Responsável</th>
+      <th>Anotações</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
         </section>
 
         <section id="panelGantt" class="ganttWrap hidden" style="margin-top:10px;">
@@ -677,18 +689,22 @@
     return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
   };
 
-  const normalize = (rows) => {
+    const normalize = (rows) => {
     const headers = rows[0] || [];
     const req = ["edt","status","atividade","início","término"];
     const missing = req.filter(r => idxOf(headers, r) === -1);
     if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
 
-    const iEDT = idxOf(headers, "edt");
+    const iEDT  = idxOf(headers, "edt");
+    const iInd  = idxOf(headers, "indicador");
+    const iPlan = idxOf(headers, "% planejado");
     const iConc = idxOf(headers, "% concluída");
     const iStatus = idxOf(headers, "status");
     const iAtiv = idxOf(headers, "atividade");
-    const iIni = idxOf(headers, "início");
-    const iFim = idxOf(headers, "término");
+    const iDur  = idxOf(headers, "duração");
+    const iIni  = idxOf(headers, "início");
+    const iFim  = idxOf(headers, "término");
+    const iMarco = idxOf(headers, "marco");
     const iPred = idxOf(headers, "predecessoras");
     const iResp = idxOf(headers, "responsável");
     const iAnot = idxOf(headers, "anotações");
@@ -698,9 +714,13 @@
       const row = rows[r] || [];
       const obj = {
         edt: row[iEDT] ?? "",
+        indicador: row[iInd] ?? "",
+        pct_planejado: toPct(row[iPlan]),
         pct_concluido: toPct(row[iConc]),
         status_raw: row[iStatus] ?? "",
         atividade: row[iAtiv] ?? "",
+        duracao_raw: row[iDur] ?? "",
+        marco: row[iMarco] ?? "",
         responsavel: row[iResp] ?? "",
         predecessoras: row[iPred] ?? "",
         anotacoes: row[iAnot] ?? "",
@@ -751,21 +771,24 @@
     return { ok, warn, bad, total: list.length };
   };
 
-  const renderTable = () => {
-    const max = Math.min(VIEW.length, 1200);
+    const renderTable = () => {
+    const max = Math.min(VIEW.length, 1600);
     let rows = "";
     for(let i=0;i<max;i++){
       const o = VIEW[i];
       rows += "<tr>" +
         "<td>"+escapeHtml(o.edt)+"</td>" +
-        "<td>"+escapeHtml(o.atividade)+"</td>" +
-        "<td>"+escapeHtml(o.status_raw)+"</td>" +
-        "<td><span class=\"tag "+o.status_class+"\">"+escapeHtml(o.status_class)+"</span></td>" +
+        "<td>"+escapeHtml(o.indicador)+"</td>" +
+        "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
         "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
+        "<td>"+escapeHtml(o.status_raw)+"</td>" +
+        "<td>"+escapeHtml(o.atividade)+"</td>" +
+        "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
         "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
         "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
-        "<td>"+escapeHtml(o.responsavel)+"</td>" +
+        "<td>"+escapeHtml(o.marco)+"</td>" +
         "<td>"+escapeHtml(o.predecessoras)+"</td>" +
+        "<td>"+escapeHtml(o.responsavel)+"</td>" +
         "<td>"+escapeHtml(o.anotacoes)+"</td>" +
       "</tr>";
     }
@@ -805,72 +828,36 @@
   };
 
   const applyFilters = () => {
-    try{
-      if(!DATA || !DATA.length){
-        els.audit.textContent = "Apply: sem dados carregados. Clique em 'Carregar & Normalizar'.";
-        return;
-      }
+    const q = String(els.q.value||"").trim().toLowerCase();
+    const st = els.fStatus.value;
+    const resp = els.fResp.value;
+    const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
+    const dFim = els.dFim.value ? new Date(els.dFim.value + "T00:00:00").getTime() : null;
+    const sort = els.sortBy.value;
+    const desc = sort.startsWith("-");
+    const key = desc ? sort.slice(1) : sort;
 
-      const q = String(els.q.value||"").trim().toLowerCase();
-      const st = String(els.fStatus.value||"").trim();
-      const resp = String(els.fResp.value||"").trim();
-
-      // Datas: considera o dia inteiro no término (<= 23:59:59)
-      const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
-      const dFim = els.dFim.value ? (new Date(els.dFim.value + "T23:59:59").getTime()) : null;
-
-      const sort = String(els.sortBy.value||"inicio_ts");
-      const desc = sort.startsWith("-");
-      const key = desc ? sort.slice(1) : sort;
-
-      let out = DATA.slice();
-
-      if(q){
-        out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes)
-          .toLowerCase()
-          .includes(q));
-      }
-      if(st){
-        out = out.filter(o => String(o.status_class||"").trim() === st);
-      }
-      if(resp){
-        out = out.filter(o => String(o.responsavel||"").trim() === resp.trim());
-      }
-      if(dIni !== null){
-        out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
-      }
-      if(dFim !== null){
-        out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
-      }
-
-      // Ordenação
-      out.sort((a,b)=>{
-        const va=a[key], vb=b[key];
-        if(va===null && vb===null) return 0;
-        if(va===null) return 1;
-        if(vb===null) return -1;
-        if(typeof va==="number" && typeof vb==="number") return va-vb;
-        return String(va).localeCompare(String(vb),"pt-BR");
-      });
-      if(desc) out.reverse();
-
-      VIEW = out;
-
-      // Auditoria rápida
-      els.audit.textContent =
-        "Apply OK. VIEW=" + VIEW.length +
-        " | q=" + (q?('"'+q+'"'):"—") +
-        " | status=" + (st||"—") +
-        " | resp=" + (resp||"—") +
-        " | ini≥" + (els.dIni.value||"—") +
-        " | fim≤" + (els.dFim.value||"—") +
-        " | sort=" + sort;
-
-      renderAll();
-    }catch(e){
-      els.audit.textContent = "ERRO no Apply: " + String(e);
-      console.error(e);
+    let out = DATA.slice();
+    if(q){
+      out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes).toLowerCase().includes(q));
     }
+    if(st) out = out.filter(o => o.status_class === st);
+    if(resp) out = out.filter(o => String(o.responsavel||"") === resp);
+    if(dIni !== null) out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
+    if(dFim !== null) out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
+
+    out.sort((a,b)=>{
+      const va=a[key], vb=b[key];
+      if(va===null && vb===null) return 0;
+      if(va===null) return 1;
+      if(vb===null) return -1;
+      if(typeof va==="number" && typeof vb==="number") return va-vb;
+      return String(va).localeCompare(String(vb),"pt-BR");
+    });
+    if(desc) out.reverse();
+
+    VIEW = out;
+    renderAll();
   };
 
   const showLista = () => {
@@ -890,7 +877,7 @@
 
   const exportCSV = () => {
     if(!VIEW.length){ alert("Nada para exportar (lista vazia)."); return; }
-    const headers = ["edt","atividade","status_raw","status_class","pct_concluido","inicio_iso","termino_iso","responsavel","predecessoras","anotacoes"];
+    const headers = ["edt","indicador","pct_planejado","pct_concluido","status_raw","atividade","duracao_raw","inicio_iso","termino_iso","marco","predecessoras","responsavel","anotacoes"];
     const lines = [headers.join(",")];
     VIEW.forEach(o => {
       const row = headers.map(k => {
@@ -936,13 +923,19 @@
   };
 
   const showTooltip = (ev, o) => {
+    
     const pct = (o.pct_concluido ?? "");
+    const plan = (o.pct_planejado ?? "");
     const body =
       "<div><b>EDT:</b> " + escapeHtml(o.edt) + "</div>" +
+      (o.indicador ? "<div><b>Indicador:</b> " + escapeHtml(o.indicador) + "</div>" : "") +
       "<div><b>Status:</b> " + escapeHtml(o.status_raw) + " (" + escapeHtml(o.status_class) + ")</div>" +
-      "<div><b>Progresso:</b> " + escapeHtml(pct) + "%</div>" +
+      (plan !== "" ? "<div><b>% Planejado:</b> " + escapeHtml(plan) + "%</div>" : "") +
+      "<div><b>% Concluída:</b> " + escapeHtml(pct) + "%</div>" +
       "<div><b>Início:</b> " + escapeHtml(fmtISOToBR(o.inicio_iso)) + "</div>" +
       "<div><b>Término:</b> " + escapeHtml(fmtISOToBR(o.termino_iso)) + "</div>" +
+      (o.duracao_raw ? "<div><b>Duração:</b> " + escapeHtml(o.duracao_raw) + "</div>" : "") +
+      (o.marco ? "<div><b>Marco:</b> " + escapeHtml(o.marco) + "</div>" : "") +
       (o.responsavel ? "<div><b>Resp.:</b> " + escapeHtml(o.responsavel) + "</div>" : "") +
       (o.predecessoras ? "<div><b>Pred.:</b> " + escapeHtml(o.predecessoras) + "</div>" : "");
     els.ttTitle.textContent = o.atividade || "(sem atividade)";
@@ -1125,15 +1118,6 @@
   els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
 
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
-  // Auto-apply quando trocar selects/datas/ordenação
-  ["change"].forEach(evt=>{
-    els.fStatus.addEventListener(evt, applyFilters);
-    els.fResp.addEventListener(evt, applyFilters);
-    els.dIni.addEventListener(evt, applyFilters);
-    els.dFim.addEventListener(evt, applyFilters);
-    els.sortBy.addEventListener(evt, applyFilters);
-  });
-
   els.tabLista.addEventListener("click", showLista);
   els.tabGantt.addEventListener("click", showGantt);
 
