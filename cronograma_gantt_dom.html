@@ -470,6 +470,114 @@ html[data-theme="light"]{
   --text: #0f172a;
   --muted: #475569;
 }
+
+/* ===== Light theme (match Painel style) ===== */
+html[data-theme="light"] body{
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="light"] header{
+  background: rgba(255,255,255,.90);
+  border-bottom: 1px solid rgba(226,232,240,.95);
+  box-shadow: 0 10px 26px rgba(2,6,23,.06);
+}
+html[data-theme="light"] .topStrip{
+  background: transparent;
+  border-color: rgba(226,232,240,.95);
+}
+html[data-theme="light"] .card{
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,.95);
+  box-shadow: 0 18px 50px rgba(2,6,23,.08);
+}
+html[data-theme="light"] .pill{
+  background:#ffffff;
+  border:1px solid rgba(226,232,240,.95);
+  color:#475569;
+}
+html[data-theme="light"] .btn{
+  background:#ffffff;
+  border:1px solid rgba(226,232,240,.95);
+  color:#0f172a;
+}
+html[data-theme="light"] .btn.primary{
+  background: linear-gradient(135deg,#6366f1,#22c55e);
+  color:#ffffff;
+  border: none;
+}
+html[data-theme="light"] .seg button,
+html[data-theme="light"] .chip{
+  background:#ffffff;
+  border:1px solid rgba(226,232,240,.95);
+  color:#0f172a;
+}
+html[data-theme="light"] .seg button.active{
+  background: linear-gradient(135deg,#6366f1,#22c55e);
+  color:#ffffff;
+  border-color: transparent;
+}
+html[data-theme="light"] input,
+html[data-theme="light"] select{
+  background:#ffffff;
+  color:#0f172a;
+  border:1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] option{
+  color:#0f172a !important;
+  background:#ffffff !important;
+}
+html[data-theme="light"] .filtersCard{
+  background: linear-gradient(135deg, rgba(99,102,241,.10), rgba(236,72,153,.08));
+  border:1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] .filtersCard .label{
+  color:#334155;
+}
+html[data-theme="light"] .filtersCard .label:before{
+  background: linear-gradient(90deg,#22c55e,#06b6d4,#6366f1);
+}
+html[data-theme="light"] .tableWrap{
+  background:#ffffff;
+  border:1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] table thead th{
+  background: #fbfcff;
+  color:#0f172a;
+  border-bottom: 1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] table tbody tr:hover{
+  background:#f8fafc;
+}
+html[data-theme="light"] table td{
+  color:#0f172a;
+  border-bottom: 1px solid rgba(226,232,240,.75);
+}
+html[data-theme="light"] .ganttWrap{
+  background:#ffffff;
+  border:1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] .ganttGrid{
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+html[data-theme="light"] .ganttHeader{
+  background:#fbfcff;
+  color:#0f172a;
+  border-bottom:1px solid rgba(226,232,240,.95);
+}
+html[data-theme="light"] .ganttRow:nth-child(odd) .ganttGrid{
+  background: #ffffff;
+}
+html[data-theme="light"] .ganttRow:nth-child(even) .ganttGrid{
+  background: #fbfcff;
+}
+html[data-theme="light"] .rowAtrasada{
+  background: rgba(220,38,38,.10) !important;
+}
+html[data-theme="light"] .hscrollDock{
+  background: rgba(255,255,255,.92);
+  border-top: 1px solid rgba(226,232,240,.95);
+}
+
 html,body{background:var(--bg); color:var(--text);}
 html[data-theme="light"] body{background: radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.10), transparent 55%),
                          radial-gradient(900px 700px at 110% 0%, rgba(236,72,153,.10), transparent 55%),
