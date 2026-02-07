@@ -612,6 +612,78 @@ body{padding-bottom:22px;}
   /* Ensures dropdown text is readable */
   select, option{color:#0f172a !important;}
   select{background:#fff !important;}
+
+/* ====== UX: Minimizar/Maximizar filtros (melhor usabilidade) ====== */
+#btnToggleFilters{
+  width:40px;height:40px;border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(148,163,184,.35);
+  color:var(--text);
+  font-weight:900;
+}
+html[data-theme="light"] #btnToggleFilters{
+  background:rgba(255,255,255,.85);
+  border:1px solid rgba(2,6,23,.12);
+  color:#0f172a;
+}
+.filtersHeader{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.filtersTitle{font-weight:950; letter-spacing:.2px;}
+/* Quando colapsado: aside vira “barra” e aparece o tab flutuante */
+body.filters-collapsed #filtersCard{width:64px; min-width:64px; padding:10px 8px;}
+body.filters-collapsed #filtersCard .filtersBody{display:none !important;}
+body.filters-collapsed #filtersCard .filtersHeader{justify-content:center;}
+body.filters-collapsed #filtersCard .filtersTitle{display:none;}
+.filtersCollapsedTab{
+  position:fixed;
+  left:10px;
+  top:180px;
+  z-index:80;
+  display:none;
+  gap:10px;
+  align-items:center;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(2,6,23,.42);
+  backdrop-filter: blur(8px);
+  color:var(--text);
+  font-weight:950;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(2,6,23,.18);
+}
+.filtersCollapsedTab span{opacity:.92}
+html[data-theme="light"] .filtersCollapsedTab{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(2,6,23,.12);
+  color:#0f172a;
+}
+body.filters-collapsed .filtersCollapsedTab{display:inline-flex;}
+/* Evita sobreposição feia no topo quando alterna modo claro */
+body.filters-collapsed .filtersCollapsedTab{top:140px;}
+
+/* ====== Scrollbars: lista sempre com barras visíveis e dock horizontal fixo ====== */
+#tableWrap{
+  overflow: scroll !important;
+  scrollbar-gutter: stable both-edges;
+}
+#tableWrap::-webkit-scrollbar{width:14px;height:14px;}
+#tableWrap::-webkit-scrollbar-thumb{
+  background:rgba(148,163,184,.45);
+  border-radius:999px;
+  border:3px solid rgba(255,255,255,.12);
+}
+#tableWrap::-webkit-scrollbar-track{background:transparent;}
+html[data-theme="light"] #tableWrap::-webkit-scrollbar-thumb{
+  border:3px solid rgba(255,255,255,.65);
+}
+/* Mantém o dock horizontal sempre ativo quando Lista estiver visível */
+#hScrollDock{display:block;}
+/* Garante que o rodapé fixo não esconda a última linha */
+#tableWrap{padding-bottom:18px;}
+
 </style>
 </head>
 <body>
@@ -676,7 +748,7 @@ body{padding-bottom:22px;}
           </div>
           <div class="rowL">
             <button id="btnApply" class="btn">Aplicar</button>
-            <button id="btnToggleFilters" class="btn icon" title="Minimizar/Expandir filtros">≡</button>
+            <button id="btnToggleFilters" aria-label="Minimizar/Maximizar filtros" class="btn icon" title="Minimizar/Expandir filtros">≡</button>
           </div>
         </div>
 
@@ -744,7 +816,13 @@ body{padding-bottom:22px;}
         </div>
 
         <div class="filtersCollapsedHint">Filtros minimizados.<br/>Clique no <b>≡</b> para expandir.</div>
-      </aside>
+      
+  </aside>
+  <!-- Botão flutuante para reabrir filtros quando colapsado (UX) -->
+  <button id="filtersCollapsedTab" class="filtersCollapsedTab" title="Expandir filtros" aria-label="Expandir filtros">
+    ☰ <span>Filtros</span>
+  </button>
+
 
       <main style="min-width:0;">
         <div class="kpis">
@@ -1658,6 +1736,15 @@ const applyQuickPeriod = (key) => {
     });
   }
   els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
+
+  // Tab flutuante para reabrir filtros quando colapsado
+  const _flt = document.getElementById('filtersCollapsedTab');
+  if (_flt){
+    _flt.addEventListener('click', ()=>{ 
+      document.body.classList.remove('filters-collapsed'); 
+      localStorage.setItem('mit045_filters_collapsed','0');
+    });
+  }
 
   els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
   els.tabLista.addEventListener("click", showLista);
