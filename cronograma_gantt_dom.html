@@ -22,7 +22,7 @@
     --line: rgba(255,255,255,.10);
     --shadow: 0 18px 50px rgba(2,6,23,.45);
     --radius: 18px;
-    --theadBg: #0b1430; /* SÓLIDO (sem transparência) */
+    --theadBg: #0b1430; /* sólido */
   }
 
   body.light{
@@ -35,7 +35,7 @@
     --muted: rgba(15,23,42,.55);
     --line: rgba(15,23,42,.12);
     --shadow: 0 18px 50px rgba(2,6,23,.08);
-    --theadBg: #f1f5f9; /* SÓLIDO */
+    --theadBg: #f1f5f9; /* sólido */
   }
 
   *{box-sizing:border-box}
@@ -50,7 +50,6 @@
     overflow-x:hidden;
   }
 
-  /* ====== Layout: ocupar laterais ====== */
   .wrap{max-width:100%;margin:0 auto;padding:0 14px;}
   header{padding:14px 0 10px 0;}
 
@@ -111,18 +110,6 @@
     padding:14px;
   }
 
-  /* ====== TOP CONTROLS BAR (mover Lista/Gantt/Zoom/Hoje para cima) ====== */
-  .topControls{
-    margin-top:10px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .controlsLeft{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .controlsRight{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-
   /* Grid principal */
   .grid{
     display:grid;
@@ -132,9 +119,7 @@
     margin-top:14px;
     transition: grid-template-columns .18s ease;
   }
-  body.sidebar-collapsed .grid{
-    grid-template-columns: 68px 1fr;
-  }
+  body.sidebar-collapsed .grid{grid-template-columns: 68px 1fr;}
   @media (max-width:1200px){ .grid{grid-template-columns:1fr;} }
 
   /* Sidebar / filtros */
@@ -147,23 +132,20 @@
     background:#fff;color:#0f172a;border-color:rgba(15,23,42,.12);
   }
 
-  /* selects: texto SEMPRE legível (escuro) */
-  .filters select{
-    color:#0f172a;
-    background: rgba(255,255,255,.95);
-  }
+  /* selects: texto sempre legível */
+  .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
   body.dark .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
 
   .filters .rowActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 
-  /* ====== Minimizar filtros (UX) ====== */
+  /* Minimizar filtros (UX) */
   #sidebarHeader{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
     position:sticky; top:0;
     padding-bottom:10px;
-    background: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.0));
+    background:transparent;
   }
-  body.light #sidebarHeader{background:transparent;}
+
   .miniBtn{
     display:inline-flex;align-items:center;gap:8px;
     border-radius:999px;
@@ -174,6 +156,11 @@
     cursor:pointer;
   }
   body.light .miniBtn{background:#fff;}
+
+  /* >>> requisito: fonte do botão Minimizar (dark=branco / light=preto) */
+  body.dark .miniBtn, body.dark .miniBtn *{ color:#ffffff !important; }
+  body.light .miniBtn, body.light .miniBtn *{ color:#0f172a !important; }
+
   .miniBtn:hover{border-color:rgba(99,102,241,.45);}
   .miniIcon{
     width:28px;height:28px;border-radius:10px;
@@ -183,23 +170,14 @@
     font-weight:950;
   }
   body.light .miniIcon{background:#fff;}
+
   body.sidebar-collapsed #sidebar .filtersBody,
   body.sidebar-collapsed #sidebar .rowActions,
   body.sidebar-collapsed #sidebar .auditBox,
-  body.sidebar-collapsed #sidebarHeader .titlePills{
-    display:none;
-  }
-  body.sidebar-collapsed #sidebar{
-    padding:10px;
-  }
-  body.sidebar-collapsed #sidebarHeader{
-    justify-content:center;
-  }
-  body.sidebar-collapsed #btnToggleSidebar{
-    width:48px; height:48px;
-    border-radius:16px;
-    justify-content:center;
-  }
+  body.sidebar-collapsed #sidebarHeader .titlePills{display:none;}
+  body.sidebar-collapsed #sidebar{padding:10px;}
+  body.sidebar-collapsed #sidebarHeader{justify-content:center;}
+  body.sidebar-collapsed #btnToggleSidebar{width:48px; height:48px; border-radius:16px; justify-content:center;}
 
   /* KPIs */
   .kpis{
@@ -224,6 +202,22 @@
   .kpi .label{color:var(--muted);font-size:12px;font-weight:900;}
   .kpi .value{font-size:22px;font-weight:950;margin-top:6px;}
 
+  /* Exibição pills */
+  .exibRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+
+  /* ====== CONTROLS BAR (posição conforme imagem) ====== */
+  .controlsBar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:2px;
+    margin-bottom:10px;
+  }
+  .controlsLeft{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .controlsRight{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
   /* Table / Lista */
   .tablewrap{
     border-radius:14px;
@@ -231,26 +225,20 @@
     background: rgba(255,255,255,.04);
     margin-top:12px;
 
-    /* barras SEMPRE visíveis */
     overflow: scroll;
     scrollbar-gutter: stable both-edges;
-
-    /* altura para rolagem vertical dentro do quadro */
     max-height: calc(100vh - 330px);
   }
   body.light .tablewrap{background:#fff;}
   table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
   thead th{
     position:sticky;top:0;z-index:5;
-    background: var(--theadBg); /* SÓLIDO */
+    background: var(--theadBg);
     border-bottom:1px solid var(--line);
     padding:10px;font-size:12px;white-space:nowrap;
     user-select:none;
   }
-  th,td{
-    padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08);
-    vertical-align:top;
-  }
+  th,td{padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;}
   body.light th, body.light td{border-bottom:1px solid rgba(15,23,42,.08);}
   tbody tr:hover{background: rgba(255,255,255,.04);}
   body.light tbody tr:hover{background:#f8fafc;}
@@ -258,11 +246,9 @@
   .muted{color:var(--muted);}
   .small{font-size:11px;}
 
-  /* Atrasadas em vermelho */
   .rowLate td{ background: rgba(220,38,38,.18) !important; }
   body.dark .rowLate td{ background: rgba(220,38,38,.28) !important; }
 
-  /* Indicadores */
   .dot{
     width:10px;height:10px;border-radius:999px;display:inline-block;
     border:1px solid rgba(255,255,255,.25);
@@ -272,7 +258,6 @@
   .dot.bad{background:var(--bad);}
   body.light .dot{border-color:rgba(15,23,42,.18);}
 
-  /* Hierarquia */
   .twisty{
     display:inline-flex;
     width:18px;height:18px;
@@ -292,7 +277,7 @@
     font-weight:900;font-size:11px;
   }
 
-  /* Dock da rolagem horizontal (fixo) */
+  /* Dock horizontal fixo */
   #hScrollDock{
     display:block;
     position:fixed;
@@ -307,30 +292,31 @@
   body.light #hScrollDock{background: rgba(255,255,255,.85);}
   #hScrollInner{height:1px;}
 
-  /* Exibição pills */
-  .exibRow{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    margin-top:10px;
-  }
-
-  /* Colunas (checklist) */
-  .colBox{
+  /* Colunas visíveis (lista simples) */
+  .colList{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    max-height:220px;
+    overflow:auto;
     border:1px solid var(--line);
     border-radius:14px;
     padding:10px;
     background: rgba(255,255,255,.04);
   }
-  body.light .colBox{background:#fff;}
-  .colBox .colItem{
+  body.light .colList{background:#fff;}
+  .colList li{
     display:flex; align-items:center; gap:10px;
-    padding:6px 0;
+    padding:6px 4px;
     border-bottom:1px dashed rgba(255,255,255,.10);
   }
-  body.light .colBox .colItem{border-bottom:1px dashed rgba(15,23,42,.12);}
-  .colBox .colItem:last-child{border-bottom:none;}
-  .colBox input[type="checkbox"]{transform:scale(1.1);}
+  body.light .colList li{border-bottom:1px dashed rgba(15,23,42,.12);}
+  .colList li:last-child{border-bottom:none;}
+  .colList input[type="checkbox"]{transform:scale(1.1);}
 
-  /* Drag header hint */
   th.draggable{cursor:grab;}
   th.draggable:active{cursor:grabbing;}
   th.dragOver{outline:2px solid rgba(99,102,241,.55); outline-offset:-2px;}
@@ -360,32 +346,6 @@
         <button class="btn" id="btnExport">Exportar (CSV)</button>
         <button class="btn" id="btnTheme">🌙 Escuro</button>
         <button class="btn" id="btnReset">Reset</button>
-      </div>
-    </div>
-
-    <!-- TOP CONTROLS BAR: mover Lista/Gantt/Zoom/Hoje para cima -->
-    <div class="card topControls">
-      <div class="controlsLeft">
-        <button class="btn" id="btnToggleSidebarTop" title="Minimizar/Maximizar filtros">≡ Filtros</button>
-
-        <button class="btn" id="tabLista">📄 Lista</button>
-        <button class="btn" id="tabGantt">📊 Gantt</button>
-
-        <span class="pill">Zoom:
-          <select id="zoomSel" style="border:none;background:transparent;color:inherit;font-weight:900;outline:none;">
-            <option value="compact">Compacto</option>
-            <option value="normal" selected>Normal</option>
-            <option value="wide">Amplo</option>
-          </select>
-        </span>
-
-        <label class="pill" style="cursor:pointer;">
-          <input type="checkbox" id="chkToday" style="margin:0 6px 0 0;"> Hoje
-        </label>
-      </div>
-
-      <div class="controlsRight muted small">
-        Gate D: renderização do Gantt baseada no modelo canônico já validado.
       </div>
     </div>
   </div>
@@ -458,7 +418,7 @@
         </label>
 
         <label class="label">Colunas visíveis</label>
-        <div class="colBox" id="colBox"></div>
+        <ul class="colList" id="colBox"></ul>
       </div>
 
       <div class="rowActions">
@@ -470,6 +430,31 @@
     </aside>
 
     <main class="card" id="main">
+
+      <!-- CONTROLS BAR: agora na posição conforme sua imagem -->
+      <div class="card controlsBar">
+        <div class="controlsLeft">
+          <button class="btn" id="btnToggleSidebarTop" title="Minimizar/Maximizar filtros">≡ Filtros</button>
+          <button class="btn" id="tabLista">📄 Lista</button>
+          <button class="btn" id="tabGantt">📊 Gantt</button>
+
+          <span class="pill">Zoom:
+            <select id="zoomSel" style="border:none;background:transparent;color:inherit;font-weight:900;outline:none;">
+              <option value="compact">Compacto</option>
+              <option value="normal" selected>Normal</option>
+              <option value="wide">Amplo</option>
+            </select>
+          </span>
+
+          <label class="pill" style="cursor:pointer;">
+            <input type="checkbox" id="chkToday" style="margin:0 6px 0 0;"> Hoje
+          </label>
+        </div>
+        <div class="controlsRight muted small">
+          Gate D: renderização do Gantt baseada no modelo canônico já validado.
+        </div>
+      </div>
+
       <!-- Exibição: ok/warn/bad logo acima dos cards -->
       <div class="exibRow">
         <span class="pill">Exibição</span>
@@ -507,7 +492,6 @@
   </div>
 </div>
 
-<!-- Barra horizontal fixa (sempre visível) -->
 <div id="hScrollDock" aria-label="Rolagem horizontal fixa"><div id="hScrollInner"></div></div>
 
 <script>
@@ -519,8 +503,8 @@ let RAW_TEXT = "";
 let ROWS_RAW = [];
 let ROWS_CANON = [];
 let VIEW = [];
-let COLLAPSED = new Set();     // EDTs recolhidos (pais)
-let HSCROLL_TARGET = null;     // elemento controlado pelo dock
+let COLLAPSED = new Set();
+let HSCROLL_TARGET = null;
 
 /* ====== Colunas (ordem/visibilidade) ====== */
 const COLS_DEF = [
@@ -541,11 +525,9 @@ const COLS_DEF = [
 
 const LS_COL_ORDER = "mit045_cols_order_v1";
 const LS_COL_VIS   = "mit045_cols_vis_v1";
-
 let COL_ORDER = [];
 let COL_VIS = {};
 
-/* ========= HELPERS ========= */
 const $ = (id)=>document.getElementById(id);
 const nowBR = ()=> new Date().toLocaleString("pt-BR");
 
@@ -581,7 +563,6 @@ function parseCSV(text){
   if(cur.length || row.length){ row.push(cur); rows.push(row); }
   return rows.filter(r => r.some(c => String(c||"").trim() !== ""));
 }
-
 function toISODateMaybe(v){
   const s=String(v||"").trim();
   if(!s) return "";
@@ -595,20 +576,17 @@ function toISODateMaybe(v){
   if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
   return "";
 }
-
 function fmtBR(iso){
   if(!iso) return "";
   const m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(!m) return iso;
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
-
 function parsePct(v){
   const s=String(v||"").trim().replace("%","");
   const n=parseFloat(s.replace(",","."));
   return isNaN(n) ? null : Math.max(0, Math.min(100, n));
 }
-
 function statusClass(raw){
   const s=String(raw||"").toLowerCase();
   if(s.includes("atras")) return "bad";
@@ -616,21 +594,17 @@ function statusClass(raw){
   if(s.includes("andam") || s.includes("outro") || s.includes("em ")) return "warn";
   return "warn";
 }
-
 function isMarco(v){
   const s=String(v||"").toLowerCase().trim();
   return s === "sim" || s === "true" || s === "1" || s === "marco";
 }
-
 function isNegative(v){
   const n = parseFloat(String(v||"").replace(",","."));
   return !isNaN(n) && n < 0;
 }
-
 function buildTreeMeta(rows){
   const childrenMap = new Map();
   const levelOf = (edt)=> String(edt||"").split(".").length-1;
-
   rows.forEach(r=>{
     const parts = String(r.edt||"").split(".");
     if(parts.length<=1) return;
@@ -638,62 +612,12 @@ function buildTreeMeta(rows){
     if(!childrenMap.has(parent)) childrenMap.set(parent, []);
     childrenMap.get(parent).push(r.edt);
   });
-
   return { childrenMap, levelOf };
 }
-
-function applyAtalhoPeriodo(code){
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  const startOfWeek = (d)=>{
-    const x=new Date(d);
-    const day=(x.getDay()+6)%7;
-    x.setDate(x.getDate()-day);
-    x.setHours(0,0,0,0);
-    return x;
-  };
-  const endOfWeek = (d)=>{
-    const s=startOfWeek(d);
-    const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999);
-    return e;
-  };
-  const startOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth(), 1); x.setHours(0,0,0,0); return x; };
-  const endOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth()+1, 0); x.setHours(23,59,59,999); return x; };
-  const startOfYear = (d)=>{ const x=new Date(d.getFullYear(),0,1); x.setHours(0,0,0,0); return x; };
-  const endOfYear = (d)=>{ const x=new Date(d.getFullYear(),11,31); x.setHours(23,59,59,999); return x; };
-
-  let a=null,b=null;
-  if(code==="thisWeek"){ a=startOfWeek(today); b=endOfWeek(today); }
-  if(code==="nextWeek"){ const t=new Date(today); t.setDate(t.getDate()+7); a=startOfWeek(t); b=endOfWeek(t); }
-  if(code==="lastWeek"){ const t=new Date(today); t.setDate(t.getDate()-7); a=startOfWeek(t); b=endOfWeek(t); }
-  if(code==="next15"){ a=new Date(today); b=new Date(today); b.setDate(b.getDate()+15); b.setHours(23,59,59,999); }
-  if(code==="prev15"){ b=new Date(today); b.setHours(23,59,59,999); a=new Date(today); a.setDate(a.getDate()-15); }
-  if(code==="thisMonth"){ a=startOfMonth(today); b=endOfMonth(today); }
-  if(code==="nextMonth"){ const t=new Date(today.getFullYear(), today.getMonth()+1, 1); a=startOfMonth(t); b=endOfMonth(t); }
-  if(code==="lastMonth"){ const t=new Date(today.getFullYear(), today.getMonth()-1, 1); a=startOfMonth(t); b=endOfMonth(t); }
-  if(code==="thisYear"){ a=startOfYear(today); b=endOfYear(today); }
-  if(code==="lastYear"){ const t=new Date(today.getFullYear()-1,0,1); a=startOfYear(t); b=endOfYear(t); }
-
-  if(a && b){
-    $("dIni").value = a.toISOString().slice(0,10);
-    $("dFim").value = new Date(b).toISOString().slice(0,10);
-  }
-}
-
-function computeWindow(rows){
-  const starts = rows.map(r=>r.inicio_iso).filter(Boolean).sort();
-  const ends = rows.map(r=>r.termino_iso).filter(Boolean).sort();
-  if(!starts.length || !ends.length) return "—";
-  return `${fmtBR(starts[0])} → ${fmtBR(ends[ends.length-1])}`;
-}
-
 function escapeHTML(s){
   return String(s||"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#39;");
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
 
 /* ========= COLS: load/save/init ========= */
@@ -705,7 +629,6 @@ function loadColsPrefs(){
     COL_ORDER = Array.isArray(o) && o.length ? o : COLS_DEF.map(c=>c.key);
     COL_VIS = (v && typeof v==="object") ? v : Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
 
-    // garantir que novas colunas apareçam por padrão
     COLS_DEF.forEach(c=>{
       if(!(c.key in COL_VIS)) COL_VIS[c.key]=true;
       if(!COL_ORDER.includes(c.key)) COL_ORDER.push(c.key);
@@ -715,27 +638,27 @@ function loadColsPrefs(){
     COL_VIS = Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
   }
 }
-
 function saveColsPrefs(){
   localStorage.setItem(LS_COL_ORDER, JSON.stringify(COL_ORDER));
   localStorage.setItem(LS_COL_VIS, JSON.stringify(COL_VIS));
 }
 
+/* >>> Colunas visíveis em lista com check (conforme pedido) */
 function buildColsChecklist(){
   const box = $("colBox");
   box.innerHTML = "";
   COLS_DEF.forEach(c=>{
-    const line = document.createElement("label");
-    line.className="colItem";
-    line.innerHTML = `<input type="checkbox" ${COL_VIS[c.key] ? "checked":""} data-col="${c.key}"> <span style="font-weight:900">${c.label}</span>`;
-    line.querySelector("input").addEventListener("change", (e)=>{
+    const li = document.createElement("li");
+    li.innerHTML = `<input type="checkbox" ${COL_VIS[c.key] ? "checked":""} data-col="${c.key}">
+                    <span style="font-weight:900">${c.label}</span>`;
+    li.querySelector("input").addEventListener("change", (e)=>{
       const k = e.target.getAttribute("data-col");
       COL_VIS[k] = !!e.target.checked;
       saveColsPrefs();
       renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
       updateHScrollDock();
     });
-    box.appendChild(line);
+    box.appendChild(li);
   });
 }
 
@@ -788,7 +711,7 @@ function renderHeader(){
   });
 }
 
-/* ========= LOAD + NORMALIZE (MANTIDO) ========= */
+/* ========= LOAD + NORMALIZE (mantido) ========= */
 async function loadAndNormalize(){
   setStatus(false, "Carregando…");
   audit("Aguardando…");
@@ -885,6 +808,13 @@ function buildResponsavelFilter(){
   sel.innerHTML = `<option value="">(todos)</option>` + vals.map(v=>`<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
 }
 
+function computeWindow(rows){
+  const starts = rows.map(r=>r.inicio_iso).filter(Boolean).sort();
+  const ends = rows.map(r=>r.termino_iso).filter(Boolean).sort();
+  if(!starts.length || !ends.length) return "—";
+  return `${fmtBR(starts[0])} → ${fmtBR(ends[ends.length-1])}`;
+}
+
 function applyFiltersAndRender(){
   const q = ($("q").value||"").trim().toLowerCase();
   const st = $("fStatus").value || "";
@@ -908,19 +838,12 @@ function applyFiltersAndRender(){
   if(df) rows = rows.filter(r=> !r.termino_iso || r.termino_iso <= df);
   if(onlyMarco) rows = rows.filter(r=> r.marco === "Sim");
 
-  if(order==="sheet"){
-    rows.sort((a,b)=>a.sheet_i-b.sheet_i);
-  }else if(order==="startAsc"){
-    rows.sort((a,b)=>String(a.inicio_iso||"9999").localeCompare(String(b.inicio_iso||"9999")));
-  }else if(order==="endAsc"){
-    rows.sort((a,b)=>String(a.termino_iso||"9999").localeCompare(String(b.termino_iso||"9999")));
-  }else if(order==="startDesc"){
-    rows.sort((a,b)=>String(b.inicio_iso||"").localeCompare(String(a.inicio_iso||"")));
-  }else if(order==="endDesc"){
-    rows.sort((a,b)=>String(b.termino_iso||"").localeCompare(String(a.termino_iso||"")));
-  }
+  if(order==="sheet") rows.sort((a,b)=>a.sheet_i-b.sheet_i);
+  else if(order==="startAsc") rows.sort((a,b)=>String(a.inicio_iso||"9999").localeCompare(String(b.inicio_iso||"9999")));
+  else if(order==="endAsc") rows.sort((a,b)=>String(a.termino_iso||"9999").localeCompare(String(b.termino_iso||"9999")));
+  else if(order==="startDesc") rows.sort((a,b)=>String(b.inicio_iso||"").localeCompare(String(a.inicio_iso||"")));
+  else if(order==="endDesc") rows.sort((a,b)=>String(b.termino_iso||"").localeCompare(String(a.termino_iso||"")));
 
-  // colapso hierárquico: esconde descendentes
   const hidden = new Set();
   for(const parent of COLLAPSED){
     rows.forEach(r=>{
@@ -929,7 +852,6 @@ function applyFiltersAndRender(){
   }
 
   VIEW = rows.filter(r=> !hidden.has(r.edt));
-
   renderKPIs(rows, VIEW);
   renderHeader();
   renderTable(rows, VIEW, buildTreeMeta(rows));
@@ -959,7 +881,6 @@ function renderTable(allRows, viewRows, meta){
   const tbody = $("tbody");
   tbody.innerHTML = "";
 
-  // quem tem filhos
   const childSet = new Set();
   allRows.forEach(r=>{
     const parts = String(r.edt).split(".");
@@ -974,7 +895,6 @@ function renderTable(allRows, viewRows, meta){
     const hasKids = childSet.has(r.edt);
     const isCollapsed = COLLAPSED.has(r.edt);
 
-    // indicador
     let indicHTML = "";
     if(r.indicador_neg){
       indicHTML = `<span class="dot bad" title="Indicador negativo"></span>`;
@@ -984,19 +904,16 @@ function renderTable(allRows, viewRows, meta){
       indicHTML = `<span class="dot ${r.status_class}" title="${r.status_class}"></span>`;
     }
 
-    // marco
     const marcoHTML = (r.marco==="Sim")
       ? `<span class="flag" title="Marco do projeto">🏁 Marco</span>`
       : `Não`;
 
-    // atividade com indent + toggle (na coluna Atividade)
     const indent = `<span class="indent" style="width:${lvl*14}px"></span>`;
     const twist = hasKids
       ? `<span class="twisty" data-edt="${r.edt}" title="Expandir/Recolher">${isCollapsed ? "+" : "–"}</span>`
       : `<span class="twisty" style="opacity:.0;border-color:transparent;">•</span>`;
     const atividadeHTML = `<div class="activityCell">${indent}${twist}<b>${escapeHTML(r.atividade||"")}</b></div>`;
 
-    // montar células conforme ordem/visibilidade
     const tds = [];
     COL_ORDER.forEach((key)=>{
       if(!COL_VIS[key]) return;
@@ -1020,7 +937,6 @@ function renderTable(allRows, viewRows, meta){
     tbody.appendChild(tr);
   }
 
-  // bind toggles
   tbody.querySelectorAll(".twisty[data-edt]").forEach(el=>{
     el.addEventListener("click", (e)=>{
       e.stopPropagation();
@@ -1049,7 +965,6 @@ function setupHScrollSync(){
     dock.scrollLeft = target.scrollLeft;
   }, {passive:true});
 }
-
 function updateHScrollDock(){
   const dock = $("hScrollDock");
   const inner = $("hScrollInner");
@@ -1063,11 +978,9 @@ function updateHScrollDock(){
     dock.scrollLeft = 0;
     return;
   }
-
   const sw = HSCROLL_TARGET.scrollWidth || 0;
   const cw = HSCROLL_TARGET.clientWidth || 0;
   inner.style.width = Math.max(sw, cw+1) + "px";
-
   try{ dock.scrollLeft = HSCROLL_TARGET.scrollLeft || 0; }catch(e){}
 }
 
@@ -1095,9 +1008,6 @@ function setSidebarCollapsed(collapsed){
   updateHScrollDock();
 }
 
-$("btnToggleSidebar").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
-$("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
-
 /* ========= BINDINGS ========= */
 $("btnLoad").addEventListener("click", ()=>loadAndNormalize());
 $("btnApply").addEventListener("click", ()=>applyFiltersAndRender());
@@ -1113,6 +1023,7 @@ $("btnClear").addEventListener("click", ()=>{
   COLLAPSED.clear();
   applyFiltersAndRender();
 });
+
 $("btnReset").addEventListener("click", ()=>{
   RAW_TEXT=""; ROWS_RAW=[]; ROWS_CANON=[]; VIEW=[];
   COLLAPSED.clear();
@@ -1167,16 +1078,42 @@ $("btnExport").addEventListener("click", ()=>{
 
 $("q").addEventListener("keydown",(e)=>{ if(e.key==="Enter") applyFiltersAndRender(); });
 
+$("btnToggleSidebar").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+$("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+
 $("fAtalho").addEventListener("change", ()=>{
   const v=$("fAtalho").value;
-  if(v) applyAtalhoPeriodo(v);
+  if(!v) return;
+  // atalhos só atualizam datas; aplicação fica no botão "Aplicar"
+  const today = new Date(); today.setHours(0,0,0,0);
+  const startOfWeek = (d)=>{ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); x.setHours(0,0,0,0); return x; };
+  const endOfWeek = (d)=>{ const s=startOfWeek(d); const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return e; };
+  const startOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth(), 1); x.setHours(0,0,0,0); return x; };
+  const endOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth()+1, 0); x.setHours(23,59,59,999); return x; };
+  const startOfYear = (d)=>{ const x=new Date(d.getFullYear(),0,1); x.setHours(0,0,0,0); return x; };
+  const endOfYear = (d)=>{ const x=new Date(d.getFullYear(),11,31); x.setHours(23,59,59,999); return x; };
+
+  let a=null,b=null;
+  if(v==="thisWeek"){ a=startOfWeek(today); b=endOfWeek(today); }
+  if(v==="nextWeek"){ const t=new Date(today); t.setDate(t.getDate()+7); a=startOfWeek(t); b=endOfWeek(t); }
+  if(v==="lastWeek"){ const t=new Date(today); t.setDate(t.getDate()-7); a=startOfWeek(t); b=endOfWeek(t); }
+  if(v==="next15"){ a=new Date(today); b=new Date(today); b.setDate(b.getDate()+15); b.setHours(23,59,59,999); }
+  if(v==="prev15"){ b=new Date(today); b.setHours(23,59,59,999); a=new Date(today); a.setDate(a.getDate()-15); }
+  if(v==="thisMonth"){ a=startOfMonth(today); b=endOfMonth(today); }
+  if(v==="nextMonth"){ const t=new Date(today.getFullYear(), today.getMonth()+1, 1); a=startOfMonth(t); b=endOfMonth(t); }
+  if(v==="lastMonth"){ const t=new Date(today.getFullYear(), today.getMonth()-1, 1); a=startOfMonth(t); b=endOfMonth(t); }
+  if(v==="thisYear"){ a=startOfYear(today); b=endOfYear(today); }
+  if(v==="lastYear"){ const t=new Date(today.getFullYear()-1,0,1); a=startOfYear(t); b=endOfYear(t); }
+  if(a && b){
+    $("dIni").value = a.toISOString().slice(0,10);
+    $("dFim").value = new Date(b).toISOString().slice(0,10);
+  }
 });
 
 $("btnTheme").addEventListener("click", ()=>{
   const cur = localStorage.getItem("mit045_theme") || "dark";
   applyTheme(cur==="dark" ? "light" : "dark");
 });
-
 $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
 
 /* ========= INIT ========= */
@@ -1196,7 +1133,6 @@ $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
   setupHScrollSync();
   updateHScrollDock();
 
-  // ajustar texto do botão sidebar
   const btn = $("btnToggleSidebar");
   if(btn){
     btn.querySelector(".miniText").textContent = document.body.classList.contains("sidebar-collapsed") ? "Expandir" : "Minimizar";
