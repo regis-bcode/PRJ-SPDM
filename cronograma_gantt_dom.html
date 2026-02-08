@@ -22,6 +22,7 @@
     --line: rgba(255,255,255,.10);
     --shadow: 0 18px 50px rgba(2,6,23,.45);
     --radius: 18px;
+    --theadBg: #0b1430; /* SÓLIDO (sem transparência) */
   }
 
   body.light{
@@ -34,6 +35,7 @@
     --muted: rgba(15,23,42,.55);
     --line: rgba(15,23,42,.12);
     --shadow: 0 18px 50px rgba(2,6,23,.08);
+    --theadBg: #f1f5f9; /* SÓLIDO */
   }
 
   *{box-sizing:border-box}
@@ -48,10 +50,10 @@
     overflow-x:hidden;
   }
 
-  .wrap{max-width:1600px;margin:0 auto;padding:0 16px;}
-  header{
-    padding:16px 0;
-  }
+  /* ====== Layout: ocupar laterais ====== */
+  .wrap{max-width:100%;margin:0 auto;padding:0 14px;}
+  header{padding:14px 0 10px 0;}
+
   .topbar{
     display:flex;
     align-items:flex-start;
@@ -71,6 +73,7 @@
   body.light .btn{background:#fff;}
   .btn:hover{border-color:rgba(99,102,241,.45);}
   .btn.primary{background: linear-gradient(135deg, rgba(99,102,241,.75), rgba(34,197,94,.75)); border-color:transparent;}
+
   .pill{
     display:inline-flex;align-items:center;gap:8px;
     padding:6px 10px;border-radius:999px;border:1px solid var(--line);
@@ -81,7 +84,7 @@
   .pill.warn{border-color:rgba(245,158,11,.45); color:rgba(245,158,11,.95); background:rgba(245,158,11,.10);}
   .pill.bad{border-color:rgba(239,68,68,.45); color:rgba(239,68,68,.95); background:rgba(239,68,68,.10);}
 
-  .nav-main{display:flex;gap:12px;margin-top:12px;}
+  .nav-main{display:flex;gap:12px;margin-top:10px;}
   .nav-item{
     text-decoration:none; padding:10px 18px; border-radius:999px;
     border:1px solid var(--line);
@@ -108,25 +111,31 @@
     padding:14px;
   }
 
-  .toolbar{
+  /* ====== TOP CONTROLS BAR (mover Lista/Gantt/Zoom/Hoje para cima) ====== */
+  .topControls{
+    margin-top:10px;
     display:flex;
     justify-content:space-between;
     align-items:center;
     gap:10px;
     flex-wrap:wrap;
-    margin-top:12px;
   }
+  .controlsLeft{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .controlsRight{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 
+  /* Grid principal */
   .grid{
     display:grid;
     grid-template-columns: 360px 1fr;
     gap:14px;
     align-items:start;
     margin-top:14px;
+    transition: grid-template-columns .18s ease;
   }
-  @media (max-width:1200px){
-    .grid{grid-template-columns:1fr;}
+  body.sidebar-collapsed .grid{
+    grid-template-columns: 68px 1fr;
   }
+  @media (max-width:1200px){ .grid{grid-template-columns:1fr;} }
 
   /* Sidebar / filtros */
   .filters .label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900;}
@@ -138,17 +147,59 @@
     background:#fff;color:#0f172a;border-color:rgba(15,23,42,.12);
   }
 
-  /* selects dos filtros: texto sempre legível */
+  /* selects: texto SEMPRE legível (escuro) */
   .filters select{
     color:#0f172a;
     background: rgba(255,255,255,.95);
   }
-  body.dark .filters select{
-    color:#0f172a;
-    background: rgba(255,255,255,.95);
-  }
+  body.dark .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
 
   .filters .rowActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+
+  /* ====== Minimizar filtros (UX) ====== */
+  #sidebarHeader{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    position:sticky; top:0;
+    padding-bottom:10px;
+    background: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.0));
+  }
+  body.light #sidebarHeader{background:transparent;}
+  .miniBtn{
+    display:inline-flex;align-items:center;gap:8px;
+    border-radius:999px;
+    padding:8px 12px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.06);
+    font-weight:950;
+    cursor:pointer;
+  }
+  body.light .miniBtn{background:#fff;}
+  .miniBtn:hover{border-color:rgba(99,102,241,.45);}
+  .miniIcon{
+    width:28px;height:28px;border-radius:10px;
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.06);
+    font-weight:950;
+  }
+  body.light .miniIcon{background:#fff;}
+  body.sidebar-collapsed #sidebar .filtersBody,
+  body.sidebar-collapsed #sidebar .rowActions,
+  body.sidebar-collapsed #sidebar .auditBox,
+  body.sidebar-collapsed #sidebarHeader .titlePills{
+    display:none;
+  }
+  body.sidebar-collapsed #sidebar{
+    padding:10px;
+  }
+  body.sidebar-collapsed #sidebarHeader{
+    justify-content:center;
+  }
+  body.sidebar-collapsed #btnToggleSidebar{
+    width:48px; height:48px;
+    border-radius:16px;
+    justify-content:center;
+  }
 
   /* KPIs */
   .kpis{
@@ -165,29 +216,37 @@
                 radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.10), transparent 45%),
                 rgba(255,255,255,.05);
   }
-  body.light .kpi{background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
-                          radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.08), transparent 45%),
-                          #fff;}
+  body.light .kpi{
+    background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
+                radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.08), transparent 45%),
+                #fff;
+  }
   .kpi .label{color:var(--muted);font-size:12px;font-weight:900;}
   .kpi .value{font-size:22px;font-weight:950;margin-top:6px;}
 
   /* Table / Lista */
   .tablewrap{
-    overflow:auto;
     border-radius:14px;
     border:1px solid var(--line);
     background: rgba(255,255,255,.04);
     margin-top:12px;
+
+    /* barras SEMPRE visíveis */
+    overflow: scroll;
+    scrollbar-gutter: stable both-edges;
+
+    /* altura para rolagem vertical dentro do quadro */
+    max-height: calc(100vh - 330px);
   }
   body.light .tablewrap{background:#fff;}
   table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
   thead th{
     position:sticky;top:0;z-index:5;
-    background: rgba(255,255,255,.06);
+    background: var(--theadBg); /* SÓLIDO */
     border-bottom:1px solid var(--line);
     padding:10px;font-size:12px;white-space:nowrap;
+    user-select:none;
   }
-  body.light thead th{background:#f8fafc;}
   th,td{
     padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08);
     vertical-align:top;
@@ -199,13 +258,7 @@
   .muted{color:var(--muted);}
   .small{font-size:11px;}
 
-  /* ===== Ajustes de UX solicitados ===== */
-  .tablewrap{
-    max-height: calc(100vh - 360px);
-    overflow: scroll;              /* barras sempre visíveis */
-    scrollbar-gutter: stable both-edges;
-  }
-  body.dark .tablewrap{ background: rgba(10,14,26,.35); }
+  /* Atrasadas em vermelho */
   .rowLate td{ background: rgba(220,38,38,.18) !important; }
   body.dark .rowLate td{ background: rgba(220,38,38,.28) !important; }
 
@@ -254,8 +307,33 @@
   body.light #hScrollDock{background: rgba(255,255,255,.85);}
   #hScrollInner{height:1px;}
 
-  /* Toggle claro/escuro */
-  .themeBtn{min-width:92px;}
+  /* Exibição pills */
+  .exibRow{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    margin-top:10px;
+  }
+
+  /* Colunas (checklist) */
+  .colBox{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px;
+    background: rgba(255,255,255,.04);
+  }
+  body.light .colBox{background:#fff;}
+  .colBox .colItem{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 0;
+    border-bottom:1px dashed rgba(255,255,255,.10);
+  }
+  body.light .colBox .colItem{border-bottom:1px dashed rgba(15,23,42,.12);}
+  .colBox .colItem:last-child{border-bottom:none;}
+  .colBox input[type="checkbox"]{transform:scale(1.1);}
+
+  /* Drag header hint */
+  th.draggable{cursor:grab;}
+  th.draggable:active{cursor:grabbing;}
+  th.dragOver{outline:2px solid rgba(99,102,241,.55); outline-offset:-2px;}
 </style>
 </head>
 
@@ -280,98 +358,120 @@
       <div class="row" style="justify-content:flex-end;">
         <button class="btn primary" id="btnLoad">Carregar &amp; Normalizar</button>
         <button class="btn" id="btnExport">Exportar (CSV)</button>
-        <button class="btn themeBtn" id="btnTheme">🌙 Escuro</button>
+        <button class="btn" id="btnTheme">🌙 Escuro</button>
         <button class="btn" id="btnReset">Reset</button>
+      </div>
+    </div>
+
+    <!-- TOP CONTROLS BAR: mover Lista/Gantt/Zoom/Hoje para cima -->
+    <div class="card topControls">
+      <div class="controlsLeft">
+        <button class="btn" id="btnToggleSidebarTop" title="Minimizar/Maximizar filtros">≡ Filtros</button>
+
+        <button class="btn" id="tabLista">📄 Lista</button>
+        <button class="btn" id="tabGantt">📊 Gantt</button>
+
+        <span class="pill">Zoom:
+          <select id="zoomSel" style="border:none;background:transparent;color:inherit;font-weight:900;outline:none;">
+            <option value="compact">Compacto</option>
+            <option value="normal" selected>Normal</option>
+            <option value="wide">Amplo</option>
+          </select>
+        </span>
+
+        <label class="pill" style="cursor:pointer;">
+          <input type="checkbox" id="chkToday" style="margin:0 6px 0 0;"> Hoje
+        </label>
+      </div>
+
+      <div class="controlsRight muted small">
+        Gate D: renderização do Gantt baseada no modelo canônico já validado.
       </div>
     </div>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="card toolbar">
-    <div class="row">
-      <button class="btn" id="tabLista">📄 Lista</button>
-      <button class="btn" id="tabGantt">📊 Gantt</button>
-      <span class="pill">Zoom:
-        <select id="zoomSel" style="border:none;background:transparent;color:inherit;font-weight:900;outline:none;">
-          <option value="compact">Compacto</option>
-          <option value="normal" selected>Normal</option>
-          <option value="wide">Amplo</option>
-        </select>
-      </span>
-      <label class="pill" style="cursor:pointer;">
-        <input type="checkbox" id="chkToday" style="margin:0 6px 0 0;"> Hoje
-      </label>
-    </div>
-    <div class="muted small">Gate D: renderização do Gantt baseada no modelo canônico já validado.</div>
-  </div>
-
   <div class="grid">
     <aside class="card filters" id="sidebar">
-      <div class="row" style="justify-content:space-between;">
-        <div class="row" style="gap:8px;">
+      <div id="sidebarHeader">
+        <div class="row titlePills" style="gap:8px;">
           <span class="pill" style="font-weight:950;">Filtros</span>
           <span class="pill" id="pillItens">0 itens</span>
         </div>
-        <button class="btn" id="btnApply">Aplicar</button>
+        <button class="miniBtn" id="btnToggleSidebar" title="Minimizar/Maximizar filtros">
+          <span class="miniIcon">≡</span>
+          <span class="miniText">Minimizar</span>
+        </button>
       </div>
 
-      <label class="label">Busca (texto livre)</label>
-      <input id="q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..."/>
+      <div class="filtersBody">
+        <label class="label">Busca (texto livre)</label>
+        <input id="q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..."/>
 
-      <label class="label">Status (classificado)</label>
-      <select id="fStatus">
-        <option value="">(todos)</option>
-        <option value="ok">ok (Concluída)</option>
-        <option value="warn">warn (Em andamento / outros)</option>
-        <option value="bad">bad (Atrasada)</option>
-      </select>
+        <label class="label">Status (classificado)</label>
+        <select id="fStatus">
+          <option value="">(todos)</option>
+          <option value="ok">ok (Concluída)</option>
+          <option value="warn">warn (Em andamento / outros)</option>
+          <option value="bad">bad (Atrasada)</option>
+        </select>
 
-      <label class="label">Responsável</label>
-      <select id="fResp">
-        <option value="">(todos)</option>
-      </select>
+        <label class="label">Responsável</label>
+        <select id="fResp">
+          <option value="">(todos)</option>
+        </select>
 
-      <label class="label">Período (início ≥ / término ≤)</label>
-      <div class="row" style="gap:10px;">
-        <input id="dIni" type="date" style="flex:1;">
-        <input id="dFim" type="date" style="flex:1;">
+        <label class="label">Período (início ≥ / término ≤)</label>
+        <div class="row" style="gap:10px;">
+          <input id="dIni" type="date" style="flex:1;">
+          <input id="dFim" type="date" style="flex:1;">
+        </div>
+
+        <label class="label">Atalhos de período (base: hoje)</label>
+        <select id="fAtalho">
+          <option value="">(nenhum)</option>
+          <option value="nextWeek">Próxima Semana</option>
+          <option value="thisWeek">Essa Semana</option>
+          <option value="lastWeek">Semana Passada</option>
+          <option value="next15">Próximos 15 dias</option>
+          <option value="prev15">15 dias Atrás</option>
+          <option value="thisMonth">Este Mês</option>
+          <option value="nextMonth">Próximo Mês</option>
+          <option value="lastMonth">Mês Passado</option>
+          <option value="thisYear">Este Ano</option>
+          <option value="lastYear">Ano Passado</option>
+        </select>
+
+        <label class="label">Ordenação</label>
+        <select id="fOrder">
+          <option value="sheet" selected>Ordem da planilha</option>
+          <option value="startAsc">Início (asc)</option>
+          <option value="endAsc">Término (asc)</option>
+          <option value="startDesc">Início (desc)</option>
+          <option value="endDesc">Término (desc)</option>
+        </select>
+
+        <label class="label">Somente Marcos</label>
+        <label class="pill" style="cursor:pointer;align-self:flex-start;">
+          <input type="checkbox" id="fMarcoOnly" style="margin:0 8px 0 0;"> Mostrar apenas tarefas Marco
+        </label>
+
+        <label class="label">Colunas visíveis</label>
+        <div class="colBox" id="colBox"></div>
       </div>
-
-      <label class="label">Atalhos de período (base: hoje)</label>
-      <select id="fAtalho">
-        <option value="">(nenhum)</option>
-        <option value="nextWeek">Próxima Semana</option>
-        <option value="thisWeek">Essa Semana</option>
-        <option value="lastWeek">Semana Passada</option>
-        <option value="next15">Próximos 15 dias</option>
-        <option value="prev15">15 dias Atrás</option>
-        <option value="thisMonth">Este Mês</option>
-        <option value="nextMonth">Próximo Mês</option>
-        <option value="lastMonth">Mês Passado</option>
-        <option value="thisYear">Este Ano</option>
-        <option value="lastYear">Ano Passado</option>
-      </select>
-
-      <label class="label">Ordenação</label>
-      <select id="fOrder">
-        <option value="sheet" selected>Ordem da planilha</option>
-        <option value="startAsc">Início (asc)</option>
-        <option value="endAsc">Término (asc)</option>
-        <option value="startDesc">Início (desc)</option>
-        <option value="endDesc">Término (desc)</option>
-      </select>
 
       <div class="rowActions">
+        <button class="btn" id="btnApply">Aplicar</button>
         <button class="btn" id="btnClear">Limpar filtros</button>
       </div>
 
-      <div class="muted small" id="audit" style="margin-top:10px;white-space:pre-wrap;"></div>
+      <div class="auditBox muted small" id="audit" style="margin-top:10px;white-space:pre-wrap;"></div>
     </aside>
 
     <main class="card" id="main">
-      <!-- Exibição (mover logo acima dos KPIs) -->
-      <div class="row" style="margin-top:0;align-items:center;">
+      <!-- Exibição: ok/warn/bad logo acima dos cards -->
+      <div class="exibRow">
         <span class="pill">Exibição</span>
         <span class="pill" id="pillShown">0 exibidos</span>
         <span class="pill ok" id="pillOk">ok: 0</span>
@@ -394,21 +494,7 @@
       <section id="panelLista" class="tablewrap" aria-label="Lista de tarefas">
         <table id="taskTable">
           <thead>
-            <tr>
-              <th>EDT</th>
-              <th>Indicador</th>
-              <th>% Planejado</th>
-              <th>% concluída</th>
-              <th>Status</th>
-              <th>Atividade</th>
-              <th>Duração</th>
-              <th>Início</th>
-              <th>Término</th>
-              <th>Marco</th>
-              <th>Predecessoras</th>
-              <th>Responsável</th>
-              <th>Anotações</th>
-            </tr>
+            <tr id="theadRow"></tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -434,7 +520,30 @@ let ROWS_RAW = [];
 let ROWS_CANON = [];
 let VIEW = [];
 let COLLAPSED = new Set();     // EDTs recolhidos (pais)
-let HSCROLL_TARGET = null;     // elemento atualmente controlado pelo dock
+let HSCROLL_TARGET = null;     // elemento controlado pelo dock
+
+/* ====== Colunas (ordem/visibilidade) ====== */
+const COLS_DEF = [
+  {key:"edt", label:"EDT"},
+  {key:"indicador", label:"Indicador"},
+  {key:"pct_plan", label:"% Planejado"},
+  {key:"pct_done", label:"% concluída"},
+  {key:"status", label:"Status"},
+  {key:"atividade", label:"Atividade"},
+  {key:"duracao", label:"Duração"},
+  {key:"inicio", label:"Início"},
+  {key:"termino", label:"Término"},
+  {key:"marco", label:"Marco"},
+  {key:"predecessoras", label:"Predecessoras"},
+  {key:"responsavel", label:"Responsável"},
+  {key:"anotacoes", label:"Anotações"},
+];
+
+const LS_COL_ORDER = "mit045_cols_order_v1";
+const LS_COL_VIS   = "mit045_cols_vis_v1";
+
+let COL_ORDER = [];
+let COL_VIS = {};
 
 /* ========= HELPERS ========= */
 const $ = (id)=>document.getElementById(id);
@@ -450,16 +559,11 @@ function setStatus(ok, msg){
     b.className="pill bad"; b.textContent=msg || "Falha no carregamento. Ver auditoria.";
   }
 }
-
-function audit(msg){
-  const el=$("audit");
-  el.textContent = msg;
-}
+function audit(msg){ $("audit").textContent = msg; }
 
 function parseCSV(text){
   const rows=[];
   let row=[], cur="", inQ=false;
-  // normaliza quebras
   const norm = String(text||"").replaceAll("\r\n","\n").replaceAll("\r","\n");
   for(let i=0;i<norm.length;i++){
     const ch=norm[i], nx=norm[i+1];
@@ -481,7 +585,6 @@ function parseCSV(text){
 function toISODateMaybe(v){
   const s=String(v||"").trim();
   if(!s) return "";
-  // aceita: "qua. 12/06/24" ou "12/06/2024"
   const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
   if(m){
     const dd=String(m[1]).padStart(2,'0');
@@ -525,11 +628,9 @@ function isNegative(v){
 }
 
 function buildTreeMeta(rows){
-  // determina nível e pais via EDT (ex: 1.7.6.1 -> pai 1.7.6)
-  const index = new Map();
-  rows.forEach((r, i)=> index.set(r.edt, i));
-
   const childrenMap = new Map();
+  const levelOf = (edt)=> String(edt||"").split(".").length-1;
+
   rows.forEach(r=>{
     const parts = String(r.edt||"").split(".");
     if(parts.length<=1) return;
@@ -538,18 +639,15 @@ function buildTreeMeta(rows){
     childrenMap.get(parent).push(r.edt);
   });
 
-  const levelOf = (edt)=> String(edt||"").split(".").length-1;
-
-  return { index, childrenMap, levelOf };
+  return { childrenMap, levelOf };
 }
 
 function applyAtalhoPeriodo(code){
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
 
   const startOfWeek = (d)=>{
     const x=new Date(d);
-    const day=(x.getDay()+6)%7; // seg=0
+    const day=(x.getDay()+6)%7;
     x.setDate(x.getDate()-day);
     x.setHours(0,0,0,0);
     return x;
@@ -589,7 +687,108 @@ function computeWindow(rows){
   return `${fmtBR(starts[0])} → ${fmtBR(ends[ends.length-1])}`;
 }
 
-/* ========= LOAD + NORMALIZE ========= */
+function escapeHTML(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#39;");
+}
+
+/* ========= COLS: load/save/init ========= */
+function loadColsPrefs(){
+  try{
+    const o = JSON.parse(localStorage.getItem(LS_COL_ORDER) || "null");
+    const v = JSON.parse(localStorage.getItem(LS_COL_VIS) || "null");
+
+    COL_ORDER = Array.isArray(o) && o.length ? o : COLS_DEF.map(c=>c.key);
+    COL_VIS = (v && typeof v==="object") ? v : Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
+
+    // garantir que novas colunas apareçam por padrão
+    COLS_DEF.forEach(c=>{
+      if(!(c.key in COL_VIS)) COL_VIS[c.key]=true;
+      if(!COL_ORDER.includes(c.key)) COL_ORDER.push(c.key);
+    });
+  }catch(e){
+    COL_ORDER = COLS_DEF.map(c=>c.key);
+    COL_VIS = Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
+  }
+}
+
+function saveColsPrefs(){
+  localStorage.setItem(LS_COL_ORDER, JSON.stringify(COL_ORDER));
+  localStorage.setItem(LS_COL_VIS, JSON.stringify(COL_VIS));
+}
+
+function buildColsChecklist(){
+  const box = $("colBox");
+  box.innerHTML = "";
+  COLS_DEF.forEach(c=>{
+    const line = document.createElement("label");
+    line.className="colItem";
+    line.innerHTML = `<input type="checkbox" ${COL_VIS[c.key] ? "checked":""} data-col="${c.key}"> <span style="font-weight:900">${c.label}</span>`;
+    line.querySelector("input").addEventListener("change", (e)=>{
+      const k = e.target.getAttribute("data-col");
+      COL_VIS[k] = !!e.target.checked;
+      saveColsPrefs();
+      renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
+      updateHScrollDock();
+    });
+    box.appendChild(line);
+  });
+}
+
+/* ========= TABLE HEADER (draggable) ========= */
+function renderHeader(){
+  const tr = $("theadRow");
+  tr.innerHTML = "";
+
+  COL_ORDER.forEach((key)=>{
+    if(!COL_VIS[key]) return;
+    const def = COLS_DEF.find(c=>c.key===key);
+    if(!def) return;
+
+    const th = document.createElement("th");
+    th.textContent = def.label;
+    th.setAttribute("data-col", key);
+    th.classList.add("draggable");
+    th.draggable = true;
+
+    th.addEventListener("dragstart", (e)=>{
+      e.dataTransfer.setData("text/plain", key);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    th.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      th.classList.add("dragOver");
+    });
+    th.addEventListener("dragleave", ()=> th.classList.remove("dragOver"));
+    th.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      th.classList.remove("dragOver");
+      const fromKey = e.dataTransfer.getData("text/plain");
+      const toKey = key;
+      if(!fromKey || fromKey===toKey) return;
+
+      const fromIdx = COL_ORDER.indexOf(fromKey);
+      const toIdx = COL_ORDER.indexOf(toKey);
+      if(fromIdx<0 || toIdx<0) return;
+
+      COL_ORDER.splice(fromIdx,1);
+      COL_ORDER.splice(toIdx,0,fromKey);
+      saveColsPrefs();
+
+      renderHeader();
+      renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
+      updateHScrollDock();
+    });
+
+    tr.appendChild(th);
+  });
+}
+
+/* ========= LOAD + NORMALIZE (MANTIDO) ========= */
 async function loadAndNormalize(){
   setStatus(false, "Carregando…");
   audit("Aguardando…");
@@ -623,17 +822,15 @@ async function loadAndNormalize(){
       responsavel: idx("Responsável"),
       anotacoes: idx("Anotações")
     };
-
-    // fallback: alguns CSVs podem ter variações
     if(col.edt < 0) col.edt = 0;
 
     const out=[];
     for(let i=1;i<ROWS_RAW.length;i++){
       const r0 = ROWS_RAW[i];
-      if(!r0 || !r0.length) continue;
+      if (!r0 || !r0.length) continue;
 
       const edt = String(r0[col.edt]||"").trim();
-      if(!edt) continue;
+      if (!edt) continue;
 
       const pctP = parsePct(r0[col.pct_plan]);
       const pctD = parsePct(r0[col.pct_done]);
@@ -683,7 +880,8 @@ async function loadAndNormalize(){
 /* ========= FILTERS / VIEW ========= */
 function buildResponsavelFilter(){
   const sel = $("fResp");
-  const vals = Array.from(new Set(ROWS_CANON.map(r=>r.responsavel).filter(v=>v && v.trim()))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const vals = Array.from(new Set(ROWS_CANON.map(r=>r.responsavel).filter(v=>v && v.trim())))
+    .sort((a,b)=>a.localeCompare(b,'pt-BR'));
   sel.innerHTML = `<option value="">(todos)</option>` + vals.map(v=>`<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
 }
 
@@ -694,6 +892,7 @@ function applyFiltersAndRender(){
   const di = $("dIni").value || "";
   const df = $("dFim").value || "";
   const order = $("fOrder").value || "sheet";
+  const onlyMarco = !!$("fMarcoOnly").checked;
 
   let rows = ROWS_CANON.slice();
 
@@ -703,20 +902,12 @@ function applyFiltersAndRender(){
       return t.includes(q);
     });
   }
-  if(st){
-    rows = rows.filter(r=> r.status_class === st);
-  }
-  if(rp){
-    rows = rows.filter(r=> r.responsavel === rp);
-  }
-  if(di){
-    rows = rows.filter(r=> !r.inicio_iso || r.inicio_iso >= di);
-  }
-  if(df){
-    rows = rows.filter(r=> !r.termino_iso || r.termino_iso <= df);
-  }
+  if(st) rows = rows.filter(r=> r.status_class === st);
+  if(rp) rows = rows.filter(r=> r.responsavel === rp);
+  if(di) rows = rows.filter(r=> !r.inicio_iso || r.inicio_iso >= di);
+  if(df) rows = rows.filter(r=> !r.termino_iso || r.termino_iso <= df);
+  if(onlyMarco) rows = rows.filter(r=> r.marco === "Sim");
 
-  // ordenação
   if(order==="sheet"){
     rows.sort((a,b)=>a.sheet_i-b.sheet_i);
   }else if(order==="startAsc"){
@@ -729,11 +920,9 @@ function applyFiltersAndRender(){
     rows.sort((a,b)=>String(b.termino_iso||"").localeCompare(String(a.termino_iso||"")));
   }
 
-  // aplica colapso hierárquico (oculta descendentes)
-  const meta = buildTreeMeta(rows);
+  // colapso hierárquico: esconde descendentes
   const hidden = new Set();
   for(const parent of COLLAPSED){
-    // esconde qualquer EDT que comece com parent + "."
     rows.forEach(r=>{
       if(String(r.edt).startsWith(parent + ".")) hidden.add(r.edt);
     });
@@ -742,7 +931,8 @@ function applyFiltersAndRender(){
   VIEW = rows.filter(r=> !hidden.has(r.edt));
 
   renderKPIs(rows, VIEW);
-  renderTable(rows, VIEW, meta);
+  renderHeader();
+  renderTable(rows, VIEW, buildTreeMeta(rows));
   updateHScrollDock();
 }
 
@@ -769,18 +959,15 @@ function renderTable(allRows, viewRows, meta){
   const tbody = $("tbody");
   tbody.innerHTML = "";
 
-  // map para saber quem tem filhos (no conjunto total, não só view)
+  // quem tem filhos
   const childSet = new Set();
   allRows.forEach(r=>{
     const parts = String(r.edt).split(".");
-    if(parts.length>1){
-      childSet.add(parts.slice(0,-1).join("."));
-    }
+    if(parts.length>1) childSet.add(parts.slice(0,-1).join("."));
   });
 
   for(const r of viewRows){
     const tr = document.createElement("tr");
-
     if(r.status_class==="bad") tr.classList.add("rowLate");
 
     const lvl = meta.levelOf(r.edt);
@@ -798,31 +985,38 @@ function renderTable(allRows, viewRows, meta){
     }
 
     // marco
-    let marcoHTML = (r.marco==="Sim")
+    const marcoHTML = (r.marco==="Sim")
       ? `<span class="flag" title="Marco do projeto">🏁 Marco</span>`
       : `Não`;
 
     // atividade com indent + toggle (na coluna Atividade)
     const indent = `<span class="indent" style="width:${lvl*14}px"></span>`;
-    const twist = hasKids ? `<span class="twisty" data-edt="${r.edt}" title="Expandir/Recolher">${isCollapsed ? "+" : "–"}</span>` : `<span class="twisty" style="opacity:.0;border-color:transparent;">•</span>`;
+    const twist = hasKids
+      ? `<span class="twisty" data-edt="${r.edt}" title="Expandir/Recolher">${isCollapsed ? "+" : "–"}</span>`
+      : `<span class="twisty" style="opacity:.0;border-color:transparent;">•</span>`;
     const atividadeHTML = `<div class="activityCell">${indent}${twist}<b>${escapeHTML(r.atividade||"")}</b></div>`;
 
-    tr.innerHTML = `
-      <td class="muted">${escapeHTML(r.edt)}</td>
-      <td>${indicHTML}</td>
-      <td>${r.pct_planejado ?? ""}</td>
-      <td>${r.pct_concluido ?? ""}</td>
-      <td>${escapeHTML(r.status_raw||"")}</td>
-      <td>${atividadeHTML}</td>
-      <td>${escapeHTML(r.duracao_raw||"")}</td>
-      <td>${escapeHTML(fmtBR(r.inicio_iso) || r.inicio_raw || "")}</td>
-      <td>${escapeHTML(fmtBR(r.termino_iso) || r.termino_raw || "")}</td>
-      <td>${marcoHTML}</td>
-      <td>${escapeHTML(r.predecessoras||"")}</td>
-      <td>${escapeHTML(r.responsavel||"")}</td>
-      <td>${escapeHTML(r.anotacoes||"")}</td>
-    `;
+    // montar células conforme ordem/visibilidade
+    const tds = [];
+    COL_ORDER.forEach((key)=>{
+      if(!COL_VIS[key]) return;
 
+      if(key==="edt") tds.push(`<td class="muted">${escapeHTML(r.edt)}</td>`);
+      else if(key==="indicador") tds.push(`<td>${indicHTML}</td>`);
+      else if(key==="pct_plan") tds.push(`<td>${r.pct_planejado ?? ""}</td>`);
+      else if(key==="pct_done") tds.push(`<td>${r.pct_concluido ?? ""}</td>`);
+      else if(key==="status") tds.push(`<td>${escapeHTML(r.status_raw||"")}</td>`);
+      else if(key==="atividade") tds.push(`<td>${atividadeHTML}</td>`);
+      else if(key==="duracao") tds.push(`<td>${escapeHTML(r.duracao_raw||"")}</td>`);
+      else if(key==="inicio") tds.push(`<td>${escapeHTML(fmtBR(r.inicio_iso) || r.inicio_raw || "")}</td>`);
+      else if(key==="termino") tds.push(`<td>${escapeHTML(fmtBR(r.termino_iso) || r.termino_raw || "")}</td>`);
+      else if(key==="marco") tds.push(`<td>${marcoHTML}</td>`);
+      else if(key==="predecessoras") tds.push(`<td>${escapeHTML(r.predecessoras||"")}</td>`);
+      else if(key==="responsavel") tds.push(`<td>${escapeHTML(r.responsavel||"")}</td>`);
+      else if(key==="anotacoes") tds.push(`<td>${escapeHTML(r.anotacoes||"")}</td>`);
+    });
+
+    tr.innerHTML = tds.join("");
     tbody.appendChild(tr);
   }
 
@@ -838,20 +1032,8 @@ function renderTable(allRows, viewRows, meta){
   });
 }
 
-function escapeHTML(s){
-  return String(s||"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#39;");
-}
-
 /* ========= SCROLL DOCK SYNC ========= */
-function getActiveHScrollTarget(){
-  // por ora, a tabela é o alvo do dock
-  return $("panelLista");
-}
+function getActiveHScrollTarget(){ return $("panelLista"); }
 
 function setupHScrollSync(){
   const dock = $("hScrollDock");
@@ -864,36 +1046,30 @@ function setupHScrollSync(){
   }, {passive:true});
 
   target.addEventListener("scroll", ()=>{
-    if(!dock) return;
     dock.scrollLeft = target.scrollLeft;
   }, {passive:true});
 }
 
 function updateHScrollDock(){
-    const dock = document.getElementById('hScrollDock');
-    const inner = document.getElementById('hScrollInner');
-    if(!dock || !inner) return;
+  const dock = $("hScrollDock");
+  const inner = $("hScrollInner");
+  if(!dock || !inner) return;
 
-    HSCROLL_TARGET = getActiveHScrollTarget();
+  HSCROLL_TARGET = getActiveHScrollTarget();
+  dock.style.display = "block";
 
-    // Dock deve ficar SEMPRE visível (barra fixa no rodapé), mesmo antes do carregamento.
-    dock.style.display = 'block';
-
-    if(!HSCROLL_TARGET){
-      inner.style.width = '1px';
-      dock.scrollLeft = 0;
-      return;
-    }
-
-    const sw = HSCROLL_TARGET.scrollWidth || 0;
-    const cw = HSCROLL_TARGET.clientWidth || 0;
-
-    // Mesmo quando não há overflow, mantemos o dock visível; o scroll fica inerte.
-    inner.style.width = Math.max(sw, cw+1) + 'px';
-
-    // Sincroniza posição
-    try{ dock.scrollLeft = HSCROLL_TARGET.scrollLeft || 0; }catch(e){}
+  if(!HSCROLL_TARGET){
+    inner.style.width = "1px";
+    dock.scrollLeft = 0;
+    return;
   }
+
+  const sw = HSCROLL_TARGET.scrollWidth || 0;
+  const cw = HSCROLL_TARGET.clientWidth || 0;
+  inner.style.width = Math.max(sw, cw+1) + "px";
+
+  try{ dock.scrollLeft = HSCROLL_TARGET.scrollLeft || 0; }catch(e){}
+}
 
 /* ========= THEME ========= */
 function applyTheme(mode){
@@ -903,6 +1079,24 @@ function applyTheme(mode){
   $("btnTheme").textContent = isLight ? "☀️ Claro" : "🌙 Escuro";
   localStorage.setItem("mit045_theme", isLight ? "light" : "dark");
 }
+
+/* ========= SIDEBAR TOGGLE ========= */
+function setSidebarCollapsed(collapsed){
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  localStorage.setItem("mit045_sidebar_collapsed", collapsed ? "1":"0");
+  const btn = $("btnToggleSidebar");
+  const top = $("btnToggleSidebarTop");
+  if(btn){
+    btn.querySelector(".miniText").textContent = collapsed ? "Expandir" : "Minimizar";
+  }
+  if(top){
+    top.textContent = collapsed ? "≡ Expandir Filtros" : "≡ Filtros";
+  }
+  updateHScrollDock();
+}
+
+$("btnToggleSidebar").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+$("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
 
 /* ========= BINDINGS ========= */
 $("btnLoad").addEventListener("click", ()=>loadAndNormalize());
@@ -915,6 +1109,7 @@ $("btnClear").addEventListener("click", ()=>{
   $("dFim").value="";
   $("fAtalho").value="";
   $("fOrder").value="sheet";
+  $("fMarcoOnly").checked=false;
   COLLAPSED.clear();
   applyFiltersAndRender();
 });
@@ -922,17 +1117,44 @@ $("btnReset").addEventListener("click", ()=>{
   RAW_TEXT=""; ROWS_RAW=[]; ROWS_CANON=[]; VIEW=[];
   COLLAPSED.clear();
   $("tbody").innerHTML="";
-  renderKPIs([],[]);
+  $("theadRow").innerHTML="";
+  $("pillItens").textContent="0 itens";
+  $("pillShown").textContent="0 exibidos";
+  $("kTotal").textContent="0";
+  $("kConcl").textContent="0";
+  $("kWarn").textContent="0";
+  $("kBad").textContent="0";
+  $("kWin").textContent="—";
   setStatus(false, "Falha no carregamento. Ver auditoria.");
   audit("Aguardando carregamento. Clique em “Carregar & Normalizar”.");
   updateHScrollDock();
 });
+
 $("btnExport").addEventListener("click", ()=>{
-  const cols = ["EDT","Indicador","% Planejado","% concluída","Status","Atividade","Duração","Início","Término","Marco","Predecessoras","Responsável","Anotações"];
-  const csv = [cols.join(","), ...VIEW.map(r=>[
-    r.edt, r.indicador_raw, r.pct_planejado ?? "", r.pct_concluido ?? "", r.status_raw,
-    r.atividade, r.duracao_raw, r.inicio_raw, r.termino_raw, r.marco, r.predecessoras, r.responsavel, r.anotacoes
-  ].map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(","))].join("\n");
+  const cols = COLS_DEF.map(c=>c.label);
+  const keys = COLS_DEF.map(c=>c.key);
+
+  const csv = [
+    cols.map(v=>`"${v.replaceAll('"','""')}"`).join(","),
+    ...VIEW.map(r=>{
+      const map = {
+        edt: r.edt,
+        indicador: r.indicador_raw,
+        pct_plan: r.pct_planejado ?? "",
+        pct_done: r.pct_concluido ?? "",
+        status: r.status_raw,
+        atividade: r.atividade,
+        duracao: r.duracao_raw,
+        inicio: r.inicio_raw,
+        termino: r.termino_raw,
+        marco: r.marco,
+        predecessoras: r.predecessoras,
+        responsavel: r.responsavel,
+        anotacoes: r.anotacoes
+      };
+      return keys.map(k=>`"${String(map[k]??"").replaceAll('"','""')}"`).join(",");
+    })
+  ].join("\n");
 
   const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
@@ -955,12 +1177,34 @@ $("btnTheme").addEventListener("click", ()=>{
   applyTheme(cur==="dark" ? "light" : "dark");
 });
 
+$("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
+
+/* ========= INIT ========= */
 (function init(){
   audit("Aguardando carregamento. Clique em “Carregar & Normalizar”.");
-  const saved = localStorage.getItem("mit045_theme") || "dark";
-  applyTheme(saved);
+
+  const savedTheme = localStorage.getItem("mit045_theme") || "dark";
+  applyTheme(savedTheme);
+
+  const collapsed = localStorage.getItem("mit045_sidebar_collapsed")==="1";
+  if(collapsed) document.body.classList.add("sidebar-collapsed");
+
+  loadColsPrefs();
+  buildColsChecklist();
+  renderHeader();
+
   setupHScrollSync();
   updateHScrollDock();
+
+  // ajustar texto do botão sidebar
+  const btn = $("btnToggleSidebar");
+  if(btn){
+    btn.querySelector(".miniText").textContent = document.body.classList.contains("sidebar-collapsed") ? "Expandir" : "Minimizar";
+  }
+  const top = $("btnToggleSidebarTop");
+  if(top){
+    top.textContent = document.body.classList.contains("sidebar-collapsed") ? "≡ Expandir Filtros" : "≡ Filtros";
+  }
 })();
 </script>
 </body>
