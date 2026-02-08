@@ -22,7 +22,7 @@
     --line: rgba(255,255,255,.10);
     --shadow: 0 18px 50px rgba(2,6,23,.45);
     --radius: 18px;
-    --theadBg: #0b1430; /* sólido */
+    --theadBg: #0b1430; /* sólido, sem transparência */
   }
 
   body.light{
@@ -132,13 +132,12 @@
     background:#fff;color:#0f172a;border-color:rgba(15,23,42,.12);
   }
 
-  /* selects: texto sempre legível */
+  /* selects: texto sempre legível no dropdown */
   .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
-  body.dark .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
 
   .filters .rowActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 
-  /* Minimizar filtros (UX) */
+  /* Minimizar filtros */
   #sidebarHeader{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
     position:sticky; top:0;
@@ -157,7 +156,7 @@
   }
   body.light .miniBtn{background:#fff;}
 
-  /* >>> requisito: fonte do botão Minimizar (dark=branco / light=preto) */
+  /* requisito: dark = branco / light = preto */
   body.dark .miniBtn, body.dark .miniBtn *{ color:#ffffff !important; }
   body.light .miniBtn, body.light .miniBtn *{ color:#0f172a !important; }
 
@@ -184,7 +183,7 @@
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap:10px;
-    margin-top:10px;
+    margin-top:8px;
   }
   .kpi{
     padding:12px;
@@ -203,17 +202,25 @@
   .kpi .value{font-size:22px;font-weight:950;margin-top:6px;}
 
   /* Exibição pills */
-  .exibRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+  .exibRow{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-top:0;
+    margin-bottom:8px; /* fica colado acima dos cards */
+  }
 
-  /* ====== CONTROLS BAR (posição conforme imagem) ====== */
+  /* CONTROLS BAR (na posição como sua imagem) */
   .controlsBar{
     display:flex;
     justify-content:space-between;
     align-items:center;
     gap:10px;
     flex-wrap:wrap;
-    margin-top:2px;
+    margin-top:10px;
     margin-bottom:10px;
+    padding:10px 12px;
   }
   .controlsLeft{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .controlsRight{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
@@ -223,17 +230,17 @@
     border-radius:14px;
     border:1px solid var(--line);
     background: rgba(255,255,255,.04);
-    margin-top:12px;
+    margin-top:10px;
 
-    overflow: scroll;
+    overflow: scroll;                /* vertical + horizontal */
     scrollbar-gutter: stable both-edges;
-    max-height: calc(100vh - 330px);
+    max-height: calc(100vh - 330px); /* mantém área grande e scrollável */
   }
   body.light .tablewrap{background:#fff;}
   table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
   thead th{
     position:sticky;top:0;z-index:5;
-    background: var(--theadBg);
+    background: var(--theadBg);      /* sólido, sem transparência */
     border-bottom:1px solid var(--line);
     padding:10px;font-size:12px;white-space:nowrap;
     user-select:none;
@@ -292,31 +299,7 @@
   body.light #hScrollDock{background: rgba(255,255,255,.85);}
   #hScrollInner{height:1px;}
 
-  /* Colunas visíveis (lista simples) */
-  .colList{
-    list-style:none;
-    padding:0;
-    margin:0;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    max-height:220px;
-    overflow:auto;
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:10px;
-    background: rgba(255,255,255,.04);
-  }
-  body.light .colList{background:#fff;}
-  .colList li{
-    display:flex; align-items:center; gap:10px;
-    padding:6px 4px;
-    border-bottom:1px dashed rgba(255,255,255,.10);
-  }
-  body.light .colList li{border-bottom:1px dashed rgba(15,23,42,.12);}
-  .colList li:last-child{border-bottom:none;}
-  .colList input[type="checkbox"]{transform:scale(1.1);}
-
+  /* Drag header */
   th.draggable{cursor:grab;}
   th.draggable:active{cursor:grabbing;}
   th.dragOver{outline:2px solid rgba(99,102,241,.55); outline-offset:-2px;}
@@ -416,9 +399,6 @@
         <label class="pill" style="cursor:pointer;align-self:flex-start;">
           <input type="checkbox" id="fMarcoOnly" style="margin:0 8px 0 0;"> Mostrar apenas tarefas Marco
         </label>
-
-        <label class="label">Colunas visíveis</label>
-        <ul class="colList" id="colBox"></ul>
       </div>
 
       <div class="rowActions">
@@ -431,7 +411,24 @@
 
     <main class="card" id="main">
 
-      <!-- CONTROLS BAR: agora na posição conforme sua imagem -->
+      <!-- TOPO DO PAINEL (como na sua imagem): Exibição acima dos cards -->
+      <div class="exibRow">
+        <span class="pill">Exibição</span>
+        <span class="pill" id="pillShown">0 exibidos</span>
+        <span class="pill ok" id="pillOk">ok: 0</span>
+        <span class="pill warn" id="pillWarn">warn: 0</span>
+        <span class="pill bad" id="pillBad">bad: 0</span>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="label">Total</div><div class="value" id="kTotal">0</div><div class="muted small">Atividades carregadas</div></div>
+        <div class="kpi"><div class="label">Concluídas</div><div class="value" id="kConcl">0</div><div class="muted small">Status class: ok</div></div>
+        <div class="kpi"><div class="label">Atrasadas</div><div class="value" id="kBad">0</div><div class="muted small">Status class: bad</div></div>
+        <div class="kpi"><div class="label">Em andamento / Outros</div><div class="value" id="kWarn">0</div><div class="muted small">Status class: warn</div></div>
+        <div class="kpi"><div class="label">Janela</div><div class="value" id="kWin">—</div><div class="muted small">Min início → Max término</div></div>
+      </div>
+
+      <!-- Barra de menus na posição do retângulo (logo abaixo dos cards) -->
       <div class="card controlsBar">
         <div class="controlsLeft">
           <button class="btn" id="btnToggleSidebarTop" title="Minimizar/Maximizar filtros">≡ Filtros</button>
@@ -455,24 +452,7 @@
         </div>
       </div>
 
-      <!-- Exibição: ok/warn/bad logo acima dos cards -->
-      <div class="exibRow">
-        <span class="pill">Exibição</span>
-        <span class="pill" id="pillShown">0 exibidos</span>
-        <span class="pill ok" id="pillOk">ok: 0</span>
-        <span class="pill warn" id="pillWarn">warn: 0</span>
-        <span class="pill bad" id="pillBad">bad: 0</span>
-      </div>
-
-      <div class="kpis">
-        <div class="kpi"><div class="label">Total</div><div class="value" id="kTotal">0</div><div class="muted small">Atividades carregadas</div></div>
-        <div class="kpi"><div class="label">Concluídas</div><div class="value" id="kConcl">0</div><div class="muted small">Status class: ok</div></div>
-        <div class="kpi"><div class="label">Atrasadas</div><div class="value" id="kBad">0</div><div class="muted small">Status class: bad</div></div>
-        <div class="kpi"><div class="label">Em andamento / Outros</div><div class="value" id="kWarn">0</div><div class="muted small">Status class: warn</div></div>
-        <div class="kpi"><div class="label">Janela</div><div class="value" id="kWin">—</div><div class="muted small">Min início → Max término</div></div>
-      </div>
-
-      <div class="muted small" style="margin-top:10px;text-align:right;">
+      <div class="muted small" style="margin-top:6px;text-align:right;">
         Lista e Gantt refletem o mesmo conjunto filtrado (VIEW).
       </div>
 
@@ -506,7 +486,7 @@ let VIEW = [];
 let COLLAPSED = new Set();
 let HSCROLL_TARGET = null;
 
-/* ====== Colunas (ordem/visibilidade) ====== */
+/* ====== Colunas (ordem fixa + reordenação drag) ====== */
 const COLS_DEF = [
   {key:"edt", label:"EDT"},
   {key:"indicador", label:"Indicador"},
@@ -522,11 +502,8 @@ const COLS_DEF = [
   {key:"responsavel", label:"Responsável"},
   {key:"anotacoes", label:"Anotações"},
 ];
-
-const LS_COL_ORDER = "mit045_cols_order_v1";
-const LS_COL_VIS   = "mit045_cols_vis_v1";
+const LS_COL_ORDER = "mit045_cols_order_v2";
 let COL_ORDER = [];
-let COL_VIS = {};
 
 const $ = (id)=>document.getElementById(id);
 const nowBR = ()=> new Date().toLocaleString("pt-BR");
@@ -620,46 +597,18 @@ function escapeHTML(s){
     .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
 
-/* ========= COLS: load/save/init ========= */
-function loadColsPrefs(){
+/* ========= COL ORDER PREF ========= */
+function loadColOrder(){
   try{
     const o = JSON.parse(localStorage.getItem(LS_COL_ORDER) || "null");
-    const v = JSON.parse(localStorage.getItem(LS_COL_VIS) || "null");
-
     COL_ORDER = Array.isArray(o) && o.length ? o : COLS_DEF.map(c=>c.key);
-    COL_VIS = (v && typeof v==="object") ? v : Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
-
-    COLS_DEF.forEach(c=>{
-      if(!(c.key in COL_VIS)) COL_VIS[c.key]=true;
-      if(!COL_ORDER.includes(c.key)) COL_ORDER.push(c.key);
-    });
+    COLS_DEF.forEach(c=>{ if(!COL_ORDER.includes(c.key)) COL_ORDER.push(c.key); });
   }catch(e){
     COL_ORDER = COLS_DEF.map(c=>c.key);
-    COL_VIS = Object.fromEntries(COLS_DEF.map(c=>[c.key,true]));
   }
 }
-function saveColsPrefs(){
+function saveColOrder(){
   localStorage.setItem(LS_COL_ORDER, JSON.stringify(COL_ORDER));
-  localStorage.setItem(LS_COL_VIS, JSON.stringify(COL_VIS));
-}
-
-/* >>> Colunas visíveis em lista com check (conforme pedido) */
-function buildColsChecklist(){
-  const box = $("colBox");
-  box.innerHTML = "";
-  COLS_DEF.forEach(c=>{
-    const li = document.createElement("li");
-    li.innerHTML = `<input type="checkbox" ${COL_VIS[c.key] ? "checked":""} data-col="${c.key}">
-                    <span style="font-weight:900">${c.label}</span>`;
-    li.querySelector("input").addEventListener("change", (e)=>{
-      const k = e.target.getAttribute("data-col");
-      COL_VIS[k] = !!e.target.checked;
-      saveColsPrefs();
-      renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
-      updateHScrollDock();
-    });
-    box.appendChild(li);
-  });
 }
 
 /* ========= TABLE HEADER (draggable) ========= */
@@ -668,7 +617,6 @@ function renderHeader(){
   tr.innerHTML = "";
 
   COL_ORDER.forEach((key)=>{
-    if(!COL_VIS[key]) return;
     const def = COLS_DEF.find(c=>c.key===key);
     if(!def) return;
 
@@ -700,7 +648,7 @@ function renderHeader(){
 
       COL_ORDER.splice(fromIdx,1);
       COL_ORDER.splice(toIdx,0,fromKey);
-      saveColsPrefs();
+      saveColOrder();
 
       renderHeader();
       renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
@@ -711,7 +659,7 @@ function renderHeader(){
   });
 }
 
-/* ========= LOAD + NORMALIZE (mantido) ========= */
+/* ========= LOAD + NORMALIZE ========= */
 async function loadAndNormalize(){
   setStatus(false, "Carregando…");
   audit("Aguardando…");
@@ -914,26 +862,23 @@ function renderTable(allRows, viewRows, meta){
       : `<span class="twisty" style="opacity:.0;border-color:transparent;">•</span>`;
     const atividadeHTML = `<div class="activityCell">${indent}${twist}<b>${escapeHTML(r.atividade||"")}</b></div>`;
 
-    const tds = [];
-    COL_ORDER.forEach((key)=>{
-      if(!COL_VIS[key]) return;
+    const map = {
+      edt: `<td class="muted">${escapeHTML(r.edt)}</td>`,
+      indicador: `<td>${indicHTML}</td>`,
+      pct_plan: `<td>${(r.pct_planejado ?? "") === "" || r.pct_planejado === null ? "" : `${r.pct_planejado}%`}</td>`,
+      pct_done: `<td>${(r.pct_concluido ?? "") === "" || r.pct_concluido === null ? "" : `${r.pct_concluido}%`}</td>`,
+      status: `<td>${escapeHTML(r.status_raw||"")}</td>`,
+      atividade: `<td>${atividadeHTML}</td>`,
+      duracao: `<td>${escapeHTML(r.duracao_raw||"")}</td>`,
+      inicio: `<td>${escapeHTML(fmtBR(r.inicio_iso) || r.inicio_raw || "")}</td>`,
+      termino: `<td>${escapeHTML(fmtBR(r.termino_iso) || r.termino_raw || "")}</td>`,
+      marco: `<td>${marcoHTML}</td>`,
+      predecessoras: `<td>${escapeHTML(r.predecessoras||"")}</td>`,
+      responsavel: `<td>${escapeHTML(r.responsavel||"")}</td>`,
+      anotacoes: `<td>${escapeHTML(r.anotacoes||"")}</td>`
+    };
 
-      if(key==="edt") tds.push(`<td class="muted">${escapeHTML(r.edt)}</td>`);
-      else if(key==="indicador") tds.push(`<td>${indicHTML}</td>`);
-      else if(key==="pct_plan") tds.push(`<td>${r.pct_planejado ?? ""}</td>`);
-      else if(key==="pct_done") tds.push(`<td>${r.pct_concluido ?? ""}</td>`);
-      else if(key==="status") tds.push(`<td>${escapeHTML(r.status_raw||"")}</td>`);
-      else if(key==="atividade") tds.push(`<td>${atividadeHTML}</td>`);
-      else if(key==="duracao") tds.push(`<td>${escapeHTML(r.duracao_raw||"")}</td>`);
-      else if(key==="inicio") tds.push(`<td>${escapeHTML(fmtBR(r.inicio_iso) || r.inicio_raw || "")}</td>`);
-      else if(key==="termino") tds.push(`<td>${escapeHTML(fmtBR(r.termino_iso) || r.termino_raw || "")}</td>`);
-      else if(key==="marco") tds.push(`<td>${marcoHTML}</td>`);
-      else if(key==="predecessoras") tds.push(`<td>${escapeHTML(r.predecessoras||"")}</td>`);
-      else if(key==="responsavel") tds.push(`<td>${escapeHTML(r.responsavel||"")}</td>`);
-      else if(key==="anotacoes") tds.push(`<td>${escapeHTML(r.anotacoes||"")}</td>`);
-    });
-
-    tr.innerHTML = tds.join("");
+    tr.innerHTML = COL_ORDER.map(k=>map[k]).join("");
     tbody.appendChild(tr);
   }
 
@@ -1084,7 +1029,6 @@ $("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!doc
 $("fAtalho").addEventListener("change", ()=>{
   const v=$("fAtalho").value;
   if(!v) return;
-  // atalhos só atualizam datas; aplicação fica no botão "Aplicar"
   const today = new Date(); today.setHours(0,0,0,0);
   const startOfWeek = (d)=>{ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); x.setHours(0,0,0,0); return x; };
   const endOfWeek = (d)=>{ const s=startOfWeek(d); const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return e; };
@@ -1126,8 +1070,7 @@ $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
   const collapsed = localStorage.getItem("mit045_sidebar_collapsed")==="1";
   if(collapsed) document.body.classList.add("sidebar-collapsed");
 
-  loadColsPrefs();
-  buildColsChecklist();
+  loadColOrder();
   renderHeader();
 
   setupHScrollSync();
