@@ -1,1807 +1,967 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PRJ-SPDM | Cronograma (Gantt DOM/CSS)</title>
-  <style>
-    :root{
-      --bg:#0b1220; --panel:#111a2e; --line:#223054;
-      --text:#e6edf7; --muted:#a7b3d1;
-      --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
-      --shadow: 0 18px 50px rgba(0,0,0,.35);
-      --radius: 18px;
-      --dayW: 12px;
-      --rowH: 42px;
-      --filtersW: 430px;
-      --filtersWCollapsed: 72px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 800px at 15% 0%, rgba(99,102,241,.18), transparent 55%),
-        radial-gradient(900px 650px at 85% 0%, rgba(34,197,94,.14), transparent 55%),
-        var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    }
-    header{
-      padding:16px 18px;
-      border-bottom:1px solid rgba(34,48,84,.9);
-      position:sticky; top:0; z-index:10;
-      background:rgba(11,18,32,.78);
-      backdrop-filter: blur(10px);
-    }
-    .wrap{max-width:100%; margin:0 auto;}
-    h1{margin:0;font-size:18px;letter-spacing:.2px}
-    .sub{margin-top:6px;color:var(--muted);font-size:12px}
-    .grid{display:grid;grid-template-columns: 1fr; gap:12px; padding:12px 12px;}
-    .card{
-      background:linear-gradient(180deg, rgba(17,26,46,.96), rgba(15,25,48,.92));
-      border:1px solid rgba(34,48,84,.9);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:12px;
-    }
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    .rowL{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:7px 12px;border-radius:999px;
-      border:1px solid rgba(34,48,84,.95);
-      background:rgba(255,255,255,.04);
-      color:var(--muted);
-      font-size:12px;
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .pill.ok{color:var(--ok);border-color:rgba(34,197,94,.45)}
-    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.45)}
-    .pill.warn{color:var(--warn);border-color:rgba(245,158,11,.45)}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>MIT045 | Cronograma — Painel Gerencial (Live)</title>
 
-    .btn{
-      cursor:pointer;
-      border:1px solid rgba(34,48,84,.95);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:14px;
-      font-weight:950;
-      letter-spacing:.2px;
-      user-select:none;
-    }
-    .btn:hover{border-color:rgba(99,102,241,.65); box-shadow:0 10px 24px rgba(0,0,0,.25)}
-    .btn.primary{
-      border-color:transparent;
-      background:linear-gradient(135deg, rgba(99,102,241,.95), rgba(34,197,94,.85));
-    }
-    .btn.ghost{background:transparent}
-    .btn.tab{padding:10px 14px;border-radius:999px}
-    .btn.tab.active{
-      border-color:transparent;
-      background:linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,197,94,.75));
-    }
-    .btn.icon{
-      width:40px; height:40px; padding:0;
-      display:inline-flex; align-items:center; justify-content:center;
-      border-radius:12px;
-      font-weight:950;
-    }
+<style>
+  :root{
+    --bg0:#050812;
+    --bg1:#04040A;
+    --panel: rgba(255,255,255,.06);
+    --panel2: rgba(255,255,255,.08);
+    --stroke: rgba(255,255,255,.12);
+    --text: rgba(255,255,255,.92);
+    --muted: rgba(255,255,255,.62);
+    --accent:#22c55e;
+    --accent2:#6366f1;
+    --bad:#ef4444;
+    --warn:#f59e0b;
+    --ok:#22c55e;
+    --line: rgba(255,255,255,.10);
+    --shadow: 0 18px 50px rgba(2,6,23,.45);
+    --radius: 18px;
+  }
 
-    label{display:block;color:rgba(203,213,225,.95);font-size:12px;font-weight:950;margin:8px 0 6px}
-    input, select{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(34,48,84,.95);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      outline:none;
-    }
-    input::placeholder{color:rgba(167,179,209,.70)}
-    input:focus, select:focus{
-      border-color:rgba(99,102,241,.75);
-      box-shadow:0 0 0 4px rgba(99,102,241,.18);
-    }
-    /* Corrige opções do select (evita branco no branco) */
-    select, option{
-      background: rgba(15,25,48,.98);
-      color: var(--text);
-    }
+  body.light{
+    --bg0:#f6f7fb;
+    --bg1:#f6f7fb;
+    --panel: rgba(255,255,255,.92);
+    --panel2: rgba(255,255,255,.92);
+    --stroke: rgba(15,23,42,.12);
+    --text: rgba(15,23,42,.92);
+    --muted: rgba(15,23,42,.55);
+    --line: rgba(15,23,42,.12);
+    --shadow: 0 18px 50px rgba(2,6,23,.08);
+  }
 
-/* === FIX: dropdown options (Chrome) === */
-select option{
-  background-color: rgba(15,25,48,.98) !important;
-  color: var(--text) !important;
-}
-/* Some browsers ignore option bg; ensure select itself is readable */
-select{
-  color: var(--text) !important;
-  background-color: rgba(15,25,48,.98) !important;
-}
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 900px at 10% -10%, rgba(99,102,241,.18), transparent 55%),
+      radial-gradient(1100px 900px at 110% 0%, rgba(236,72,153,.14), transparent 55%),
+      linear-gradient(180deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
+  }
 
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .layout{display:grid; grid-template-columns: var(--filtersW) 1fr; gap:12px; align-items:start;}
-    body.filters-collapsed .layout{grid-template-columns: var(--filtersWCollapsed) 1fr;}
-    @media (max-width: 1180px){ .layout{grid-template-columns:1fr;} body.filters-collapsed .layout{grid-template-columns:1fr;} }
+  .wrap{max-width:1600px;margin:0 auto;padding:0 16px;}
+  header{
+    padding:16px 0;
+  }
+  .topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  h1{margin:0;font-size:18px;letter-spacing:.2px;}
+  .sub{margin-top:6px;color:var(--muted);font-size:12px}
 
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;}
-    .kpi{
-      border:1px solid rgba(34,48,84,.9);
-      border-radius:16px;
-      background:
-        radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
-        radial-gradient(900px 900px at 110% 0%, rgba(34,197,94,.10), transparent 45%),
-        rgba(255,255,255,.04);
-      padding:12px;
-      box-shadow:0 10px 24px rgba(0,0,0,.20);
-    }
-    .kpi .label{color:var(--muted);font-weight:950;font-size:12px;letter-spacing:.2px}
-    .kpi .value{font-weight:950;font-size:22px;margin-top:6px}
-    .kpi small{color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .btn{
+    cursor:pointer;border:1px solid var(--line);
+    background: rgba(255,255,255,.08);
+    color:var(--text);padding:10px 12px;border-radius:12px;font-weight:900;
+  }
+  body.light .btn{background:#fff;}
+  .btn:hover{border-color:rgba(99,102,241,.45);}
+  .btn.primary{background: linear-gradient(135deg, rgba(99,102,241,.75), rgba(34,197,94,.75)); border-color:transparent;}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+    color:var(--muted);font-size:12px;background: rgba(255,255,255,.06);
+    font-weight:900;
+  }
+  .pill.ok{border-color:rgba(34,197,94,.45); color:rgba(34,197,94,.95); background:rgba(34,197,94,.10);}
+  .pill.warn{border-color:rgba(245,158,11,.45); color:rgba(245,158,11,.95); background:rgba(245,158,11,.10);}
+  .pill.bad{border-color:rgba(239,68,68,.45); color:rgba(239,68,68,.95); background:rgba(239,68,68,.10);}
 
-    .tag{
-      display:inline-flex;align-items:center;justify-content:center;
-      min-width:52px;
-      padding:5px 10px;border-radius:999px;
-      border:1px solid rgba(34,48,84,.95);
-      font-weight:950;font-size:12px;
-      background:rgba(255,255,255,.03);
-    }
-    .tag.ok{color:var(--ok);border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
-    .tag.bad{color:var(--bad);border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
-    .tag.warn{color:var(--warn);border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.07)}
+  .nav-main{display:flex;gap:12px;margin-top:12px;}
+  .nav-item{
+    text-decoration:none; padding:10px 18px; border-radius:999px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.06);
+    font-weight:950; letter-spacing:.3px;
+    color:var(--text);
+    box-shadow: 0 10px 24px rgba(2,6,23,.20);
+    transition:all .15s ease;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  body.light .nav-item{background:#fff;}
+  .nav-item:hover{transform:translateY(-1px); border-color:rgba(99,102,241,.55);}
+  .nav-item.active{
+    background: linear-gradient(135deg,#6366f1,#22c55e);
+    color:#fff;border-color:transparent;
+    box-shadow: 0 12px 28px rgba(99,102,241,.35);
+  }
 
-    .tablewrap{overflow:auto;border-radius:14px;border:1px solid rgba(34,48,84,.95);background:rgba(0,0,0,.10)}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1400px}
-    th,td{padding:8px 10px;border-bottom:1px solid rgba(34,48,84,.65);font-size:12px;vertical-align:top}
-    thead th{position:sticky;top:0;background:rgba(15,25,48,.98);z-index:2}
-    tbody tr:hover{background:rgba(255,255,255,.04)}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding:14px;
+  }
 
-    .small{font-size:11px;color:var(--muted)}
-    .sep{height:1px;background:rgba(34,48,84,.75);margin:10px 0}
-    .hidden{display:none !important;}
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
 
-    /* ===== Nav (PAINEL/CRONOGRAMA) ===== */
-    .nav{display:flex; gap:10px; align-items:center; margin-top:10px;}
-    .nav a{
-      text-decoration:none;
-      display:inline-flex; align-items:center; gap:10px;
-      padding:12px 16px;
-      border-radius:999px;
-      border:1px solid rgba(34,48,84,.95);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      font-weight:950;
-      letter-spacing:.2px;
-      box-shadow:0 12px 26px rgba(0,0,0,.18);
-    }
-    .nav a:hover{border-color:rgba(99,102,241,.65);}
-    .nav a.active{
-      border-color:transparent;
-      background:linear-gradient(135deg, rgba(99,102,241,.92), rgba(34,197,94,.78));
-    }
+  .grid{
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:14px;
+    align-items:start;
+    margin-top:14px;
+  }
+  @media (max-width:1200px){
+    .grid{grid-template-columns:1fr;}
+  }
 
-    /* ===== Filters collapse ===== */
-    .filtersCard{padding:12px;}
-    .filtersHead{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom:10px;
-    }
-    body.filters-collapsed .filtersBody{display:none;}
-    body.filters-collapsed .filtersCard{padding:10px; display:flex; flex-direction:column; align-items:center;}
-    body.filters-collapsed .filtersHead{width:100%; justify-content:center;}
-    body.filters-collapsed #pillCount{display:none;}
-    body.filters-collapsed #btnApply{display:none;}
-    body.filters-collapsed .filtersHint{display:none;}
-    body.filters-collapsed .filtersCollapsedHint{display:block;}
-    .filtersCollapsedHint{display:none; color:rgba(167,179,209,.75); font-size:11px; text-align:center; margin-top:10px;}
-    .filtersSticky{position: sticky; top: 88px;}
+  /* Sidebar / filtros */
+  .filters .label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900;}
+  .filters input, .filters select{
+    width:100%;padding:10px;border-radius:12px;border:1px solid var(--line);
+    background: rgba(255,255,255,.06);color:var(--text); outline:none;
+  }
+  body.light .filters input, body.light .filters select{
+    background:#fff;color:#0f172a;border-color:rgba(15,23,42,.12);
+  }
 
-    /* ===== GANTT ===== */
-    .ganttWrap{
-      border:1px solid rgba(34,48,84,.95);
-      border-radius:16px;
-      overflow:hidden;
-      background:rgba(0,0,0,.10);
-    }
-    .ganttTopbar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px; flex-wrap:wrap;
-      padding:10px 12px;
-      background:rgba(15,25,48,.98);
-      border-bottom:1px solid rgba(34,48,84,.75);
-    }
-    .ganttBody{display:grid;grid-template-columns: 380px 1fr;min-height: 520px;}
-    @media (max-width: 1180px){ .ganttBody{grid-template-columns: 1fr;} }
-    .ganttLeft{
-      border-right:1px solid rgba(34,48,84,.75);
-      background:linear-gradient(180deg, rgba(15,25,48,.70), rgba(15,25,48,.55));
-      overflow:auto; max-height: 70vh;
-    }
-    .ganttRight{
-      overflow:auto; max-height: 70vh;
-      background: radial-gradient(900px 400px at 20% 0%, rgba(99,102,241,.10), transparent 60%);
-      position:relative;
-    }
-    .ganttAxis{position:sticky; top:0; z-index:5;background:rgba(15,25,48,.98);border-bottom:1px solid rgba(34,48,84,.75);}
-    .axisMonths{display:flex;height:28px;border-bottom:1px solid rgba(34,48,84,.55);}
-    .axisMonths .m{
-      display:flex; align-items:center; justify-content:center;
-      font-size:11px; color:var(--muted); font-weight:950;
-      border-right:1px solid rgba(34,48,84,.35);
-      padding:0 8px; white-space:nowrap;
-    }
-    .axisDays{display:flex;height:26px;}
-    .axisDays .d{
-      width:var(--dayW);
-      border-right:1px solid rgba(34,48,84,.20);
-      color:rgba(167,179,209,.65);
-      font-size:10px;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .ganttRowL{
-      display:grid;
-      grid-template-columns: 86px 1fr;
-      gap:10px;
-      padding:10px 10px;
-      height: var(--rowH);
-      border-bottom:1px solid rgba(34,48,84,.45);
-      align-items:center;
-    }
-    .ganttRowL .edt{font-weight:950; font-size:12px; color:#dbe7ff}
-    .ganttRowL .name{
-      font-size:12px; color:var(--text);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .ganttRowR{
-      position:relative;
-      height: var(--rowH);
-      border-bottom:1px solid rgba(34,48,84,.30);
-      background:
-        repeating-linear-gradient(
-          to right,
-          rgba(34,48,84,.18) 0,
-          rgba(34,48,84,.18) 1px,
-          transparent 1px,
-          transparent calc(var(--dayW))
-        );
-    }
-    .bar{
-      position:absolute;
-      transform: translateY(-50%);
-      height: 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 10px 18px rgba(0,0,0,.25);
-      overflow:hidden;
-      min-width: 8px;
-    }
-    .bar.ok{background:linear-gradient(90deg, rgba(34,197,94,.95), rgba(16,185,129,.80));}
-    .bar.warn{background:linear-gradient(90deg, rgba(245,158,11,.92), rgba(251,191,36,.75));}
-    .bar.bad{background:linear-gradient(90deg, rgba(239,68,68,.92), rgba(244,63,94,.75));}
-    .bar .fill{height:100%;background:rgba(0,0,0,.22);mix-blend-mode: overlay;}
-    .bar .pct{
-      position:absolute; right:8px; top:50%;
-      transform:translateY(-50%);
-      font-size:10px; font-weight:950;
-      color:rgba(255,255,255,.92);
-      text-shadow: 0 1px 2px rgba(0,0,0,.55);
-      pointer-events:none;
-    }
-    .todayLine{
-      position:absolute; top:0; bottom:0;
-      width:2px;
-      background:rgba(99,102,241,.85);
-      box-shadow:0 0 0 4px rgba(99,102,241,.14);
-      z-index:4;
-    }
-    .tooltip{
-      position:fixed;
-      z-index:9999;
-      pointer-events:none;
-      background:rgba(10,16,28,.92);
-      border:1px solid rgba(34,48,84,.95);
-      border-radius:14px;
-      box-shadow: 0 18px 50px rgba(0,0,0,.45);
-      padding:10px 12px;
-      min-width: 260px;
-      color:var(--text);
-      display:none;
-    }
-    .tooltip .t{font-weight:950; font-size:12px; margin-bottom:6px}
-    .tooltip .kv{font-size:11px;color:var(--muted);line-height:1.35}
-    .kbd{font-size:11px;color:rgba(167,179,209,.85);padding:6px 10px;border-radius:999px;border:1px solid rgba(34,48,84,.65);background:rgba(255,255,255,.03);}
-  /* === Indicators / milestone icons === */
-.negBullet{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:14px; height:14px; border-radius:999px;
-  background: rgba(239,68,68,.16);
-  border: 1px solid rgba(239,68,68,.55);
-  color: var(--bad);
-  font-weight: 950;
-  line-height: 1;
-}
-.flag{
-  display:inline-flex; align-items:center; gap:8px;
-  font-weight: 950;
-  color: rgba(255,255,255,.92);
-}
-.flagIcon{
-  width:18px; height:18px;
-  display:inline-flex; align-items:center; justify-content:center;
-  border-radius:8px;
-  background: rgba(34,197,94,.14);
-  border: 1px solid rgba(34,197,94,.45);
-  color: var(--ok);
-  font-size: 12px;
-}
-/* === FIX: dropdown options (Chrome) === */
-select option{
-  background-color: rgba(15,25,48,.98) !important;
-  color: var(--text) !important;
-}
-select{
-  color: var(--text) !important;
-  background-color: rgba(15,25,48,.98) !important;
-}
-  /* === Hierarquia EDT (pai/filho) === */
-.treeCell{display:flex; align-items:center; gap:8px; min-width:180px;}
-.twisty{
-  width:18px; height:18px; border-radius:8px;
-  display:inline-flex; align-items:center; justify-content:center;
-  cursor:pointer; user-select:none;
-  background: rgba(148,163,184,.10);
-  border: 1px solid rgba(148,163,184,.28);
-  color: rgba(255,255,255,.92);
-  font-weight: 950;
-  line-height: 1;
-}
-.twisty:hover{border-color: rgba(99,102,241,.55);}
-.twisty.blank{opacity:.0; cursor:default; border-color: transparent; background: transparent;}
-.indent{display:inline-block; width:0px; height:1px;}
-.taskName{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 520px;}
-.pctBadge{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:14px; height:14px; border-radius:999px;
-  font-weight: 950; line-height:1;
-  border: 1px solid rgba(148,163,184,.35);
-  background: rgba(148,163,184,.10);
-  color: rgba(255,255,255,.92);
-}
-.pctBadge.ok{
-  background: rgba(34,197,94,.14);
-  border-color: rgba(34,197,94,.45);
-  color: var(--ok);
-}
-  /* === Linhas atrasadas (status = Atrasada) === */
-tr.rowLate{
-  background: linear-gradient(90deg, rgba(239,68,68,.22), rgba(239,68,68,.10)) !important;
-}
-tr.rowLate td{ border-bottom-color: rgba(239,68,68,.18) !important; }
+  /* selects dos filtros: texto sempre legível */
+  .filters select{
+    color:#0f172a;
+    background: rgba(255,255,255,.95);
+  }
+  body.dark .filters select{
+    color:#0f172a;
+    background: rgba(255,255,255,.95);
+  }
 
-/* === Scrollbars sempre visíveis (tabela) === */
-.tableWrap{
-  overflow: scroll !important; /* força barras vertical/horizontal */
-  scrollbar-gutter: stable both-edges;
-}
-.tableWrap::-webkit-scrollbar{height:12px;width:12px;}
-.tableWrap::-webkit-scrollbar-thumb{background:rgba(148,163,184,.35);border-radius:999px;border:3px solid rgba(2,6,23,.55);}
-.tableWrap::-webkit-scrollbar-track{background:rgba(2,6,23,.35);}
+  .filters .rowActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 
-/* === Atividade com indentação tipo Project === */
-.activityCell{display:flex; align-items:center; gap:10px; min-width:520px;}
-.activityCell .taskName{max-width: 720px;}
-.twisty.tri{border-radius:10px; width:20px; height:20px; font-size:12px;}
-.twisty.tri.blank{opacity:0; cursor:default; border-color: transparent; background: transparent;}
-.twisty.tri[data-state="open"]::after{content:"▾";}
-.twisty.tri[data-state="closed"]::after{content:"▸";}
+  /* KPIs */
+  .kpis{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  .kpi{
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.12), transparent 45%),
+                radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.10), transparent 45%),
+                rgba(255,255,255,.05);
+  }
+  body.light .kpi{background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
+                          radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.08), transparent 45%),
+                          #fff;}
+  .kpi .label{color:var(--muted);font-size:12px;font-weight:900;}
+  .kpi .value{font-size:22px;font-weight:950;margin-top:6px;}
 
-/* Bullet verde para concluído (na coluna Indicador) */
-.okBullet{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:14px; height:14px; border-radius:999px;
-  background: rgba(34,197,94,.14);
-  border: 1px solid rgba(34,197,94,.45);
-  color: var(--ok);
-  font-weight: 950;
-  line-height: 1;
-}
-  /* === Ocultar chips técnicos (Fonte/CT) sem remover funcionalidade === */
-.hideOnUI{display:none !important;}
-  /* === Header layout (executivo) === */
-header.top{position:sticky; top:0; z-index:30; padding:14px 18px; background:rgba(2,6,23,.86); backdrop-filter: blur(10px); border-bottom:1px solid rgba(148,163,184,.16);}
-.wrapTop{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; max-width: 1900px; margin:0 auto;}
-.leftTop{display:flex; flex-direction:column; gap:6px; min-width: 520px;}
-.titleRow{display:flex; flex-direction:column; gap:6px;}
-.h1{font-size:18px; font-weight:950; letter-spacing:.2px; color:rgba(255,255,255,.92);}
-.badgesRow{display:flex; flex-wrap:wrap; gap:10px;}
-.badgePill{display:inline-flex; align-items:center; padding:8px 12px; border-radius:999px; border:1px solid rgba(148,163,184,.22); background:rgba(148,163,184,.10); font-weight:900; font-size:12px;}
-.badgePill.ok{border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); color: rgba(187,247,208,.95);}
-.subRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-.muted{color:rgba(148,163,184,.85); font-size:12px;}
-.rightTop{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
-.btnPrimary{cursor:pointer; border:none; padding:10px 14px; border-radius:12px; font-weight:950; color:#0b1220;
-  background: linear-gradient(90deg, rgba(99,102,241,1), rgba(34,197,94,1)); box-shadow: 0 10px 24px rgba(0,0,0,.25);}
-.btnPrimary:hover{filter:brightness(1.04);}
-.btn{cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:950; color:rgba(255,255,255,.92);
-  background: rgba(15,25,48,.75); border:1px solid rgba(148,163,184,.22);}
-.btn:hover{border-color: rgba(99,102,241,.55);}
-@media (max-width: 980px){
-  .wrapTop{flex-direction:column; align-items:stretch;}
-  .rightTop{justify-content:flex-start;}
-}
-/* ===== Header layout (alinhado ao anexo) ===== */
-header{position:sticky;top:0;z-index:50;background:rgba(2,6,23,.86);backdrop-filter:blur(10px);border-bottom:1px solid rgba(148,163,184,.16);}
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 0;}
-.titlegroup{display:flex;flex-direction:column;gap:6px;min-width:480px;}
-.badges{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
-.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
-.pill.ok{border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); color: rgba(187,247,208,.95); font-weight:950;}
-/* Esconde chips técnicos remanescentes */
-#pillMeta, .pillMeta, .tech, .sourceChips{display:none !important;}
-@media (max-width: 980px){
-  .topbar{flex-direction:column;align-items:stretch;}
-  .actions{justify-content:flex-start;}
-}
-/* === Layout fix: remover faixa técnica intermediária (Fonte/CT + botões duplicados) === */
-#techStrip, #sourceStrip, #midStrip, .sourceStrip, .midStrip, .topStrip, .toolbarTop, .rowTopMeta { display:none !important; }
-.pillMetaRow, .metaRow { display:none !important; }
-/* hide any row that contains pillSource or pillCT if still rendered outside header */
-div:has(#pillSource), div:has(#pillCT) { display:none !important; }
+  /* Table / Lista */
+  .tablewrap{
+    overflow:auto;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.04);
+    margin-top:12px;
+  }
+  body.light .tablewrap{background:#fff;}
+  table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
+  thead th{
+    position:sticky;top:0;z-index:5;
+    background: rgba(255,255,255,.06);
+    border-bottom:1px solid var(--line);
+    padding:10px;font-size:12px;white-space:nowrap;
+  }
+  body.light thead th{background:#f8fafc;}
+  th,td{
+    padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08);
+    vertical-align:top;
+  }
+  body.light th, body.light td{border-bottom:1px solid rgba(15,23,42,.08);}
+  tbody tr:hover{background: rgba(255,255,255,.04);}
+  body.light tbody tr:hover{background:#f8fafc;}
 
+  .muted{color:var(--muted);}
+  .small{font-size:11px;}
 
-/* ===== Theme (Claro/Escuro) ===== */
-:root{
-  --bg: #070A12;
-  --panel: rgba(255,255,255,.06);
-  --panel2: rgba(255,255,255,.08);
-  --stroke: rgba(255,255,255,.12);
-  --text: #EAF0FF;
-  --muted: rgba(234,240,255,.72);
-  --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
-}
-html[data-theme="light"]{
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --panel2: #fbfcff;
-  --stroke: rgba(2,6,23,.10);
-  --text: #0f172a;
-  --muted: #475569;
-}
+  /* ===== Ajustes de UX solicitados ===== */
+  .tablewrap{
+    max-height: calc(100vh - 360px);
+    overflow: scroll;              /* barras sempre visíveis */
+    scrollbar-gutter: stable both-edges;
+  }
+  body.dark .tablewrap{ background: rgba(10,14,26,.35); }
+  .rowLate td{ background: rgba(220,38,38,.18) !important; }
+  body.dark .rowLate td{ background: rgba(220,38,38,.28) !important; }
 
-/* ===== Light theme (match Painel style) ===== */
-html[data-theme="light"] body{
-  background: var(--bg);
-  color: var(--text);
-}
-html[data-theme="light"] header{
-  background: rgba(255,255,255,.90);
-  border-bottom: 1px solid rgba(226,232,240,.95);
-  box-shadow: 0 10px 26px rgba(2,6,23,.06);
-}
-html[data-theme="light"] .topStrip{
-  background: transparent;
-  border-color: rgba(226,232,240,.95);
-}
-html[data-theme="light"] .card{
-  background: #ffffff;
-  border: 1px solid rgba(226,232,240,.95);
-  box-shadow: 0 18px 50px rgba(2,6,23,.08);
-}
-html[data-theme="light"] .pill{
-  background:#ffffff;
-  border:1px solid rgba(226,232,240,.95);
-  color:#475569;
-}
-html[data-theme="light"] .btn{
-  background:#ffffff;
-  border:1px solid rgba(226,232,240,.95);
-  color:#0f172a;
-}
-html[data-theme="light"] .btn.primary{
-  background: linear-gradient(135deg,#6366f1,#22c55e);
-  color:#ffffff;
-  border: none;
-}
-html[data-theme="light"] .seg button,
-html[data-theme="light"] .chip{
-  background:#ffffff;
-  border:1px solid rgba(226,232,240,.95);
-  color:#0f172a;
-}
-html[data-theme="light"] .seg button.active{
-  background: linear-gradient(135deg,#6366f1,#22c55e);
-  color:#ffffff;
-  border-color: transparent;
-}
-html[data-theme="light"] input,
-html[data-theme="light"] select{
-  background:#ffffff;
-  color:#0f172a;
-  border:1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] option{
-  color:#0f172a !important;
-  background:#ffffff !important;
-}
-html[data-theme="light"] .filtersCard{
-  background: linear-gradient(135deg, rgba(99,102,241,.10), rgba(236,72,153,.08));
-  border:1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] .filtersCard .label{
-  color:#334155;
-}
-html[data-theme="light"] .filtersCard .label:before{
-  background: linear-gradient(90deg,#22c55e,#06b6d4,#6366f1);
-}
-html[data-theme="light"] .tableWrap{
-  background:#ffffff;
-  border:1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] table thead th{
-  background: #fbfcff;
-  color:#0f172a;
-  border-bottom: 1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] table tbody tr:hover{
-  background:#f8fafc;
-}
-html[data-theme="light"] table td{
-  color:#0f172a;
-  border-bottom: 1px solid rgba(226,232,240,.75);
-}
-html[data-theme="light"] .ganttWrap{
-  background:#ffffff;
-  border:1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] .ganttGrid{
-  background: linear-gradient(180deg, #ffffff, #fbfcff);
-}
-html[data-theme="light"] .ganttHeader{
-  background:#fbfcff;
-  color:#0f172a;
-  border-bottom:1px solid rgba(226,232,240,.95);
-}
-html[data-theme="light"] .ganttRow:nth-child(odd) .ganttGrid{
-  background: #ffffff;
-}
-html[data-theme="light"] .ganttRow:nth-child(even) .ganttGrid{
-  background: #fbfcff;
-}
-html[data-theme="light"] .rowAtrasada{
-  background: rgba(220,38,38,.10) !important;
-}
-html[data-theme="light"] .hscrollDock{
-  background: rgba(255,255,255,.92);
-  border-top: 1px solid rgba(226,232,240,.95);
-}
+  /* Indicadores */
+  .dot{
+    width:10px;height:10px;border-radius:999px;display:inline-block;
+    border:1px solid rgba(255,255,255,.25);
+  }
+  .dot.ok{background:var(--ok);}
+  .dot.warn{background:var(--warn);}
+  .dot.bad{background:var(--bad);}
+  body.light .dot{border-color:rgba(15,23,42,.18);}
 
-html,body{background:var(--bg); color:var(--text);}
-html[data-theme="light"] body{background: radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.10), transparent 55%),
-                         radial-gradient(900px 700px at 110% 0%, rgba(236,72,153,.10), transparent 55%),
-                         var(--bg);}
+  /* Hierarquia */
+  .twisty{
+    display:inline-flex;
+    width:18px;height:18px;
+    align-items:center;justify-content:center;
+    border-radius:6px;border:1px solid var(--line);
+    margin-right:8px;
+    cursor:pointer;
+    font-weight:950;
+    user-select:none;
+  }
+  body.light .twisty{background:#fff;}
+  .indent{display:inline-block;width:0;}
+  .activityCell{white-space:normal;}
+  .flag{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+    font-weight:900;font-size:11px;
+  }
 
-/* Select/Option: texto sempre legível (escuro) */
-select{background:#ffffff !important; color:#0f172a !important; border:1px solid rgba(2,6,23,.12) !important;}
-option{background:#ffffff !important; color:#0f172a !important;}
+  /* Dock da rolagem horizontal (fixo) */
+  #hScrollDock{
+    display:block;
+    position:fixed;
+    left:0; right:0; bottom:0;
+    height:16px;
+    overflow-x:scroll; overflow-y:hidden;
+    background: rgba(0,0,0,.35);
+    border-top:1px solid var(--line);
+    z-index:999;
+    scrollbar-gutter: stable both-edges;
+  }
+  body.light #hScrollDock{background: rgba(255,255,255,.85);}
+  #hScrollInner{height:1px;}
 
-/* Dock de rolagem horizontal (fixo no rodapé) */
-#hScrollDock{
-  position:fixed; left:0; right:0; bottom:0;
-  height:18px;
-  overflow-x:auto; overflow-y:hidden;
-  z-index:60;
-  background: rgba(2,6,23,.20);
-  border-top:1px solid var(--stroke);
-  backdrop-filter: blur(6px);
-  display:none;
-}
-html[data-theme="light"] #hScrollDock{background: rgba(255,255,255,.75); border-top:1px solid rgba(2,6,23,.10);}
-#hScrollInner{height:1px;}
-#hScrollDock::-webkit-scrollbar{height:14px;}
-#hScrollDock::-webkit-scrollbar-thumb{background:rgba(148,163,184,.45); border-radius:999px; border:3px solid rgba(255,255,255,.18);}
-#hScrollDock::-webkit-scrollbar-track{background:transparent;}
-
-/* Pequena margem para não cobrir conteúdo com o dock */
-body{padding-bottom:22px;}
-
-
-
-  /* Ensures dropdown text is readable */
-  select, option{color:#0f172a !important;}
-  select{background:#fff !important;}
-
-/* ====== UX: Minimizar/Maximizar filtros (melhor usabilidade) ====== */
-#btnToggleFilters{
-  width:40px;height:40px;border-radius:14px;
-  display:inline-flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(148,163,184,.35);
-  color:var(--text);
-  font-weight:900;
-}
-html[data-theme="light"] #btnToggleFilters{
-  background:rgba(255,255,255,.85);
-  border:1px solid rgba(2,6,23,.12);
-  color:#0f172a;
-}
-.filtersHeader{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-}
-.filtersTitle{font-weight:950; letter-spacing:.2px;}
-/* Quando colapsado: aside vira “barra” e aparece o tab flutuante */
-body.filters-collapsed #filtersCard{width:64px; min-width:64px; padding:10px 8px;}
-body.filters-collapsed #filtersCard .filtersBody{display:none !important;}
-body.filters-collapsed #filtersCard .filtersHeader{justify-content:center;}
-body.filters-collapsed #filtersCard .filtersTitle{display:none;}
-.filtersCollapsedTab{
-  position:fixed;
-  left:10px;
-  top:180px;
-  z-index:80;
-  display:none;
-  gap:10px;
-  align-items:center;
-  padding:10px 14px;
-  border-radius:999px;
-  border:1px solid rgba(148,163,184,.35);
-  background:rgba(2,6,23,.42);
-  backdrop-filter: blur(8px);
-  color:var(--text);
-  font-weight:950;
-  cursor:pointer;
-  box-shadow:0 10px 24px rgba(2,6,23,.18);
-}
-.filtersCollapsedTab span{opacity:.92}
-html[data-theme="light"] .filtersCollapsedTab{
-  background:rgba(255,255,255,.88);
-  border:1px solid rgba(2,6,23,.12);
-  color:#0f172a;
-}
-body.filters-collapsed .filtersCollapsedTab{display:inline-flex;}
-/* Evita sobreposição feia no topo quando alterna modo claro */
-body.filters-collapsed .filtersCollapsedTab{top:140px;}
-
-/* ====== Scrollbars: lista sempre com barras visíveis e dock horizontal fixo ====== */
-#tableWrap{
-  overflow: scroll !important;
-  scrollbar-gutter: stable both-edges;
-}
-#tableWrap::-webkit-scrollbar{width:14px;height:14px;}
-#tableWrap::-webkit-scrollbar-thumb{
-  background:rgba(148,163,184,.45);
-  border-radius:999px;
-  border:3px solid rgba(255,255,255,.12);
-}
-#tableWrap::-webkit-scrollbar-track{background:transparent;}
-html[data-theme="light"] #tableWrap::-webkit-scrollbar-thumb{
-  border:3px solid rgba(255,255,255,.65);
-}
-/* Mantém o dock horizontal sempre ativo quando Lista estiver visível */
-#hScrollDock{display:block;}
-/* Garante que o rodapé fixo não esconda a última linha */
-#tableWrap{padding-bottom:18px;}
-
+  /* Toggle claro/escuro */
+  .themeBtn{min-width:92px;}
 </style>
 </head>
-<body>
+
+<body class="dark">
 <header>
   <div class="wrap">
     <div class="topbar">
-      <div class="titlegroup">
+      <div>
         <h1>MIT045 | Cronograma — Painel Gerencial (Live)</h1>
-        <div class="badges">
-          <span id="pillStatus" class="pill ok">Status: OK (Cronograma operacional)</span>
-          <span id="pillInfo" class="pill ok">Lista + Gantt consistentes (VIEW).</span>
+        <div class="row" style="margin-top:8px;">
+          <span id="pillStatus" class="pill bad">Status: NOK (Erro)</span>
+          <span id="pillView" class="pill bad">Falha no carregamento. Ver auditoria.</span>
         </div>
         <div class="sub">Gantt em HTML puro (DOM/CSS). Sem dependências externas.</div>
+
+        <div class="nav-main" aria-label="Navegação principal">
+          <a href="index.html" class="nav-item" id="navPainel">📊 PAINEL</a>
+          <a href="cronograma.html" class="nav-item active" id="navCronograma">🗓️ CRONOGRAMA</a>
+        </div>
       </div>
 
-      <div class="actions">
-        <button id="btnLoad" class="btn primary">Carregar &amp; Normalizar</button>
-        <button id="btnExportCsv" class="btn">Exportar (CSV)</button>
-        <button id="btnTheme" class="btn" title="Alternar tema (Claro/Escuro)">🌙/☀</button>
-        <button id="btnResetAll" class="btn ghost">Reset</button>
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn primary" id="btnLoad">Carregar &amp; Normalizar</button>
+        <button class="btn" id="btnExport">Exportar (CSV)</button>
+        <button class="btn themeBtn" id="btnTheme">🌙 Escuro</button>
+        <button class="btn" id="btnReset">Reset</button>
       </div>
-    </div>
-
-    <div class="nav" aria-label="Navegação">
-      <a id="navPainel" href="index.html">📊 PAINEL</a>
-      <a class="active" href="cronograma.html">🗓️ CRONOGRAMA</a>
     </div>
   </div>
 </header>
 
-<div class="grid wrap">
-  <section class="card">
-    
-
-    <div class="sep"></div>
-
+<div class="wrap">
+  <div class="card toolbar">
     <div class="row">
-      <div class="rowL">
-        <button id="tabLista" class="btn tab active">📄 Lista</button>
-        <button id="tabGantt" class="btn tab">📊 Gantt</button>
-        <span class="kbd">Zoom:
-          <select id="zoomSel" style="width:auto; display:inline-block; margin-left:6px; padding:8px 10px; border-radius:12px;">
-            <option value="6">Compacto</option>
-            <option value="12" selected>Normal</option>
-            <option value="18">Conforto</option>
-            <option value="26">Detalhado</option>
-          </select>
-        </span>
-        <span class="kbd"><input id="chkToday" type="checkbox" checked style="width:auto; margin-right:6px; vertical-align:middle;">Hoje</span>
+      <button class="btn" id="tabLista">📄 Lista</button>
+      <button class="btn" id="tabGantt">📊 Gantt</button>
+      <span class="pill">Zoom:
+        <select id="zoomSel" style="border:none;background:transparent;color:inherit;font-weight:900;outline:none;">
+          <option value="compact">Compacto</option>
+          <option value="normal" selected>Normal</option>
+          <option value="wide">Amplo</option>
+        </select>
+      </span>
+      <label class="pill" style="cursor:pointer;">
+        <input type="checkbox" id="chkToday" style="margin:0 6px 0 0;"> Hoje
+      </label>
+    </div>
+    <div class="muted small">Gate D: renderização do Gantt baseada no modelo canônico já validado.</div>
+  </div>
+
+  <div class="grid">
+    <aside class="card filters" id="sidebar">
+      <div class="row" style="justify-content:space-between;">
+        <div class="row" style="gap:8px;">
+          <span class="pill" style="font-weight:950;">Filtros</span>
+          <span class="pill" id="pillItens">0 itens</span>
+        </div>
+        <button class="btn" id="btnApply">Aplicar</button>
       </div>
-      <div class="small">Gate D: renderização do Gantt baseada no modelo canônico já validado.</div>
-    </div>
 
-    <div class="sep"></div>
+      <label class="label">Busca (texto livre)</label>
+      <input id="q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..."/>
 
-    <div class="layout">
-      <aside class="card filtersCard filtersSticky" style="min-width:0;">
-        <div class="filtersHead">
-          <div class="rowL">
-            <span class="pill">Filtros</span>
-            <span id="pillCount" class="pill">0 itens</span>
-          </div>
-          <div class="rowL">
-            <button id="btnApply" class="btn">Aplicar</button>
-            <button id="btnToggleFilters" aria-label="Minimizar/Maximizar filtros" class="btn icon" title="Minimizar/Expandir filtros">≡</button>
-          </div>
-        </div>
+      <label class="label">Status (classificado)</label>
+      <select id="fStatus">
+        <option value="">(todos)</option>
+        <option value="ok">ok (Concluída)</option>
+        <option value="warn">warn (Em andamento / outros)</option>
+        <option value="bad">bad (Atrasada)</option>
+      </select>
 
-        <div class="filtersBody">
-          <label>Busca (texto livre)</label>
-          <input id="q" type="text" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..." />
+      <label class="label">Responsável</label>
+      <select id="fResp">
+        <option value="">(todos)</option>
+      </select>
 
-          <label>Status (classificado)</label>
-          <select id="fStatus">
-            <option value="">(todos)</option>
-            <option value="ok">ok (Concluída)</option>
-            <option value="warn">warn (Em andamento / outros)</option>
-            <option value="bad">bad (Atrasada)</option>
-          </select>
+      <label class="label">Período (início ≥ / término ≤)</label>
+      <div class="row" style="gap:10px;">
+        <input id="dIni" type="date" style="flex:1;">
+        <input id="dFim" type="date" style="flex:1;">
+      </div>
 
-          <label>Responsável</label>
-          <select id="fResp">
-            <option value="">(todos)</option>
-          </select>
+      <label class="label">Atalhos de período (base: hoje)</label>
+      <select id="fAtalho">
+        <option value="">(nenhum)</option>
+        <option value="nextWeek">Próxima Semana</option>
+        <option value="thisWeek">Essa Semana</option>
+        <option value="lastWeek">Semana Passada</option>
+        <option value="next15">Próximos 15 dias</option>
+        <option value="prev15">15 dias Atrás</option>
+        <option value="thisMonth">Este Mês</option>
+        <option value="nextMonth">Próximo Mês</option>
+        <option value="lastMonth">Mês Passado</option>
+        <option value="thisYear">Este Ano</option>
+        <option value="lastYear">Ano Passado</option>
+      </select>
 
-          <label>Período (início ≥ / término ≤)</label>
-          <div class="rowL" style="gap:10px;">
-            <div style="flex:1">
-              <input id="dIni" type="date" />
-              <div class="small">Início mínimo</div>
-            </div>
-            <div style="flex:1">
-              <input id="dFim" type="date" />
-              <div class="small">Término máximo</div>
-            </div>
-          </div>
+      <label class="label">Ordenação</label>
+      <select id="fOrder">
+        <option value="sheet" selected>Ordem da planilha</option>
+        <option value="startAsc">Início (asc)</option>
+        <option value="endAsc">Término (asc)</option>
+        <option value="startDesc">Início (desc)</option>
+        <option value="endDesc">Término (desc)</option>
+      </select>
 
-          
-          <label>Atalhos de período (base: hoje)</label>
-          <select id="quickPeriod">
-            <option value="">(nenhum)</option>
-            <option value="this_week">Essa semana</option>
-            <option value="next_week">Próxima semana</option>
-            <option value="last_week">Semana passada</option>
-            <option value="next_15">Próximos 15 dias</option>
-            <option value="last_15">15 dias atrás</option>
-            <option value="this_month">Este mês</option>
-            <option value="next_month">Próximo mês</option>
-            <option value="last_month">Mês passado</option>
-            <option value="this_year">Este ano</option>
-            <option value="last_year">Ano passado</option>
-          </select>
+      <div class="rowActions">
+        <button class="btn" id="btnClear">Limpar filtros</button>
+      </div>
 
-          <label>Ordenação</label>
-          <select id="sortBy">
-  <option value="sheet" selected>Ordem da planilha</option>
-  <option value="inicio_ts">Início (asc)</option>
-  <option value="termino_ts">Término (asc)</option>
-  <option value="status_class">Status (class)</option>
-  <option value="responsavel">Responsável (A→Z)</option>
-</select>
+      <div class="muted small" id="audit" style="margin-top:10px;white-space:pre-wrap;"></div>
+    </aside>
 
-          <div class="rowL" style="margin-top:12px;">
-            <button id="btnClearFilters" class="btn ghost">Limpar filtros</button>
-          </div>
+    <main class="card" id="main">
+      <!-- Exibição (mover logo acima dos KPIs) -->
+      <div class="row" style="margin-top:0;align-items:center;">
+        <span class="pill">Exibição</span>
+        <span class="pill" id="pillShown">0 exibidos</span>
+        <span class="pill ok" id="pillOk">ok: 0</span>
+        <span class="pill warn" id="pillWarn">warn: 0</span>
+        <span class="pill bad" id="pillBad">bad: 0</span>
+      </div>
 
-          <div class="sep"></div>
-          <div class="small mono" id="audit">Aguardando carga…</div>
-          <div class="filtersHint small" style="margin-top:10px;">Dica: use <b>Enter</b> no campo de busca para aplicar.</div>
-        </div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Total</div><div class="value" id="kTotal">0</div><div class="muted small">Atividades carregadas</div></div>
+        <div class="kpi"><div class="label">Concluídas</div><div class="value" id="kConcl">0</div><div class="muted small">Status class: ok</div></div>
+        <div class="kpi"><div class="label">Atrasadas</div><div class="value" id="kBad">0</div><div class="muted small">Status class: bad</div></div>
+        <div class="kpi"><div class="label">Em andamento / Outros</div><div class="value" id="kWarn">0</div><div class="muted small">Status class: warn</div></div>
+        <div class="kpi"><div class="label">Janela</div><div class="value" id="kWin">—</div><div class="muted small">Min início → Max término</div></div>
+      </div>
 
-        <div class="filtersCollapsedHint">Filtros minimizados.<br/>Clique no <b>≡</b> para expandir.</div>
-      
-  </aside>
-  <!-- Botão flutuante para reabrir filtros quando colapsado (UX) -->
-  <button id="filtersCollapsedTab" class="filtersCollapsedTab" title="Expandir filtros" aria-label="Expandir filtros">
-    ☰ <span>Filtros</span>
-  </button>
+      <div class="muted small" style="margin-top:10px;text-align:right;">
+        Lista e Gantt refletem o mesmo conjunto filtrado (VIEW).
+      </div>
 
+      <section id="panelLista" class="tablewrap" aria-label="Lista de tarefas">
+        <table id="taskTable">
+          <thead>
+            <tr>
+              <th>EDT</th>
+              <th>Indicador</th>
+              <th>% Planejado</th>
+              <th>% concluída</th>
+              <th>Status</th>
+              <th>Atividade</th>
+              <th>Duração</th>
+              <th>Início</th>
+              <th>Término</th>
+              <th>Marco</th>
+              <th>Predecessoras</th>
+              <th>Responsável</th>
+              <th>Anotações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </section>
 
-      <main style="min-width:0;">
-        <div class="kpis">
-          <div class="kpi">
-            <div class="label">Total</div>
-            <div id="kTotal" class="value">0</div>
-            <small>Atividades carregadas</small>
-          </div>
-          <div class="kpi">
-            <div class="label">Concluídas</div>
-            <div id="kOk" class="value">0</div>
-            <small>Status class: ok</small>
-          </div>
-          <div class="kpi">
-            <div class="label">Atrasadas</div>
-            <div id="kBad" class="value">0</div>
-            <small>Status class: bad</small>
-          </div>
-          <div class="kpi">
-            <div class="label">Em andamento / Outros</div>
-            <div id="kWarn" class="value">0</div>
-            <small>Status class: warn</small>
-          </div>
-          <div class="kpi">
-            <div class="label">Janela</div>
-            <div id="kWindow" class="value" style="font-size:14px">—</div>
-            <small>Min início → Max término</small>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:12px;">
-          <div class="rowL">
-            <span class="pill">Exibição</span>
-            <span id="kFiltered" class="pill">0 exibidos</span>
-            <span id="chipOk" class="tag ok">ok: 0</span>
-            <span id="chipWarn" class="tag warn">warn: 0</span>
-            <span id="chipBad" class="tag bad">bad: 0</span>
-          </div>
-          <div class="small">Lista e Gantt refletem o mesmo conjunto filtrado (VIEW).</div>
-        </div>
-
-        <section id="panelLista" class="tablewrap" style="margin-top:10px;">
-          <table>
-  <thead>
-    <tr>
-      <th>EDT</th>
-      <th>Indicador</th>
-      <th>% Planejado</th>
-      <th>% concluída</th>
-      <th>Status</th>
-      <th>Atividade</th>
-      <th>Duração</th>
-      <th>Início</th>
-      <th>Término</th>
-      <th>Marco</th>
-      <th>Predecessoras</th>
-      <th>Responsável</th>
-      <th>Anotações</th>
-    </tr>
-  </thead>
-  <tbody id="tbody"></tbody>
-</table>
-        </section>
-
-        <section id="panelGantt" class="ganttWrap hidden" style="margin-top:10px;">
-          <div class="ganttTopbar">
-            <div class="rowL">
-              <span class="pill">Gantt</span>
-              <span id="gInfo" class="pill">—</span>
-              <span class="pill">Modelo: canônico</span>
-            </div>
-            <div class="rowL">
-              <span class="tag ok">ok</span>
-              <span class="tag warn">warn</span>
-              <span class="tag bad">bad</span>
-            </div>
-          </div>
-
-          <div class="ganttBody">
-            <div id="gLeft" class="ganttLeft"></div>
-            <div id="gRight" class="ganttRight">
-              <div class="ganttAxis">
-                <div id="axisMonths" class="axisMonths"></div>
-                <div id="axisDays" class="axisDays"></div>
-              </div>
-              <div id="gCanvas"></div>
-            </div>
-          </div>
-        </section>
-
-        <div class="small" style="margin-top:8px;">Critério de aceite: Gantt bate 1:1 com a Lista (datas e status), sem divergência.</div>
-      </main>
-    </div>
-  </section>
+      <div class="muted small" style="margin-top:8px;">
+        Critério de aceite: Gantt bate 1:1 com a Lista (datas e status), sem divergência.
+      </div>
+    </main>
+  </div>
 </div>
 
-<div id="tooltip" class="tooltip">
-  <div id="ttTitle" class="t">—</div>
-  <div id="ttBody" class="kv">—</div>
-</div>
+<!-- Barra horizontal fixa (sempre visível) -->
+<div id="hScrollDock" aria-label="Rolagem horizontal fixa"><div id="hScrollInner"></div></div>
 
 <script>
-(() => {
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+/* ========= CONFIG ========= */
+const CSV_URL_DEFAULT = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
 
-  const els = {
-    pillStatus: document.getElementById("pillStatus"),
-    pillInfo: document.getElementById("pillInfo"),
-    pillMeta: document.getElementById("pillMeta"),
-    pillCount: document.getElementById("pillCount"),
-    kTotal: document.getElementById("kTotal"),
-    kOk: document.getElementById("kOk"),
-    kBad: document.getElementById("kBad"),
-    kWarn: document.getElementById("kWarn"),
-    kWindow: document.getElementById("kWindow"),
-    kFiltered: document.getElementById("kFiltered"),
-    chipOk: document.getElementById("chipOk"),
-    chipWarn: document.getElementById("chipWarn"),
-    chipBad: document.getElementById("chipBad"),
-    tbody: document.getElementById("tbody"),
-    audit: document.getElementById("audit"),
-    q: document.getElementById("q"),
-    fStatus: document.getElementById("fStatus"),
-    fResp: document.getElementById("fResp"),
-    dIni: document.getElementById("dIni"),
-    dFim: document.getElementById("dFim"),
-    sortBy: document.getElementById("sortBy"),
-    quickPeriod: document.getElementById("quickPeriod"),
-    btnLoad: document.getElementById("btnLoad"),
-    btnApply: document.getElementById("btnApply"),
-    btnExport: document.getElementById("btnExportCsv"),
-    btnResetAll: document.getElementById("btnResetAll"),
-    btnClearFilters: document.getElementById("btnClearFilters"),
-    btnToggleFilters: document.getElementById("btnToggleFilters"),
-    tabLista: document.getElementById("tabLista"),
-    tabGantt: document.getElementById("tabGantt"),
-    panelLista: document.getElementById("panelLista"),
-    panelGantt: document.getElementById("panelGantt"),
-    zoomSel: document.getElementById("zoomSel"),
-    chkToday: document.getElementById("chkToday"),
-    gLeft: document.getElementById("gLeft"),
-    gRight: document.getElementById("gRight"),
-    axisMonths: document.getElementById("axisMonths"),
-    axisDays: document.getElementById("axisDays"),
-    gCanvas: document.getElementById("gCanvas"),
-    gInfo: document.getElementById("gInfo"),
-    tooltip: document.getElementById("tooltip"),
-    ttTitle: document.getElementById("ttTitle"),
-    ttBody: document.getElementById("ttBody"),
-  };
+/* ========= STATE ========= */
+let RAW_TEXT = "";
+let ROWS_RAW = [];
+let ROWS_CANON = [];
+let VIEW = [];
+let COLLAPSED = new Set();     // EDTs recolhidos (pais)
+let HSCROLL_TARGET = null;     // elemento atualmente controlado pelo dock
 
-  // ===== Tema (claro/escuro) =====
-  const THEME_LS_KEY = 'mit045_crono_theme';
-  function setTheme(mode){
-    const m = (mode==='light'||mode==='dark') ? mode : 'dark';
-    document.documentElement.setAttribute('data-theme', m);
-    localStorage.setItem(THEME_LS_KEY, m);
-    const btn = document.getElementById('btnTheme');
-    if(btn) btn.textContent = (m==='light') ? 'Escuro' : 'Claro';
+/* ========= HELPERS ========= */
+const $ = (id)=>document.getElementById(id);
+const nowBR = ()=> new Date().toLocaleString("pt-BR");
+
+function setStatus(ok, msg){
+  const a = $("pillStatus"), b=$("pillView");
+  if(ok){
+    a.className="pill ok"; a.textContent="Status: OK (Cronograma operacional)";
+    b.className="pill ok"; b.textContent="Lista + Gantt consistentes (VIEW).";
+  }else{
+    a.className="pill bad"; a.textContent="Status: NOK (Erro)";
+    b.className="pill bad"; b.textContent=msg || "Falha no carregamento. Ver auditoria.";
   }
-  function initTheme(){
-    const saved = localStorage.getItem(THEME_LS_KEY) || 'dark';
-    setTheme(saved);
-    const btn = document.getElementById('btnTheme');
-    if(btn){
-      btn.addEventListener('click', ()=>{
-        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-        setTheme(cur==='dark' ? 'light' : 'dark');
-      });
+}
+
+function audit(msg){
+  const el=$("audit");
+  el.textContent = msg;
+}
+
+function parseCSV(text){
+  const rows=[];
+  let row=[], cur="", inQ=false;
+  // normaliza quebras
+  const norm = String(text||"").replaceAll("\r\n","\n").replaceAll("\r","\n");
+  for(let i=0;i<norm.length;i++){
+    const ch=norm[i], nx=norm[i+1];
+    if(inQ){
+      if(ch === '"' && nx === '"'){ cur+='"'; i++; }
+      else if(ch === '"'){ inQ=false; }
+      else cur += ch;
+    }else{
+      if(ch === '"') inQ=true;
+      else if(ch === ','){ row.push(cur); cur=""; }
+      else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else cur += ch;
     }
   }
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c||"").trim() !== ""));
+}
 
-  // ===== Dock de rolagem horizontal (fixo) =====
-  let HSCROLL_TARGET = null;
-  let _hsSync = false;
-  function getActiveHScrollTarget(){
-    // Lista usa panelLista; Gantt usa ganttViewport (se existir e tiver overflow).
-    if(!els) return null;
-    if(els.panelLista && !els.panelLista.classList.contains('hidden')) return els.panelLista;
-    if(els.ganttViewport && !els.panelGantt.classList.contains('hidden')) return els.ganttViewport;
-    return els.panelLista || null;
+function toISODateMaybe(v){
+  const s=String(v||"").trim();
+  if(!s) return "";
+  // aceita: "qua. 12/06/24" ou "12/06/2024"
+  const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){
+    const dd=String(m[1]).padStart(2,'0');
+    const mm=String(m[2]).padStart(2,'0');
+    const yy=m[3].length===2 ? ('20'+m[3]) : m[3];
+    return `${yy}-${mm}-${dd}`;
   }
-  function updateHScrollDock(){
-    const dock = document.getElementById('hScrollDock');
-    const inner = document.getElementById('hScrollInner');
-    if(!dock || !inner) return;
-    HSCROLL_TARGET = getActiveHScrollTarget();
-    if(!HSCROLL_TARGET){ dock.style.display='none'; return; }
-    // Ajusta largura do inner para refletir o scrollWidth do alvo
-    const sw = HSCROLL_TARGET.scrollWidth || 0;
-    inner.style.width = sw + 'px';
-    const need = sw > (HSCROLL_TARGET.clientWidth + 2);
-    dock.style.display = need ? 'block' : 'none';
-    // sincroniza posição
-    dock.scrollLeft = HSCROLL_TARGET.scrollLeft;
-  }
-  function bindHScrollDock(){
-    const dock = document.getElementById('hScrollDock');
-    if(!dock) return;
-    dock.addEventListener('scroll', ()=>{
-      if(_hsSync) return;
-      if(!HSCROLL_TARGET) return;
-      _hsSync = true;
-      HSCROLL_TARGET.scrollLeft = dock.scrollLeft;
-      _hsSync = false;
-    });
-    // alvo -> dock
-    const hookTarget = ()=>{
-      const t = getActiveHScrollTarget();
-      if(!t) return;
-      t.addEventListener('scroll', ()=>{
-        if(_hsSync) return;
-        _hsSync = true;
-        dock.scrollLeft = t.scrollLeft;
-        _hsSync = false;
-      });
-    };
-    hookTarget();
-    window.addEventListener('resize', ()=> setTimeout(updateHScrollDock, 50));
-  }
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  return "";
+}
 
-  let DATA = [];
-  let TREE = { children:new Map(), hasChildren:new Set() }; // built from normalized DATA
-  let COLLAPSED = new Set(); // edt keys collapsed
+function fmtBR(iso){
+  if(!iso) return "";
+  const m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
 
-  function parentEdtKey(edt){
-    const s=String(edt||"").trim();
-    const i=s.lastIndexOf(".");
-    return i>0 ? s.slice(0,i) : "";
-  }
-  function isHiddenByCollapse(edt){
-    let p = parentEdtKey(edt);
-    while(p){
-      if (COLLAPSED.has(p)) return true;
-      p = parentEdtKey(p);
-    }
-    return false;
-  }
+function parsePct(v){
+  const s=String(v||"").trim().replace("%","");
+  const n=parseFloat(s.replace(",","."));
+  return isNaN(n) ? null : Math.max(0, Math.min(100, n));
+}
 
-  const COLLAPSE_LS = 'cronograma_collapsed_v1';
+function statusClass(raw){
+  const s=String(raw||"").toLowerCase();
+  if(s.includes("atras")) return "bad";
+  if(s.includes("concl")) return "ok";
+  if(s.includes("andam") || s.includes("outro") || s.includes("em ")) return "warn";
+  return "warn";
+}
 
-  let VIEW = [];
-  let META = { contentType: "", size: 0, rows: 0, cols: 0, delim: "," };
+function isMarco(v){
+  const s=String(v||"").toLowerCase().trim();
+  return s === "sim" || s === "true" || s === "1" || s === "marco";
+}
 
-  const setPill = (el, text, kind) => {
-    if(!el) return;
-    el.classList.remove("ok","bad","warn");
-    if(kind) el.classList.add(kind);
-    el.textContent = text;
-  };
+function isNegative(v){
+  const n = parseFloat(String(v||"").replace(",","."));
+  return !isNaN(n) && n < 0;
+}
 
-  const detectDelimiter = (firstLine) => {
-    const comma = firstLine.split(",").length - 1;
-    const semi  = firstLine.split(";").length - 1;
-    return semi > comma ? ";" : ",";
-  };
+function buildTreeMeta(rows){
+  // determina nível e pais via EDT (ex: 1.7.6.1 -> pai 1.7.6)
+  const index = new Map();
+  rows.forEach((r, i)=> index.set(r.edt, i));
 
-  const parseCSV = (text) => {
-    const norm = String(text || "").split("\r").join("");
-    const firstLine = (norm.split("\n").find(l => l.trim() !== "") || "");
-    const DELIM = detectDelimiter(firstLine);
-
-    const rows = [];
-    let row = [], cur = "", inQ = false;
-
-    for(let i=0;i<norm.length;i++){
-      const ch = norm[i];
-      const nx = norm[i+1];
-
-      if(inQ){
-        if(ch === '"' && nx === '"'){ cur += '"'; i++; }
-        else if(ch === '"'){ inQ = false; }
-        else { cur += ch; }
-      }else{
-        if(ch === '"'){ inQ = true; }
-        else if(ch === DELIM){ row.push(cur); cur = ""; }
-        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
-        else { cur += ch; }
-      }
-    }
-    if(cur.length || row.length){ row.push(cur); rows.push(row); }
-    return { rows: rows.filter(r => r.some(c => String(c).trim() !== "")), delim: DELIM };
-  };
-
-  const idxOf = (headers, name) => {
-    const n = String(name||"").trim().toLowerCase();
-    for(let i=0;i<headers.length;i++){
-      const h = String(headers[i]||"").trim().toLowerCase();
-      if(h === n) return i;
-    }
-    return -1;
-  };
-
-  const toPct = (v) => {
-    const s = String(v||"").trim();
-    if(!s) return null;
-    const t = s.split("%").join("").trim();
-    const parts = t.split(",");
-    const main = parts[0];
-    const num = parseInt(main, 10);
-    return isNaN(num) ? null : num;
-  };
-
-  const stripWeekdayPrefix = (s) => {
-    const t = String(s||"").trim();
-    if(!t) return "";
-    const parts = t.split(" ");
-    if(parts.length >= 2 && parts[0].endsWith(".")) return parts.slice(1).join(" ").trim();
-    return t;
-  };
-
-  const toISODateMaybe = (v) => {
-    let s = stripWeekdayPrefix(v);
-    if(!s) return "";
-    if(s.includes("/")){
-      const seg = s.split("/");
-      if(seg.length >= 3){
-        const dd = String(seg[0]).padStart(2, "0");
-        const mm = String(seg[1]).padStart(2, "0");
-        let yy = String(seg[2]).trim().split(" ")[0];
-        if(yy.length === 2) yy = "20" + yy;
-        if(yy.length === 4) return yy + "-" + mm + "-" + dd;
-      }
-    }
-    if(s.length >= 10 && s[4] === "-" && s[7] === "-") return s.slice(0,10);
-    return "";
-  };
-
-  const toEpoch = (iso) => {
-    if(!iso) return null;
-    const d = new Date(iso + "T00:00:00");
-    return isNaN(d) ? null : d.getTime();
-  };
-
-  const statusClass = (s) => {
-    const t = String(s||"").toLowerCase();
-    if(t.includes("concl")) return "ok";
-    if(t.includes("atras")) return "bad";
-    return "warn";
-  };
-
-  const fmtISOToBR = (iso) => {
-    if(!iso) return "";
-    return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
-  };
-
-      const edtParts = (edt) => String(edt||"").trim().split(".").filter(Boolean);
-  const edtParent = (edt) => {
-    const p = edtParts(edt);
-    if(p.length <= 1) return "";
-    p.pop();
-    return p.join(".");
-  };
-  const edtLevel = (edt) => Math.max(0, edtParts(edt).length - 1);
-
-  const normalize = (rows) => {
-    const headers = rows[0] || [];
-    const req = ["edt","status","atividade","início","término"];
-    const missing = req.filter(r => idxOf(headers, r) === -1);
-    if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
-
-    const iEDT  = idxOf(headers, "edt");
-    const iInd  = idxOf(headers, "indicador");
-    const iPlan = idxOf(headers, "% planejado");
-    const iConc = idxOf(headers, "% concluída");
-    const iStatus = idxOf(headers, "status");
-    const iAtiv = idxOf(headers, "atividade");
-    const iDur  = idxOf(headers, "duração");
-    const iIni  = idxOf(headers, "início");
-    const iFim  = idxOf(headers, "término");
-    const iMarco = idxOf(headers, "marco");
-    const iPred = idxOf(headers, "predecessoras");
-    const iResp = idxOf(headers, "responsável");
-    const iAnot = idxOf(headers, "anotações");
-
-    const out = [];
-    for(let r=1; r<rows.length; r++){
-      const row = rows[r] || [];
-      const edt = row[iEDT] ?? "";
-      const obj = {
-        _idx: r, // ordem original da planilha (linha no CSV)
-        edt: edt,
-        edt_parent: edtParent(edt),
-        edt_level: edtLevel(edt),
-
-        indicador: row[iInd] ?? "",
-        pct_planejado: toPct(row[iPlan]),
-        pct_concluido: toPct(row[iConc]),
-        status_raw: row[iStatus] ?? "",
-        atividade: row[iAtiv] ?? "",
-        duracao_raw: row[iDur] ?? "",
-        marco: row[iMarco] ?? "",
-        responsavel: row[iResp] ?? "",
-        predecessoras: row[iPred] ?? "",
-        anotacoes: row[iAnot] ?? "",
-        inicio_raw: row[iIni] ?? "",
-        termino_raw: row[iFim] ?? "",
-      };
-      obj.inicio_iso = toISODateMaybe(obj.inicio_raw);
-      obj.termino_iso = toISODateMaybe(obj.termino_raw);
-      obj.inicio_ts = toEpoch(obj.inicio_iso);
-      obj.termino_ts = toEpoch(obj.termino_iso);
-      obj.status_class = statusClass(obj.status_raw);
-
-      if(obj.inicio_ts !== null && obj.termino_ts === null){ obj.termino_ts = obj.inicio_ts; obj.termino_iso = obj.inicio_iso; }
-      if(obj.inicio_ts === null && obj.termino_ts !== null){ obj.inicio_ts = obj.termino_ts; obj.inicio_iso = obj.termino_iso; }
-      if (isHiddenByCollapse(obj.edt)) continue;
-    out.push(obj);
-    }
-    return out;
-  };
-
-  const fetchCSV = async (url) => {
-    const res = await fetch(url, { cache: "no-store" });
-    return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text: await res.text() };
-  };
-
-  const guardNotHTML = (text) => {
-    const head = String(text||"").slice(0,200).toLowerCase();
-    if(head.includes("<html") || head.includes("<!doctype")) throw new Error("Resposta veio HTML, não CSV.");
-  };
-
-  const escapeHtml = (s) => String(s||"")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-
-  const uniqueSorted = (arr) => {
-    const set = new Set(arr.map(x => String(x||"").trim()).filter(x => x));
-    return Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-  };
-
-  const fillResponsaveis = () => {
-    const resps = uniqueSorted(DATA.map(d => d.responsavel));
-    els.fResp.innerHTML = '<option value="">(todos)</option>' +
-      resps.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("");
-  };
-
-  const countByClass = (list) => {
-    let ok=0,warn=0,bad=0;
-    list.forEach(o => { if(o.status_class==="ok") ok++; else if(o.status_class==="bad") bad++; else warn++; });
-    return { ok, warn, bad, total: list.length };
-  };
-
-      const renderTable = () => {
-  const max = Math.min(VIEW.length, 2000);
-  let rows = "";
-  for(let i=0;i<max;i++){
-    const o = VIEW[i];
-
-    const edtKey = String(o.edt||"").trim();
-    const hasKids = TREE.hasChildren && TREE.hasChildren.has(edtKey);
-    const isCollapsed = COLLAPSED.has(edtKey);
-
-    // EDT indentation (sem botão aqui)
-    const indentPx = Math.min(8 + (o.edt_level||0)*16, 120);
-    const edtCell = `<div class="treeCell"><span class="indent" style="width:${indentPx}px"></span><span>${escapeHtml(o.edt)}</span></div>`;
-
-    // Indicador: (1) se indicador negativo -> bullet vermelho; (2) se % concluída = 100 -> bullet verde; senão valor normal
-    const indNum = parseFloat(String(o.indicador ?? "").replace(",", "."));
-    const concNum = parseFloat(String(o.pct_concluido ?? "").replace(",", "."));
-
-    let indicadorCell = escapeHtml(o.indicador);
-    if(!isNaN(indNum) && indNum < 0){
-      indicadorCell = '<span class="negBullet" title="Indicador negativo">●</span>';
-    } else if(!isNaN(concNum) && concNum >= 100){
-      indicadorCell = '<span class="okBullet" title="Concluído (100%)">●</span>';
-    }
-
-    // Marco: Sim -> bandeira
-    const marcoTxt = String(o.marco || "").trim().toLowerCase();
-    const marcoCell = (marcoTxt === "sim" || marcoTxt === "yes" || marcoTxt === "true" || marcoTxt === "1")
-      ? '<span class="flag" title="Marco do projeto"><span class="flagIcon">⚑</span> Marco</span>'
-      : escapeHtml(o.marco);
-
-    // Atividade com indentação e botão expand/collapse no nível pai
-    const actIndent = Math.min(8 + (o.edt_level||0)*16, 140);
-    const twisty = hasKids
-      ? `<span class="twisty tri" data-edt="${escapeAttr(edtKey)}" data-state="${isCollapsed ? "closed" : "open"}" title="Abrir/fechar subtarefas"></span>`
-      : `<span class="twisty tri blank"></span>`;
-    const atividadeCell =
-      `<div class="activityCell"><span class="indent" style="width:${actIndent}px"></span>${twisty}<span class="taskName">${escapeHtml(o.atividade)}</span></div>`;
-
-    // Linha atrasada
-    const isLate = String(o.status_raw||"").toLowerCase().includes("atrasad");
-    const trClass = isLate ? ' class="rowLate"' : "";
-
-    rows += `<tr${trClass}>` +
-      "<td>"+edtCell+"</td>" +
-      "<td>"+indicadorCell+"</td>" +
-      "<td>"+escapeHtml(o.pct_planejado ?? "")+"</td>" +
-      "<td>"+escapeHtml(o.pct_concluido ?? "")+"</td>" +
-      "<td>"+escapeHtml(o.status_raw)+"</td>" +
-      "<td>"+atividadeCell+"</td>" +
-      "<td>"+escapeHtml(o.duracao_raw)+"</td>" +
-      "<td>"+escapeHtml(fmtISOToBR(o.inicio_iso))+"</td>" +
-      "<td>"+escapeHtml(fmtISOToBR(o.termino_iso))+"</td>" +
-      "<td>"+marcoCell+"</td>" +
-      "<td>"+escapeHtml(o.predecessoras)+"</td>" +
-      "<td>"+escapeHtml(o.responsavel)+"</td>" +
-      "<td>"+escapeHtml(o.anotacoes)+"</td>" +
-    "</tr>";
-  }
-  els.tbody.innerHTML = rows;
-
-  // bind toggles (somente nos pais)
-  els.tbody.querySelectorAll(".twisty[data-edt]").forEach(el=>{
-    el.addEventListener("click", (ev)=>{
-      ev.stopPropagation();
-      const k = el.getAttribute("data-edt");
-      if(!k) return;
-      if(COLLAPSED.has(k)) COLLAPSED.delete(k); else COLLAPSED.add(k);
-      saveCollapsed();
-      applyFilters();
-      if(isGanttVisible()) renderGantt();
-    });
+  const childrenMap = new Map();
+  rows.forEach(r=>{
+    const parts = String(r.edt||"").split(".");
+    if(parts.length<=1) return;
+    const parent = parts.slice(0,-1).join(".");
+    if(!childrenMap.has(parent)) childrenMap.set(parent, []);
+    childrenMap.get(parent).push(r.edt);
   });
-};
 
-  const isGanttVisible = () => (els.panelGantt ? !els.panelGantt.classList.contains("hidden") : false);
+  const levelOf = (edt)=> String(edt||"").split(".").length-1;
 
-  const renderAll = () => {
-    const all = countByClass(DATA);
-    const cur = countByClass(VIEW);
+  return { index, childrenMap, levelOf };
+}
 
-    els.kTotal.textContent = String(all.total);
-    els.kOk.textContent = String(all.ok);
-    els.kWarn.textContent = String(all.warn);
-    els.kBad.textContent = String(all.bad);
-
-    els.kFiltered.textContent = String(cur.total) + " exibidos";
-    els.pillCount.textContent = String(cur.total) + " itens";
-    els.chipOk.textContent = "ok: " + cur.ok;
-    els.chipWarn.textContent = "warn: " + cur.warn;
-    els.chipBad.textContent = "bad: " + cur.bad;
-
-    if(DATA.length){
-      const mins = DATA.map(o=>o.inicio_ts).filter(v=>v!==null);
-      const maxs = DATA.map(o=>o.termino_ts).filter(v=>v!==null);
-      if(mins.length && maxs.length){
-        const minTS = Math.min(...mins), maxTS = Math.max(...maxs);
-        const minISO = new Date(minTS).toISOString().slice(0,10);
-        const maxISO = new Date(maxTS).toISOString().slice(0,10);
-        els.kWindow.textContent = fmtISOToBR(minISO) + " → " + fmtISOToBR(maxISO);
-      }else els.kWindow.textContent = "—";
-    }else els.kWindow.textContent = "—";
-
-    renderTable();
-    if(isGanttVisible()) renderGantt();
-    updateHScrollDock();
-  };
-
-const startOfWeekMonday = (d) => {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const day = x.getDay(); // 0=Sun
-  const diff = (day === 0 ? -6 : 1 - day); // Monday
-  x.setDate(x.getDate() + diff);
-  x.setHours(0,0,0,0);
-  return x;
-};
-
-const endOfWeekSunday = (d) => {
-  const s = startOfWeekMonday(d);
-  const e = new Date(s);
-  e.setDate(e.getDate() + 6);
-  e.setHours(0,0,0,0);
-  return e;
-};
-
-const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth()+1, 0);
-const startOfYear = (d) => new Date(d.getFullYear(), 0, 1);
-const endOfYear = (d) => new Date(d.getFullYear(), 11, 31);
-
-const fmtInputDate = (d) => {
-  const yy = d.getFullYear();
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return `${yy}-${mm}-${dd}`;
-};
-
-const applyQuickPeriod = (key) => {
-  if(!key){ return; }
+function applyAtalhoPeriodo(code){
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  let ini=null, fim=null;
+  const startOfWeek = (d)=>{
+    const x=new Date(d);
+    const day=(x.getDay()+6)%7; // seg=0
+    x.setDate(x.getDate()-day);
+    x.setHours(0,0,0,0);
+    return x;
+  };
+  const endOfWeek = (d)=>{
+    const s=startOfWeek(d);
+    const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999);
+    return e;
+  };
+  const startOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth(), 1); x.setHours(0,0,0,0); return x; };
+  const endOfMonth = (d)=>{ const x=new Date(d.getFullYear(), d.getMonth()+1, 0); x.setHours(23,59,59,999); return x; };
+  const startOfYear = (d)=>{ const x=new Date(d.getFullYear(),0,1); x.setHours(0,0,0,0); return x; };
+  const endOfYear = (d)=>{ const x=new Date(d.getFullYear(),11,31); x.setHours(23,59,59,999); return x; };
 
-  if(key === "this_week"){
-    ini = startOfWeekMonday(today);
-    fim = endOfWeekSunday(today);
-  } else if(key === "next_week"){
-    const t = new Date(today); t.setDate(t.getDate()+7);
-    ini = startOfWeekMonday(t); fim = endOfWeekSunday(t);
-  } else if(key === "last_week"){
-    const t = new Date(today); t.setDate(t.getDate()-7);
-    ini = startOfWeekMonday(t); fim = endOfWeekSunday(t);
-  } else if(key === "next_15"){
-    ini = new Date(today);
-    fim = new Date(today); fim.setDate(fim.getDate()+15);
-  } else if(key === "last_15"){
-    ini = new Date(today); ini.setDate(ini.getDate()-15);
-    fim = new Date(today);
-  } else if(key === "this_month"){
-    ini = startOfMonth(today);
-    fim = endOfMonth(today);
-  } else if(key === "next_month"){
-    const t = new Date(today.getFullYear(), today.getMonth()+1, 1);
-    ini = startOfMonth(t);
-    fim = endOfMonth(t);
-  } else if(key === "last_month"){
-    const t = new Date(today.getFullYear(), today.getMonth()-1, 1);
-    ini = startOfMonth(t);
-    fim = endOfMonth(t);
-  } else if(key === "this_year"){
-    ini = startOfYear(today);
-    fim = endOfYear(today);
-  } else if(key === "last_year"){
-    const t = new Date(today.getFullYear()-1, 0, 1);
-    ini = startOfYear(t);
-    fim = endOfYear(t);
+  let a=null,b=null;
+  if(code==="thisWeek"){ a=startOfWeek(today); b=endOfWeek(today); }
+  if(code==="nextWeek"){ const t=new Date(today); t.setDate(t.getDate()+7); a=startOfWeek(t); b=endOfWeek(t); }
+  if(code==="lastWeek"){ const t=new Date(today); t.setDate(t.getDate()-7); a=startOfWeek(t); b=endOfWeek(t); }
+  if(code==="next15"){ a=new Date(today); b=new Date(today); b.setDate(b.getDate()+15); b.setHours(23,59,59,999); }
+  if(code==="prev15"){ b=new Date(today); b.setHours(23,59,59,999); a=new Date(today); a.setDate(a.getDate()-15); }
+  if(code==="thisMonth"){ a=startOfMonth(today); b=endOfMonth(today); }
+  if(code==="nextMonth"){ const t=new Date(today.getFullYear(), today.getMonth()+1, 1); a=startOfMonth(t); b=endOfMonth(t); }
+  if(code==="lastMonth"){ const t=new Date(today.getFullYear(), today.getMonth()-1, 1); a=startOfMonth(t); b=endOfMonth(t); }
+  if(code==="thisYear"){ a=startOfYear(today); b=endOfYear(today); }
+  if(code==="lastYear"){ const t=new Date(today.getFullYear()-1,0,1); a=startOfYear(t); b=endOfYear(t); }
+
+  if(a && b){
+    $("dIni").value = a.toISOString().slice(0,10);
+    $("dFim").value = new Date(b).toISOString().slice(0,10);
   }
+}
 
-  if(ini && fim){
-    els.dIni.value = fmtInputDate(ini);
-    els.dFim.value = fmtInputDate(fim);
-    applyFilters();
-  }
-};
+function computeWindow(rows){
+  const starts = rows.map(r=>r.inicio_iso).filter(Boolean).sort();
+  const ends = rows.map(r=>r.termino_iso).filter(Boolean).sort();
+  if(!starts.length || !ends.length) return "—";
+  return `${fmtBR(starts[0])} → ${fmtBR(ends[ends.length-1])}`;
+}
 
-  const applyFilters = () => {
-    if(!TREE || !TREE.hasChildren){ TREE = buildTree(DATA||[]); }
+/* ========= LOAD + NORMALIZE ========= */
+async function loadAndNormalize(){
+  setStatus(false, "Carregando…");
+  audit("Aguardando…");
 
-    const q = String(els.q.value||"").trim().toLowerCase();
-    const st = els.fStatus.value;
-    const resp = els.fResp.value;
-    const dIni = els.dIni.value ? new Date(els.dIni.value + "T00:00:00").getTime() : null;
-    const dFim = els.dFim.value ? new Date(els.dFim.value + "T00:00:00").getTime() : null;
-    const sort = els.sortBy.value;
-    const desc = sort.startsWith("-");
-    const key = desc ? sort.slice(1) : sort;
+  try{
+    const url = CSV_URL_DEFAULT;
+    const r = await fetch(url, {cache:"no-store"});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const ct = r.headers.get("content-type") || "";
+    const text = await r.text();
+    RAW_TEXT = text;
 
-    let out = DATA.slice();
-    if(q){
-      out = out.filter(o => (o.edt+" "+o.atividade+" "+o.status_raw+" "+o.responsavel+" "+o.predecessoras+" "+o.anotacoes).toLowerCase().includes(q));
-    }
-    if(st) out = out.filter(o => o.status_class === st);
-    if(resp) out = out.filter(o => String(o.responsavel||"") === resp);
-    if(dIni !== null) out = out.filter(o => o.inicio_ts === null ? true : o.inicio_ts >= dIni);
-    if(dFim !== null) out = out.filter(o => o.termino_ts === null ? true : o.termino_ts <= dFim);
+    ROWS_RAW = parseCSV(text);
+    if(!ROWS_RAW.length) throw new Error("CSV vazio");
 
-    out.sort((a,b)=>{
-      const va=a[key], vb=b[key];
-      if(va===null && vb===null) return 0;
-      if(va===null) return 1;
-      if(vb===null) return -1;
-      if(typeof va==="number" && typeof vb==="number") return va-vb;
-      return String(va).localeCompare(String(vb),"pt-BR");
-    });
-    if(desc) out.reverse();
+    const header = ROWS_RAW[0].map(h=>String(h||"").trim());
+    const idx = (name)=> header.findIndex(h=>h.toLowerCase()===name.toLowerCase());
 
-    VIEW = out;
-    renderAll();
-    updateHScrollDock();
-  };
+    const col = {
+      edt: idx("EDT"),
+      indicador: idx("Indicador"),
+      pct_plan: idx("% Planejado"),
+      pct_done: idx("% concluída"),
+      status: idx("Status"),
+      atividade: idx("Atividade"),
+      duracao: idx("Duração"),
+      inicio: idx("Início"),
+      termino: idx("Término"),
+      marco: idx("Marco"),
+      predecessoras: idx("Predecessoras"),
+      responsavel: idx("Responsável"),
+      anotacoes: idx("Anotações")
+    };
 
-  const showLista = () => {
-    if(els.tabLista) els.tabLista.classList.add("active");
-    if(els.tabGantt) els.tabGantt.classList.remove("active");
-    if(els.panelLista) els.panelLista.classList.remove("hidden");
-    if(els.panelGantt) els.panelGantt.classList.add("hidden");
-  };
+    // fallback: alguns CSVs podem ter variações
+    if(col.edt < 0) col.edt = 0;
 
-  const showGantt = () => {
-    if(els.tabGantt) els.tabGantt.classList.add("active");
-    if(els.tabLista) els.tabLista.classList.remove("active");
-    if(els.panelGantt) els.panelGantt.classList.remove("hidden");
-    if(els.panelLista) els.panelLista.classList.add("hidden");
-    renderGantt();
-    updateHScrollDock();
-  };
+    const out=[];
+    for(let i=1;i<ROWS_RAW.length;i++){
+      const r0 = ROWS_RAW[i];
+      if(!r0 || !r0.length) continue;
 
-  const exportCSV = () => {
-    if(!VIEW.length){ alert("Nada para exportar (lista vazia)."); return; }
-    const headers = ["edt","indicador","pct_planejado","pct_concluido","status_raw","atividade","duracao_raw","inicio_iso","termino_iso","marco","predecessoras","responsavel","anotacoes"];
-    const lines = [headers.join(",")];
-    VIEW.forEach(o => {
-      const row = headers.map(k => {
-        const v = String(o[k] ?? "");
-        const q = v.replaceAll('"','""');
-        if(q.includes(",") || q.includes("\n") || q.includes('"')) return '"' + q + '"';
-        return q;
+      const edt = String(r0[col.edt]||"").trim();
+      if(!edt) continue;
+
+      const pctP = parsePct(r0[col.pct_plan]);
+      const pctD = parsePct(r0[col.pct_done]);
+      const stRaw = String(r0[col.status]||"").trim();
+      const stClass = statusClass(stRaw);
+
+      const iniRaw = String(r0[col.inicio]||"").trim();
+      const fimRaw = String(r0[col.termino]||"").trim();
+      const iniISO = toISODateMaybe(iniRaw);
+      const fimISO = toISODateMaybe(fimRaw);
+
+      out.push({
+        sheet_i: i,
+        edt,
+        indicador_raw: String(r0[col.indicador]||"").trim(),
+        indicador_neg: isNegative(r0[col.indicador]),
+        pct_planejado: pctP,
+        pct_concluido: pctD,
+        status_raw: stRaw,
+        status_class: stClass,
+        atividade: String(r0[col.atividade]||"").trim(),
+        duracao_raw: String(r0[col.duracao]||"").trim(),
+        inicio_raw: iniRaw,
+        termino_raw: fimRaw,
+        inicio_iso: iniISO,
+        termino_iso: fimISO,
+        marco: isMarco(r0[col.marco]) ? "Sim" : "Não",
+        predecessoras: String(r0[col.predecessoras]||"").trim(),
+        responsavel: String(r0[col.responsavel]||"").trim(),
+        anotacoes: String(r0[col.anotacoes]||"").trim()
       });
-      lines.push(row.join(","));
-    });
-    const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cronograma_view.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  const setDayWidth = (px) => document.documentElement.style.setProperty("--dayW", px + "px");
-  const daysBetween = (tsA, tsB) => Math.round((tsB - tsA) / (24*60*60*1000));
-  const addDays = (ts, n) => ts + n*(24*60*60*1000);
-  const isoFromTs = (ts) => new Date(ts).toISOString().slice(0,10);
-  const monthKey = (ts) => {
-    const d = new Date(ts);
-    return d.getUTCFullYear() + "-" + String(d.getUTCMonth()+1).padStart(2,"0");
-  };
-  const monthLabel = (ts) => {
-    const d = new Date(ts);
-    const m = d.toLocaleString("pt-BR", { month: "short", timeZone: "UTC" }).replace(".", "");
-    return m.charAt(0).toUpperCase() + m.slice(1) + " " + d.getUTCFullYear();
-  };
-
-  const moveTooltip = (ev) => {
-    const pad = 14;
-    const box = els.tooltip.getBoundingClientRect();
-    let x = ev.clientX + pad;
-    let y = ev.clientY + pad;
-    if(x + box.width > window.innerWidth - 10) x = ev.clientX - box.width - pad;
-    if(y + box.height > window.innerHeight - 10) y = ev.clientY - box.height - pad;
-    els.tooltip.style.left = x + "px";
-    els.tooltip.style.top = y + "px";
-  };
-
-  const showTooltip = (ev, o) => {
-    
-    const pct = (o.pct_concluido ?? "");
-    const plan = (o.pct_planejado ?? "");
-    const body =
-      "<div><b>EDT:</b> " + escapeHtml(o.edt) + "</div>" +
-      (o.indicador ? "<div><b>Indicador:</b> " + escapeHtml(o.indicador) + "</div>" : "") +
-      "<div><b>Status:</b> " + escapeHtml(o.status_raw) + " (" + escapeHtml(o.status_class) + ")</div>" +
-      (plan !== "" ? "<div><b>% Planejado:</b> " + escapeHtml(plan) + "%</div>" : "") +
-      "<div><b>% Concluída:</b> " + escapeHtml(pct) + "%</div>" +
-      "<div><b>Início:</b> " + escapeHtml(fmtISOToBR(o.inicio_iso)) + "</div>" +
-      "<div><b>Término:</b> " + escapeHtml(fmtISOToBR(o.termino_iso)) + "</div>" +
-      (o.duracao_raw ? "<div><b>Duração:</b> " + escapeHtml(o.duracao_raw) + "</div>" : "") +
-      (o.marco ? "<div><b>Marco:</b> " + escapeHtml(o.marco) + "</div>" : "") +
-      (o.responsavel ? "<div><b>Resp.:</b> " + escapeHtml(o.responsavel) + "</div>" : "") +
-      (o.predecessoras ? "<div><b>Pred.:</b> " + escapeHtml(o.predecessoras) + "</div>" : "");
-    els.ttTitle.textContent = o.atividade || "(sem atividade)";
-    els.ttBody.innerHTML = body;
-    els.tooltip.style.display = "block";
-    moveTooltip(ev);
-  };
-
-  const hideTooltip = () => { els.tooltip.style.display = "none"; };
-
-  const renderGantt = () => {
-    if(!VIEW.length){
-      els.gLeft.innerHTML = '<div style="padding:12px;color:var(--muted)">Sem itens no filtro atual.</div>';
-      els.gCanvas.innerHTML = "";
-      els.axisMonths.innerHTML = "";
-      els.axisDays.innerHTML = "";
-      els.gInfo.textContent = "—";
-      return;
     }
 
-    const starts = VIEW.map(o=>o.inicio_ts).filter(v=>v!==null);
-    const ends = VIEW.map(o=>o.termino_ts).filter(v=>v!==null);
-    if(!starts.length || !ends.length){
-      els.gInfo.textContent = "Datas insuficientes no filtro.";
-      return;
-    }
-
-    let minTS = new Date(isoFromTs(Math.min(...starts)) + "T00:00:00Z").getTime();
-    let maxTS = new Date(isoFromTs(Math.max(...ends)) + "T00:00:00Z").getTime();
-    minTS = addDays(minTS, -2);
-    maxTS = addDays(maxTS,  2);
-
-    const totalDays = Math.max(1, daysBetween(minTS, maxTS) + 1);
-    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dayW"), 10) || 12;
-    const canvasW = totalDays * dayW;
-
-    els.gInfo.textContent = totalDays + " dias | " + fmtISOToBR(isoFromTs(minTS)) + " → " + fmtISOToBR(isoFromTs(maxTS)) + " | itens: " + VIEW.length;
-
-    const dayStep = dayW <= 6 ? 10 : dayW <= 12 ? 7 : dayW <= 18 ? 5 : 3;
-    els.axisDays.innerHTML = Array.from({length: totalDays}).map((_,i)=>{
-      const ts = addDays(minTS, i);
-      const day = new Date(ts).getUTCDate();
-      const show = (i % dayStep) === 0;
-      return '<div class="d" title="' + isoFromTs(ts) + '">' + (show ? String(day) : "") + '</div>';
-    }).join("");
-
-    const months = [];
-    let curKey = monthKey(minTS), curStart = 0;
-    for(let i=0;i<totalDays;i++){
-      const k = monthKey(addDays(minTS,i));
-      if(k !== curKey){
-        months.push({ key: curKey, start: curStart, end: i-1 });
-        curKey = k; curStart = i;
-      }
-    }
-    months.push({ key: curKey, start: curStart, end: totalDays-1 });
-    els.axisMonths.innerHTML = months.map(m => {
-      const ts = addDays(minTS, m.start);
-      const w = (m.end - m.start + 1) * dayW;
-      return '<div class="m" style="width:' + w + 'px" title="' + m.key + '">' + monthLabel(ts) + '</div>';
-    }).join("");
-
-    els.gLeft.innerHTML = VIEW.map(o => (
-      '<div class="ganttRowL" title="' + escapeHtml(o.atividade) + '">' +
-        '<div class="edt">' + escapeHtml(o.edt) + '</div>' +
-        '<div class="name">' + escapeHtml(o.atividade) + '</div>' +
-      '</div>'
-    )).join("");
-
-    els.gCanvas.innerHTML = '<div id="gRows" style="position:relative; width:' + canvasW + 'px">' +
-      VIEW.map(()=> '<div class="ganttRowR" style="width:' + canvasW + 'px"></div>').join("") +
-    '</div>';
-
-    const gRowsEl = document.getElementById("gRows");
-    const rowH = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH"), 10) || 42;
-
-    VIEW.forEach((o,i)=>{
-      if(o.inicio_ts === null || o.termino_ts === null) return;
-      const sTS = new Date(isoFromTs(o.inicio_ts) + "T00:00:00Z").getTime();
-      const eTS = new Date(isoFromTs(o.termino_ts) + "T00:00:00Z").getTime();
-      const startIdx = Math.max(0, daysBetween(minTS, sTS));
-      const endIdx = Math.max(0, daysBetween(minTS, eTS));
-      const left = startIdx * dayW;
-      const width = Math.max(8, (endIdx - startIdx + 1) * dayW);
-      const top = i * rowH + (rowH/2);
-
-      const pct = Math.min(100, Math.max(0, (o.pct_concluido ?? 0)));
-      const bar = document.createElement("div");
-      bar.className = "bar " + o.status_class;
-      bar.style.left = left + "px";
-      bar.style.width = width + "px";
-      bar.style.top = top + "px";
-      bar.innerHTML = '<div class="fill" style="width:' + pct + '%"></div>' +
-        '<div class="pct">' + (o.pct_concluido !== null ? String(o.pct_concluido) + "%" : "") + '</div>';
-
-      bar.addEventListener("mouseenter", (ev)=> showTooltip(ev, o));
-      bar.addEventListener("mousemove", (ev)=> { if(els.tooltip.style.display==="block") moveTooltip(ev); });
-      bar.addEventListener("mouseleave", hideTooltip);
-      gRowsEl.appendChild(bar);
-    });
-
-    const old = els.gRight.querySelector(".todayLine");
-    if(old) old.remove();
-    if(els.chkToday.checked){
-      const todayISO = new Date().toISOString().slice(0,10);
-      const todayTS = new Date(todayISO + "T00:00:00Z").getTime();
-      const idx = daysBetween(minTS, todayTS);
-      if(idx >= 0 && idx <= totalDays){
-        const line = document.createElement("div");
-        line.className = "todayLine";
-        line.style.left = (idx * dayW) + "px";
-        els.gRight.appendChild(line);
-      }
-    }
-
-    els.gRight.onscroll = () => { els.gLeft.scrollTop = els.gRight.scrollTop; };
-    els.gLeft.onscroll = () => { els.gRight.scrollTop = els.gLeft.scrollTop; };
-  };
-
-  const load = async () => {
-    try{
-      setPill(els.pillStatus, "Status: Carregando…", "warn");
-      setPill(els.pillInfo, "Buscando CSV e normalizando…", "warn");
-      els.audit.textContent = "Iniciando carga…";
-      DATA=[]; VIEW=[]; els.tbody.innerHTML="";
-      setPill(els.pillMeta, "—");
-
-      const out = await fetchCSV(CSV_URL);
-      guardNotHTML(out.text);
-      if(!out.ok) throw new Error("Fetch não OK: " + out.status + " " + out.statusText);
-
-      const parsed = parseCSV(out.text);
-      META = { contentType: out.ctype, size: out.text.length, rows: parsed.rows.length, cols: (parsed.rows[0]||[]).length, delim: parsed.delim };
-      setPill(els.pillMeta, "CT: " + (META.contentType||"—") + " | linhas: " + META.rows + " | colunas: " + META.cols, "ok");
-
-      DATA = normalize(parsed.rows);
-      VIEW = DATA.slice();
-      fillResponsaveis();
-      applyFilters();
-
-      setPill(els.pillStatus, "Status: OK (Cronograma operacional)", "ok");
-      setPill(els.pillInfo, "Lista + Gantt consistentes (VIEW).", "ok");
-      els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
-    }catch(e){
-      setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
-      setPill(els.pillInfo, "Falha no carregamento. Ver auditoria.", "bad");
-      els.audit.textContent = "ERRO: " + String(e);
-      console.error(e);
-    }
-  };
-
-  const resetFilters = () => {
-    els.q.value=""; els.fStatus.value=""; els.fResp.value=""; els.dIni.value=""; els.dFim.value=""; els.sortBy.value="sheet";
-    if(els.quickPeriod) els.quickPeriod.value="";
-    applyFilters();
-  };
-
-  const resetAll = () => {
-    DATA=[]; VIEW=[]; els.tbody.innerHTML="";
-    els.fResp.innerHTML = '<option value="">(todos)</option>';
-    setPill(els.pillMeta, "—");
-    els.audit.textContent = "Aguardando carga…";
-    setPill(els.pillStatus, "Status: Aguardando");
-    setPill(els.pillInfo, "—");
-    showLista();
-    resetFilters();
-    renderAll();
+    ROWS_CANON = out;
+    audit(`OK. Registros normalizados: ${ROWS_CANON.length}\nCT: ${ct}\nAtualizado: ${nowBR()}`);
+    setStatus(true);
+    buildResponsavelFilter();
+    applyFiltersAndRender();
     updateHScrollDock();
-  };
+  }catch(e){
+    console.error(e);
+    audit("ERRO: " + String(e));
+    setStatus(false, "Falha no carregamento. Ver auditoria.");
+  }
+}
 
-  const LS_COLLAPSE = "cronograma_filters_collapsed";
-  const setCollapsed = (on) => {
-    document.body.classList.toggle("filters-collapsed", on);
-    localStorage.setItem(LS_COLLAPSE, on ? "1" : "0");
-  };
+/* ========= FILTERS / VIEW ========= */
+function buildResponsavelFilter(){
+  const sel = $("fResp");
+  const vals = Array.from(new Set(ROWS_CANON.map(r=>r.responsavel).filter(v=>v && v.trim()))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  sel.innerHTML = `<option value="">(todos)</option>` + vals.map(v=>`<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
+}
 
-  els.btnLoad.addEventListener("click", load);
-  els.btnApply.addEventListener("click", applyFilters);
-  els.btnExport.addEventListener("click", exportCSV);
-  els.btnResetAll.addEventListener("click", resetAll);
-  els.btnClearFilters.addEventListener("click", resetFilters);
-  if(els.quickPeriod){
-    els.quickPeriod.addEventListener("change", ()=>{
-      applyQuickPeriod(els.quickPeriod.value);
+function applyFiltersAndRender(){
+  const q = ($("q").value||"").trim().toLowerCase();
+  const st = $("fStatus").value || "";
+  const rp = $("fResp").value || "";
+  const di = $("dIni").value || "";
+  const df = $("dFim").value || "";
+  const order = $("fOrder").value || "sheet";
+
+  let rows = ROWS_CANON.slice();
+
+  if(q){
+    rows = rows.filter(r=>{
+      const t = `${r.edt} ${r.status_raw} ${r.atividade} ${r.responsavel} ${r.anotacoes}`.toLowerCase();
+      return t.includes(q);
     });
   }
-  els.btnToggleFilters.addEventListener("click", () => setCollapsed(!document.body.classList.contains("filters-collapsed")));
+  if(st){
+    rows = rows.filter(r=> r.status_class === st);
+  }
+  if(rp){
+    rows = rows.filter(r=> r.responsavel === rp);
+  }
+  if(di){
+    rows = rows.filter(r=> !r.inicio_iso || r.inicio_iso >= di);
+  }
+  if(df){
+    rows = rows.filter(r=> !r.termino_iso || r.termino_iso <= df);
+  }
 
-  // Tab flutuante para reabrir filtros quando colapsado
-  const _flt = document.getElementById('filtersCollapsedTab');
-  if (_flt){
-    _flt.addEventListener('click', ()=>{ 
-      document.body.classList.remove('filters-collapsed'); 
-      localStorage.setItem('mit045_filters_collapsed','0');
+  // ordenação
+  if(order==="sheet"){
+    rows.sort((a,b)=>a.sheet_i-b.sheet_i);
+  }else if(order==="startAsc"){
+    rows.sort((a,b)=>String(a.inicio_iso||"9999").localeCompare(String(b.inicio_iso||"9999")));
+  }else if(order==="endAsc"){
+    rows.sort((a,b)=>String(a.termino_iso||"9999").localeCompare(String(b.termino_iso||"9999")));
+  }else if(order==="startDesc"){
+    rows.sort((a,b)=>String(b.inicio_iso||"").localeCompare(String(a.inicio_iso||"")));
+  }else if(order==="endDesc"){
+    rows.sort((a,b)=>String(b.termino_iso||"").localeCompare(String(a.termino_iso||"")));
+  }
+
+  // aplica colapso hierárquico (oculta descendentes)
+  const meta = buildTreeMeta(rows);
+  const hidden = new Set();
+  for(const parent of COLLAPSED){
+    // esconde qualquer EDT que comece com parent + "."
+    rows.forEach(r=>{
+      if(String(r.edt).startsWith(parent + ".")) hidden.add(r.edt);
     });
   }
 
-  els.q.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyFilters(); });
-  els.tabLista.addEventListener("click", showLista);
-  els.tabGantt.addEventListener("click", showGantt);
+  VIEW = rows.filter(r=> !hidden.has(r.edt));
 
-  els.zoomSel.addEventListener("change", () => {
-    setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
-    if(isGanttVisible()) renderGantt();
+  renderKPIs(rows, VIEW);
+  renderTable(rows, VIEW, meta);
+  updateHScrollDock();
+}
+
+function renderKPIs(allRows, viewRows){
+  const total = allRows.length;
+  const ok = allRows.filter(r=>r.status_class==="ok").length;
+  const warn = allRows.filter(r=>r.status_class==="warn").length;
+  const bad = allRows.filter(r=>r.status_class==="bad").length;
+
+  $("kTotal").textContent = total;
+  $("kConcl").textContent = ok;
+  $("kWarn").textContent = warn;
+  $("kBad").textContent = bad;
+  $("kWin").textContent = computeWindow(allRows);
+
+  $("pillItens").textContent = `${total} itens`;
+  $("pillShown").textContent = `${viewRows.length} exibidos`;
+  $("pillOk").textContent = `ok: ${ok}`;
+  $("pillWarn").textContent = `warn: ${warn}`;
+  $("pillBad").textContent = `bad: ${bad}`;
+}
+
+function renderTable(allRows, viewRows, meta){
+  const tbody = $("tbody");
+  tbody.innerHTML = "";
+
+  // map para saber quem tem filhos (no conjunto total, não só view)
+  const childSet = new Set();
+  allRows.forEach(r=>{
+    const parts = String(r.edt).split(".");
+    if(parts.length>1){
+      childSet.add(parts.slice(0,-1).join("."));
+    }
   });
-  els.chkToday.addEventListener("change", () => { if(isGanttVisible()) renderGantt(); });
 
-  els.dIni.addEventListener("change", ()=>{ if(els.quickPeriod) els.quickPeriod.value=""; });
-  els.dFim.addEventListener("change", ()=>{ if(els.quickPeriod) els.quickPeriod.value=""; });
+  for(const r of viewRows){
+    const tr = document.createElement("tr");
 
-  setDayWidth(parseInt(els.zoomSel.value, 10) || 12);
-  setCollapsed(localStorage.getItem(LS_COLLAPSE) === "1");
-  resetAll();
+    if(r.status_class==="bad") tr.classList.add("rowLate");
+
+    const lvl = meta.levelOf(r.edt);
+    const hasKids = childSet.has(r.edt);
+    const isCollapsed = COLLAPSED.has(r.edt);
+
+    // indicador
+    let indicHTML = "";
+    if(r.indicador_neg){
+      indicHTML = `<span class="dot bad" title="Indicador negativo"></span>`;
+    }else if(r.pct_concluido === 100){
+      indicHTML = `<span class="dot ok" title="100% concluído"></span>`;
+    }else{
+      indicHTML = `<span class="dot ${r.status_class}" title="${r.status_class}"></span>`;
+    }
+
+    // marco
+    let marcoHTML = (r.marco==="Sim")
+      ? `<span class="flag" title="Marco do projeto">🏁 Marco</span>`
+      : `Não`;
+
+    // atividade com indent + toggle (na coluna Atividade)
+    const indent = `<span class="indent" style="width:${lvl*14}px"></span>`;
+    const twist = hasKids ? `<span class="twisty" data-edt="${r.edt}" title="Expandir/Recolher">${isCollapsed ? "+" : "–"}</span>` : `<span class="twisty" style="opacity:.0;border-color:transparent;">•</span>`;
+    const atividadeHTML = `<div class="activityCell">${indent}${twist}<b>${escapeHTML(r.atividade||"")}</b></div>`;
+
+    tr.innerHTML = `
+      <td class="muted">${escapeHTML(r.edt)}</td>
+      <td>${indicHTML}</td>
+      <td>${r.pct_planejado ?? ""}</td>
+      <td>${r.pct_concluido ?? ""}</td>
+      <td>${escapeHTML(r.status_raw||"")}</td>
+      <td>${atividadeHTML}</td>
+      <td>${escapeHTML(r.duracao_raw||"")}</td>
+      <td>${escapeHTML(fmtBR(r.inicio_iso) || r.inicio_raw || "")}</td>
+      <td>${escapeHTML(fmtBR(r.termino_iso) || r.termino_raw || "")}</td>
+      <td>${marcoHTML}</td>
+      <td>${escapeHTML(r.predecessoras||"")}</td>
+      <td>${escapeHTML(r.responsavel||"")}</td>
+      <td>${escapeHTML(r.anotacoes||"")}</td>
+    `;
+
+    tbody.appendChild(tr);
+  }
+
+  // bind toggles
+  tbody.querySelectorAll(".twisty[data-edt]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const edt = el.getAttribute("data-edt");
+      if(COLLAPSED.has(edt)) COLLAPSED.delete(edt);
+      else COLLAPSED.add(edt);
+      applyFiltersAndRender();
+    });
+  });
+}
+
+function escapeHTML(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#39;");
+}
+
+/* ========= SCROLL DOCK SYNC ========= */
+function getActiveHScrollTarget(){
+  // por ora, a tabela é o alvo do dock
+  return $("panelLista");
+}
+
+function setupHScrollSync(){
+  const dock = $("hScrollDock");
+  const target = getActiveHScrollTarget();
+  if(!dock || !target) return;
+
+  dock.addEventListener("scroll", ()=>{
+    if(!HSCROLL_TARGET) return;
+    HSCROLL_TARGET.scrollLeft = dock.scrollLeft;
+  }, {passive:true});
+
+  target.addEventListener("scroll", ()=>{
+    if(!dock) return;
+    dock.scrollLeft = target.scrollLeft;
+  }, {passive:true});
+}
+
+function updateHScrollDock(){
+    const dock = document.getElementById('hScrollDock');
+    const inner = document.getElementById('hScrollInner');
+    if(!dock || !inner) return;
+
+    HSCROLL_TARGET = getActiveHScrollTarget();
+
+    // Dock deve ficar SEMPRE visível (barra fixa no rodapé), mesmo antes do carregamento.
+    dock.style.display = 'block';
+
+    if(!HSCROLL_TARGET){
+      inner.style.width = '1px';
+      dock.scrollLeft = 0;
+      return;
+    }
+
+    const sw = HSCROLL_TARGET.scrollWidth || 0;
+    const cw = HSCROLL_TARGET.clientWidth || 0;
+
+    // Mesmo quando não há overflow, mantemos o dock visível; o scroll fica inerte.
+    inner.style.width = Math.max(sw, cw+1) + 'px';
+
+    // Sincroniza posição
+    try{ dock.scrollLeft = HSCROLL_TARGET.scrollLeft || 0; }catch(e){}
+  }
+
+/* ========= THEME ========= */
+function applyTheme(mode){
+  const isLight = (mode==="light");
+  document.body.classList.toggle("light", isLight);
+  document.body.classList.toggle("dark", !isLight);
+  $("btnTheme").textContent = isLight ? "☀️ Claro" : "🌙 Escuro";
+  localStorage.setItem("mit045_theme", isLight ? "light" : "dark");
+}
+
+/* ========= BINDINGS ========= */
+$("btnLoad").addEventListener("click", ()=>loadAndNormalize());
+$("btnApply").addEventListener("click", ()=>applyFiltersAndRender());
+$("btnClear").addEventListener("click", ()=>{
+  $("q").value="";
+  $("fStatus").value="";
+  $("fResp").value="";
+  $("dIni").value="";
+  $("dFim").value="";
+  $("fAtalho").value="";
+  $("fOrder").value="sheet";
+  COLLAPSED.clear();
+  applyFiltersAndRender();
+});
+$("btnReset").addEventListener("click", ()=>{
+  RAW_TEXT=""; ROWS_RAW=[]; ROWS_CANON=[]; VIEW=[];
+  COLLAPSED.clear();
+  $("tbody").innerHTML="";
+  renderKPIs([],[]);
+  setStatus(false, "Falha no carregamento. Ver auditoria.");
+  audit("Aguardando carregamento. Clique em “Carregar & Normalizar”.");
+  updateHScrollDock();
+});
+$("btnExport").addEventListener("click", ()=>{
+  const cols = ["EDT","Indicador","% Planejado","% concluída","Status","Atividade","Duração","Início","Término","Marco","Predecessoras","Responsável","Anotações"];
+  const csv = [cols.join(","), ...VIEW.map(r=>[
+    r.edt, r.indicador_raw, r.pct_planejado ?? "", r.pct_concluido ?? "", r.status_raw,
+    r.atividade, r.duracao_raw, r.inicio_raw, r.termino_raw, r.marco, r.predecessoras, r.responsavel, r.anotacoes
+  ].map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(","))].join("\n");
+
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "mit045_cronograma_view.csv";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1200);
+});
+
+$("q").addEventListener("keydown",(e)=>{ if(e.key==="Enter") applyFiltersAndRender(); });
+
+$("fAtalho").addEventListener("change", ()=>{
+  const v=$("fAtalho").value;
+  if(v) applyAtalhoPeriodo(v);
+});
+
+$("btnTheme").addEventListener("click", ()=>{
+  const cur = localStorage.getItem("mit045_theme") || "dark";
+  applyTheme(cur==="dark" ? "light" : "dark");
+});
+
+(function init(){
+  audit("Aguardando carregamento. Clique em “Carregar & Normalizar”.");
+  const saved = localStorage.getItem("mit045_theme") || "dark";
+  applyTheme(saved);
+  setupHScrollSync();
+  updateHScrollDock();
 })();
-</script>
-
-<script>
-  // ===== Theme toggle (CLARO / ESCURO) =====
-  (function(){
-    const KEY = "mit045_theme_mode";
-    function apply(mode){
-      document.documentElement.setAttribute('data-theme', mode);
-      try{ localStorage.setItem(KEY, mode); }catch(e){}
-      const btn = document.getElementById('btnTheme');
-      if (btn) btn.textContent = (mode==='light') ? '☀️ Claro' : '🌙 Escuro';
-    }
-    const saved = (function(){ try{ return localStorage.getItem(KEY); }catch(e){ return null; }})();
-    const initial = (saved === 'light' || saved === 'dark') ? saved : 'dark';
-    apply(initial);
-    const btn = document.getElementById('btnTheme');
-    if (btn){
-      btn.addEventListener('click', ()=>{
-        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-        apply(cur === 'light' ? 'dark' : 'light');
-      });
-    }
-  })();
 </script>
 </body>
 </html>
