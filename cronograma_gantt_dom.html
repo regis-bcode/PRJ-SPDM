@@ -9,33 +9,51 @@
   :root{
     --bg0:#050812;
     --bg1:#04040A;
+
     --panel: rgba(255,255,255,.06);
     --panel2: rgba(255,255,255,.08);
     --stroke: rgba(255,255,255,.12);
+
     --text: rgba(255,255,255,.92);
     --muted: rgba(255,255,255,.62);
+
     --accent:#22c55e;
     --accent2:#6366f1;
+
     --bad:#ef4444;
     --warn:#f59e0b;
     --ok:#22c55e;
+
     --line: rgba(255,255,255,.10);
     --shadow: 0 18px 50px rgba(2,6,23,.45);
     --radius: 18px;
-    --theadBg: #0b1430; /* sólido, sem transparência */
+
+    --theadBg: #0b1430;       /* sólido (sem transparência) */
+    --scrollTrack: rgba(255,255,255,.06);
+    --scrollThumb: rgba(255,255,255,.22);
+    --todayLine: rgba(34,197,94,.70);
+    --todayLine2: rgba(34,197,94,.25);
   }
 
   body.light{
     --bg0:#f6f7fb;
     --bg1:#f6f7fb;
-    --panel: rgba(255,255,255,.92);
-    --panel2: rgba(255,255,255,.92);
+
+    --panel: rgba(255,255,255,.96);
+    --panel2: rgba(255,255,255,.96);
+
     --stroke: rgba(15,23,42,.12);
     --text: rgba(15,23,42,.92);
     --muted: rgba(15,23,42,.55);
+
     --line: rgba(15,23,42,.12);
     --shadow: 0 18px 50px rgba(2,6,23,.08);
-    --theadBg: #f1f5f9; /* sólido */
+
+    --theadBg: #eaf0ff;       /* sólido */
+    --scrollTrack: rgba(15,23,42,.06);
+    --scrollThumb: rgba(15,23,42,.20);
+    --todayLine: rgba(34,197,94,.85);
+    --todayLine2: rgba(34,197,94,.22);
   }
 
   *{box-sizing:border-box}
@@ -67,11 +85,12 @@
   .btn{
     cursor:pointer;border:1px solid var(--line);
     background: rgba(255,255,255,.08);
-    color:var(--text);padding:10px 12px;border-radius:12px;font-weight:900;
+    color:var(--text);
+    padding:10px 12px;border-radius:12px;font-weight:900;
   }
-  body.light .btn{background:#fff;}
+  body.light .btn{background:#fff;color:rgba(15,23,42,.92);}
   .btn:hover{border-color:rgba(99,102,241,.45);}
-  .btn.primary{background: linear-gradient(135deg, rgba(99,102,241,.75), rgba(34,197,94,.75)); border-color:transparent;}
+  .btn.primary{background: linear-gradient(135deg, rgba(99,102,241,.75), rgba(34,197,94,.75)); border-color:transparent; color:#fff;}
   .btn.active{outline:2px solid rgba(99,102,241,.55);}
 
   .pill{
@@ -80,6 +99,7 @@
     color:var(--muted);font-size:12px;background: rgba(255,255,255,.06);
     font-weight:900;
   }
+  body.light .pill{background:#fff;}
   .pill.ok{border-color:rgba(34,197,94,.45); color:rgba(34,197,94,.95); background:rgba(34,197,94,.10);}
   .pill.warn{border-color:rgba(245,158,11,.45); color:rgba(245,158,11,.95); background:rgba(245,158,11,.10);}
   .pill.bad{border-color:rgba(239,68,68,.45); color:rgba(239,68,68,.95); background:rgba(239,68,68,.10);}
@@ -95,7 +115,7 @@
     transition:all .15s ease;
     display:inline-flex;align-items:center;gap:8px;
   }
-  body.light .nav-item{background:#fff;}
+  body.light .nav-item{background:#fff; color:#0f172a;} /* FIX: texto visível no claro */
   .nav-item:hover{transform:translateY(-1px); border-color:rgba(99,102,241,.55);}
   .nav-item.active{
     background: linear-gradient(135deg,#6366f1,#22c55e);
@@ -133,7 +153,7 @@
     background:#fff;color:#0f172a;border-color:rgba(15,23,42,.12);
   }
 
-  /* selects: texto sempre legível no dropdown */
+  /* selects: texto legível no dropdown */
   .filters select{ color:#0f172a; background: rgba(255,255,255,.95); }
 
   .filters .rowActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
@@ -144,6 +164,7 @@
     position:sticky; top:0;
     padding-bottom:10px;
     background:transparent;
+    z-index:5;
   }
 
   .miniBtn{
@@ -179,13 +200,20 @@
   body.sidebar-collapsed #sidebarHeader{justify-content:center;}
   body.sidebar-collapsed #btnToggleSidebar{width:48px; height:48px; border-radius:16px; justify-content:center;}
 
-  /* KPIs */
+  /* KPIs: sempre cabem (5 cards) */
   .kpis{
     display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr)); /* FIX: 5 cards sempre alinhados */
     gap:10px;
     margin-top:8px;
   }
+  @media (max-width:1400px){
+    .kpis{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width:900px){
+    .kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
   .kpi{
     padding:12px;
     border:1px solid var(--line);
@@ -193,6 +221,7 @@
     background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.12), transparent 45%),
                 radial-gradient(900px 900px at 110% 0%, rgba(236,72,153,.10), transparent 45%),
                 rgba(255,255,255,.05);
+    min-width:0;
   }
   body.light .kpi{
     background: radial-gradient(1200px 1200px at 10% -10%, rgba(99,102,241,.10), transparent 45%),
@@ -226,36 +255,39 @@
   .controlsLeft{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .controlsRight{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
 
-  /* Table / Lista */
+  /* Table / Lista: scroll interno fixo */
   .tablewrap{
     border-radius:14px;
     border:1px solid var(--line);
     background: rgba(255,255,255,.04);
     margin-top:10px;
 
-    overflow: scroll;                /* vertical + horizontal */
+    position:relative;             /* FIX sticky context */
+    overflow: scroll;              /* FIX: força barras sempre */
     scrollbar-gutter: stable both-edges;
-    max-height: calc(100vh - 330px);
+    height: calc(100vh - 430px);   /* FIX: rolagem interna = cabeçalho não some */
+    min-height: 320px;
   }
   body.light .tablewrap{background:#fff;}
 
   table{
-    width:100%;
+    width:max-content;             /* FIX: largura acompanha colunas => scroll horizontal real */
     border-collapse:separate;
     border-spacing:0;
-    min-width:1200px;
-    table-layout: fixed; /* necessário para resize previsível */
+    table-layout: fixed;           /* resize previsível */
   }
 
   thead th{
-    position:sticky;top:0;z-index:5;
+    position:sticky; top:0; z-index:10; /* FIX */
     background: var(--theadBg);
+    color: var(--text);
     border-bottom:1px solid var(--line);
     padding:10px;font-size:12px;white-space:nowrap;
     user-select:none;
     overflow:hidden;
     text-overflow:ellipsis;
   }
+
   th,td{
     padding:10px;
     font-size:12px;
@@ -263,8 +295,9 @@
     vertical-align:top;
     overflow:hidden;
     text-overflow:ellipsis;
+    color: var(--text);
   }
-  body.light th, body.light td{border-bottom:1px solid rgba(15,23,42,.08);}
+  body.light th, body.light td{border-bottom:1px solid rgba(15,23,42,.08); color: rgba(15,23,42,.92);}
 
   tbody tr:hover{background: rgba(255,255,255,.04);}
   body.light tbody tr:hover{background:#f8fafc;}
@@ -293,6 +326,7 @@
     cursor:pointer;
     font-weight:950;
     user-select:none;
+    flex:0 0 auto;
   }
   body.light .twisty{background:#fff;}
   .indent{display:inline-block;width:0;}
@@ -303,19 +337,41 @@
     font-weight:900;font-size:11px;
   }
 
+  /* Scrollbars: sempre visíveis (WebKit) */
+  .tablewrap::-webkit-scrollbar,
+  .ganttWrap::-webkit-scrollbar{
+    width: 12px;
+    height: 12px;
+  }
+  .tablewrap::-webkit-scrollbar-track,
+  .ganttWrap::-webkit-scrollbar-track{
+    background: var(--scrollTrack);
+    border-radius: 999px;
+  }
+  .tablewrap::-webkit-scrollbar-thumb,
+  .ganttWrap::-webkit-scrollbar-thumb{
+    background: var(--scrollThumb);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
   /* Dock horizontal fixo */
   #hScrollDock{
     display:block;
     position:fixed;
     left:0; right:0; bottom:0;
-    height:16px;
+    height:18px;
     overflow-x:scroll; overflow-y:hidden;
     background: rgba(0,0,0,.35);
     border-top:1px solid var(--line);
     z-index:999;
     scrollbar-gutter: stable both-edges;
   }
-  body.light #hScrollDock{background: rgba(255,255,255,.85);}
+  body.light #hScrollDock{background: rgba(255,255,255,.92);}
+  #hScrollDock::-webkit-scrollbar{height: 12px;}
+  #hScrollDock::-webkit-scrollbar-track{background: var(--scrollTrack);}
+  #hScrollDock::-webkit-scrollbar-thumb{background: var(--scrollThumb); border-radius:999px; border:3px solid transparent; background-clip:content-box;}
   #hScrollInner{height:1px;}
 
   /* Drag header */
@@ -329,7 +385,7 @@
     top:0; right:0;
     width:10px; height:100%;
     cursor:col-resize;
-    z-index:10;
+    z-index:20;
   }
   .colResizer:after{
     content:"";
@@ -351,24 +407,14 @@
     background: rgba(255,255,255,.04);
     margin-top:10px;
 
+    position:relative;
     overflow: scroll;
     scrollbar-gutter: stable both-edges;
-    max-height: calc(100vh - 330px);
+    height: calc(100vh - 430px);   /* FIX: mantém barra vertical estável */
+    min-height: 320px;
   }
   body.light .ganttWrap{background:#fff;}
 
-  .ganttGrid{
-    min-width:1200px;
-    display:grid;
-    grid-template-columns: 360px 1fr;
-    gap:0;
-  }
-  .ganttLeft{
-    border-right:1px solid var(--line);
-  }
-  .ganttRight{
-    position:relative;
-  }
   .ganttHeader{
     position:sticky; top:0; z-index:20;
     background: var(--theadBg);
@@ -381,15 +427,15 @@
     font-weight:950;
     font-size:12px;
     white-space:nowrap;
+    color: var(--text);
   }
-  .ganttHeader .hr{
-    overflow:hidden;
-  }
+
   .ganttTimeline{
     display:flex;
     align-items:center;
     gap:0;
     height:28px;
+    position:relative;
   }
   .tick{
     height:28px;
@@ -419,7 +465,6 @@
   }
   .bar{
     position:absolute;
-    confirmation: initial;
     height:16px;
     border-radius:999px;
     top:50%;
@@ -442,6 +487,18 @@
     pointer-events:none;
   }
   body.light .barLabel{color:#0f172a;}
+
+  /* Linha de hoje (Gantt) */
+  .todayLine{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:2px;
+    background: var(--todayLine);
+    box-shadow: 0 0 0 6px var(--todayLine2);
+    pointer-events:none;
+    z-index:5;
+  }
 </style>
 </head>
 
@@ -791,7 +848,7 @@ function renderHeader(){
     th.classList.add("draggable");
     th.style.width = colWidth(key) + "px";
 
-    // Drag reorder (mantido)
+    // Drag reorder
     th.draggable = true;
     th.addEventListener("dragstart", (e)=>{
       e.dataTransfer.setData("text/plain", key);
@@ -819,7 +876,7 @@ function renderHeader(){
 
       renderHeader();
       renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
-      renderGantt(); // mantém consistência
+      renderGantt();
       updateHScrollDock();
     });
 
@@ -832,6 +889,9 @@ function renderHeader(){
 
     tr.appendChild(th);
   });
+
+  // garante dock atualizado com width real
+  updateHScrollDock();
 }
 
 let _resize = null;
@@ -851,10 +911,11 @@ function startResize(ev, key, th){
     COL_WIDTHS[_resize.key] = newW;
     saveColWidths();
 
-    // aplica no TH e nas células da coluna (table-layout: fixed usa width no th)
+    // TH width
     const ths = document.querySelectorAll(`#theadRow th[data-col="${CSS.escape(_resize.key)}"]`);
     ths.forEach(x=>x.style.width = newW + "px");
-    // atualiza largura do table (scroll)
+
+    // FIX: scroll dock recalcula com base no scrollWidth real (colunas mudaram)
     updateHScrollDock();
   };
 
@@ -864,7 +925,7 @@ function startResize(ev, key, th){
     document.body.style.cursor = "";
     _resize = null;
 
-    // re-render leve para garantir consistência visual (especialmente em Gantt)
+    // re-render leve para garantir consistência
     renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
     renderGantt();
     updateHScrollDock();
@@ -875,6 +936,7 @@ function startResize(ev, key, th){
 }
 
 /* ========= LOAD + NORMALIZE ========= */
+/* NÃO ALTERADO NA LÓGICA: apenas uso como estava */
 async function loadAndNormalize(){
   setStatus(false, "Carregando…");
   audit("Aguardando…");
@@ -1018,7 +1080,7 @@ function applyFiltersAndRender(){
   renderKPIs(rows, VIEW);
   renderHeader();
   renderTable(rows, VIEW, buildTreeMeta(rows));
-  renderGantt(); // garante que o Gantt abre e esteja sincronizado com VIEW
+  renderGantt();
   updateHScrollDock();
 }
 
@@ -1107,6 +1169,9 @@ function renderTable(allRows, viewRows, meta){
       applyFiltersAndRender();
     });
   });
+
+  // FIX: dock recalcula após preencher tabela
+  updateHScrollDock();
 }
 
 /* ========= GANTT ========= */
@@ -1123,11 +1188,11 @@ function addDays(d, n){
   const x=new Date(d); x.setDate(x.getDate()+n); return x;
 }
 function fmtTick(d){
-  // mostra mês/ano a cada ~30 dias, senão dia
   const mm = d.toLocaleString("pt-BR",{month:"short"}).replace(".","");
   const yy = String(d.getFullYear()).slice(2);
   return `${mm}/${yy}`;
 }
+
 function renderGantt(){
   const panel = $("panelGantt");
   if(!panel) return;
@@ -1137,14 +1202,12 @@ function renderGantt(){
   const body = $("gBody");
   if(!tl || !body) return;
 
-  // Sem dados
   if(!ROWS_CANON.length || !rows.length){
     tl.innerHTML = "";
     body.innerHTML = `<div style="padding:14px;color:var(--muted);">Sem dados para renderizar o Gantt (carregue e/ou ajuste filtros).</div>`;
     return;
   }
 
-  // Janela
   const starts = rows.map(r=>r.inicio_iso).filter(Boolean).sort();
   const ends = rows.map(r=>r.termino_iso).filter(Boolean).sort();
   const min = isoToDate(starts[0]);
@@ -1156,7 +1219,6 @@ function renderGantt(){
   }
 
   const totalDays = Math.max(1, dayDiff(min, max)+1);
-  // largura por dia (zoom)
   const z = $("zoomSel").value || "normal";
   const pxPerDay = (z==="compact") ? 4 : (z==="wide" ? 10 : 6);
 
@@ -1165,7 +1227,6 @@ function renderGantt(){
 
   // ticks mensais
   tl.innerHTML = "";
-  // coloca um tick por mês (base: dia 1)
   let cursor = new Date(min.getFullYear(), min.getMonth(), 1);
   if(cursor < min) cursor = new Date(min.getFullYear(), min.getMonth()+1, 1);
   const ticks = [];
@@ -1173,7 +1234,7 @@ function renderGantt(){
     ticks.push(new Date(cursor));
     cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
   }
-  // preenche uma linha contínua com blocos (cada bloco ocupa até o próximo tick)
+
   let last = min;
   for(let i=0;i<ticks.length;i++){
     const t = ticks[i];
@@ -1187,7 +1248,6 @@ function renderGantt(){
     tl.appendChild(div);
     last = end;
   }
-  // resto
   const wRest = Math.max(1, (dayDiff(last, addDays(max,1))) * pxPerDay);
   const divRest = document.createElement("div");
   divRest.className = "tick";
@@ -1195,13 +1255,26 @@ function renderGantt(){
   divRest.textContent = fmtTick(last);
   tl.appendChild(divRest);
 
+  // Linha de hoje (se marcado)
+  const showToday = !!$("chkToday").checked;
+  let todayOffPx = null;
+  if(showToday){
+    const today = new Date(); today.setHours(0,0,0,0);
+    if(today >= min && today <= max){
+      todayOffPx = Math.max(0, dayDiff(min, today)) * pxPerDay;
+      const line = document.createElement("div");
+      line.className = "todayLine";
+      line.style.left = todayOffPx + "px";
+      tl.appendChild(line);
+    }
+  }
+
   // rows
   body.innerHTML = "";
   for(const r of rows){
     const gr = document.createElement("div");
     gr.className = "gRow";
 
-    // label (respeita indent EDT como referência)
     const level = String(r.edt||"").split(".").length-1;
     const pad = level*14;
 
@@ -1212,9 +1285,19 @@ function renderGantt(){
 
     const right = document.createElement("div");
     right.className = "gCellR";
-
-    // faixa de fundo (grid por dia, leve)
     right.style.width = timelineWidth + "px";
+
+    // Linha de hoje por célula (sem DOM extra pesado)
+    if(showToday && todayOffPx !== null){
+      right.style.backgroundImage =
+        `linear-gradient(to right,
+          transparent ${todayOffPx}px,
+          var(--todayLine) ${todayOffPx}px,
+          var(--todayLine) ${todayOffPx+2}px,
+          transparent ${todayOffPx+2}px)`;
+    }else{
+      right.style.backgroundImage = "";
+    }
 
     const di = isoToDate(r.inicio_iso);
     const df = isoToDate(r.termino_iso);
@@ -1241,7 +1324,6 @@ function renderGantt(){
     body.appendChild(gr);
   }
 
-  // sincroniza scroll horizontal dock com o painel ativo (gantt/lista)
   updateHScrollDock();
 }
 
@@ -1260,7 +1342,6 @@ function setupHScrollSync(){
     HSCROLL_TARGET.scrollLeft = dock.scrollLeft;
   }, {passive:true});
 
-  // listeners nos 2 painéis
   const list = $("panelLista");
   const gantt = $("panelGantt");
   [list, gantt].forEach(target=>{
@@ -1270,6 +1351,9 @@ function setupHScrollSync(){
       dock.scrollLeft = target.scrollLeft;
     }, {passive:true});
   });
+
+  // FIX: recalcula em resize de janela
+  window.addEventListener("resize", ()=>updateHScrollDock());
 }
 function updateHScrollDock(){
   const dock = $("hScrollDock");
@@ -1323,7 +1407,6 @@ function setTab(tab){
   $("tabLista").classList.toggle("active", isLista);
   $("tabGantt").classList.toggle("active", !isLista);
 
-  // ao abrir Gantt, renderiza novamente pra garantir
   if(!isLista) renderGantt();
   updateHScrollDock();
 }
@@ -1390,10 +1473,9 @@ $("btnExport").addEventListener("click", ()=>{
   ].join("\n");
 
   const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "mit045_cronograma_view.csv";
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="mit045_cronograma_view.csv";
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 1200);
 });
@@ -1405,11 +1487,12 @@ $("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!doc
 
 $("tabLista").addEventListener("click", ()=>setTab("lista"));
 $("tabGantt").addEventListener("click", ()=>setTab("gantt"));
+
 $("zoomSel").addEventListener("change", ()=>{
   if(ACTIVE_TAB==="gantt") renderGantt();
 });
+
 $("chkToday").addEventListener("change", ()=>{
-  // placeholder: você pode usar isso depois para destacar "hoje" no gantt (sem quebrar nada)
   if(ACTIVE_TAB==="gantt") renderGantt();
 });
 
@@ -1473,7 +1556,6 @@ $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
     top.textContent = document.body.classList.contains("sidebar-collapsed") ? "≡ Expandir Filtros" : "≡ Filtros";
   }
 
-  // garante aba inicial
   setTab("lista");
 })();
 </script>
