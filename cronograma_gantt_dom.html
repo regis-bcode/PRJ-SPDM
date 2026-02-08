@@ -72,6 +72,7 @@
   body.light .btn{background:#fff;}
   .btn:hover{border-color:rgba(99,102,241,.45);}
   .btn.primary{background: linear-gradient(135deg, rgba(99,102,241,.75), rgba(34,197,94,.75)); border-color:transparent;}
+  .btn.active{outline:2px solid rgba(99,102,241,.55);}
 
   .pill{
     display:inline-flex;align-items:center;gap:8px;
@@ -208,10 +209,10 @@
     flex-wrap:wrap;
     align-items:center;
     margin-top:0;
-    margin-bottom:8px; /* fica colado acima dos cards */
+    margin-bottom:8px;
   }
 
-  /* CONTROLS BAR (na posição como sua imagem) */
+  /* CONTROLS BAR */
   .controlsBar{
     display:flex;
     justify-content:space-between;
@@ -234,19 +235,37 @@
 
     overflow: scroll;                /* vertical + horizontal */
     scrollbar-gutter: stable both-edges;
-    max-height: calc(100vh - 330px); /* mantém área grande e scrollável */
+    max-height: calc(100vh - 330px);
   }
   body.light .tablewrap{background:#fff;}
-  table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
+
+  table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:1200px;
+    table-layout: fixed; /* necessário para resize previsível */
+  }
+
   thead th{
     position:sticky;top:0;z-index:5;
-    background: var(--theadBg);      /* sólido, sem transparência */
+    background: var(--theadBg);
     border-bottom:1px solid var(--line);
     padding:10px;font-size:12px;white-space:nowrap;
     user-select:none;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
-  th,td{padding:10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;}
+  th,td{
+    padding:10px;
+    font-size:12px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    vertical-align:top;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
   body.light th, body.light td{border-bottom:1px solid rgba(15,23,42,.08);}
+
   tbody tr:hover{background: rgba(255,255,255,.04);}
   body.light tbody tr:hover{background:#f8fafc;}
 
@@ -300,9 +319,129 @@
   #hScrollInner{height:1px;}
 
   /* Drag header */
-  th.draggable{cursor:grab;}
+  th.draggable{cursor:grab; position:relative;}
   th.draggable:active{cursor:grabbing;}
   th.dragOver{outline:2px solid rgba(99,102,241,.55); outline-offset:-2px;}
+
+  /* Resize handle */
+  .colResizer{
+    position:absolute;
+    top:0; right:0;
+    width:10px; height:100%;
+    cursor:col-resize;
+    z-index:10;
+  }
+  .colResizer:after{
+    content:"";
+    position:absolute;
+    top:20%;
+    right:4px;
+    width:2px;
+    height:60%;
+    background: rgba(255,255,255,.18);
+    border-radius:2px;
+  }
+  body.light .colResizer:after{background: rgba(15,23,42,.18);}
+
+  /* ====== GANTT (aba) ====== */
+  #panelGantt{display:none;}
+  .ganttWrap{
+    border-radius:14px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.04);
+    margin-top:10px;
+
+    overflow: scroll;
+    scrollbar-gutter: stable both-edges;
+    max-height: calc(100vh - 330px);
+  }
+  body.light .ganttWrap{background:#fff;}
+
+  .ganttGrid{
+    min-width:1200px;
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:0;
+  }
+  .ganttLeft{
+    border-right:1px solid var(--line);
+  }
+  .ganttRight{
+    position:relative;
+  }
+  .ganttHeader{
+    position:sticky; top:0; z-index:20;
+    background: var(--theadBg);
+    border-bottom:1px solid var(--line);
+    display:grid;
+    grid-template-columns: 360px 1fr;
+  }
+  .ganttHeader .hl, .ganttHeader .hr{
+    padding:10px;
+    font-weight:950;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .ganttHeader .hr{
+    overflow:hidden;
+  }
+  .ganttTimeline{
+    display:flex;
+    align-items:center;
+    gap:0;
+    height:28px;
+  }
+  .tick{
+    height:28px;
+    border-left:1px solid rgba(255,255,255,.08);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px;
+    color:var(--muted);
+  }
+  body.light .tick{border-left:1px solid rgba(15,23,42,.10);}
+
+  .gRow{
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  body.light .gRow{border-bottom:1px solid rgba(15,23,42,.08);}
+  .gCellL{
+    padding:10px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .gCellR{
+    padding:10px;
+    position:relative;
+    min-height:40px;
+  }
+  .bar{
+    position:absolute;
+    confirmation: initial;
+    height:16px;
+    border-radius:999px;
+    top:50%;
+    transform:translateY(-50%);
+    background: rgba(99,102,241,.65);
+    border:1px solid rgba(99,102,241,.85);
+    min-width:4px;
+  }
+  .bar.ok{background: rgba(34,197,94,.65); border-color: rgba(34,197,94,.85);}
+  .bar.warn{background: rgba(245,158,11,.60); border-color: rgba(245,158,11,.85);}
+  .bar.bad{background: rgba(239,68,68,.60); border-color: rgba(239,68,68,.85);}
+  .barLabel{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:11px;
+    font-weight:900;
+    color: rgba(255,255,255,.92);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  body.light .barLabel{color:#0f172a;}
 </style>
 </head>
 
@@ -411,7 +550,6 @@
 
     <main class="card" id="main">
 
-      <!-- TOPO DO PAINEL (como na sua imagem): Exibição acima dos cards -->
       <div class="exibRow">
         <span class="pill">Exibição</span>
         <span class="pill" id="pillShown">0 exibidos</span>
@@ -428,11 +566,10 @@
         <div class="kpi"><div class="label">Janela</div><div class="value" id="kWin">—</div><div class="muted small">Min início → Max término</div></div>
       </div>
 
-      <!-- Barra de menus na posição do retângulo (logo abaixo dos cards) -->
       <div class="card controlsBar">
         <div class="controlsLeft">
           <button class="btn" id="btnToggleSidebarTop" title="Minimizar/Maximizar filtros">≡ Filtros</button>
-          <button class="btn" id="tabLista">📄 Lista</button>
+          <button class="btn active" id="tabLista">📄 Lista</button>
           <button class="btn" id="tabGantt">📊 Gantt</button>
 
           <span class="pill">Zoom:
@@ -456,6 +593,7 @@
         Lista e Gantt refletem o mesmo conjunto filtrado (VIEW).
       </div>
 
+      <!-- LISTA -->
       <section id="panelLista" class="tablewrap" aria-label="Lista de tarefas">
         <table id="taskTable">
           <thead>
@@ -463,6 +601,17 @@
           </thead>
           <tbody id="tbody"></tbody>
         </table>
+      </section>
+
+      <!-- GANTT -->
+      <section id="panelGantt" class="ganttWrap" aria-label="Gantt">
+        <div class="ganttHeader">
+          <div class="hl">Tarefas</div>
+          <div class="hr">
+            <div class="ganttTimeline" id="gTimeline"></div>
+          </div>
+        </div>
+        <div id="gBody"></div>
       </section>
 
       <div class="muted small" style="margin-top:8px;">
@@ -485,25 +634,28 @@ let ROWS_CANON = [];
 let VIEW = [];
 let COLLAPSED = new Set();
 let HSCROLL_TARGET = null;
+let ACTIVE_TAB = "lista"; // "lista" | "gantt"
 
-/* ====== Colunas (ordem fixa + reordenação drag) ====== */
+/* ====== Colunas ====== */
 const COLS_DEF = [
-  {key:"edt", label:"EDT"},
-  {key:"indicador", label:"Indicador"},
-  {key:"pct_plan", label:"% Planejado"},
-  {key:"pct_done", label:"% concluída"},
-  {key:"status", label:"Status"},
-  {key:"atividade", label:"Atividade"},
-  {key:"duracao", label:"Duração"},
-  {key:"inicio", label:"Início"},
-  {key:"termino", label:"Término"},
-  {key:"marco", label:"Marco"},
-  {key:"predecessoras", label:"Predecessoras"},
-  {key:"responsavel", label:"Responsável"},
-  {key:"anotacoes", label:"Anotações"},
+  {key:"edt", label:"EDT", w:90},
+  {key:"indicador", label:"Indicador", w:90},
+  {key:"pct_plan", label:"% Planejado", w:110},
+  {key:"pct_done", label:"% concluída", w:110},
+  {key:"status", label:"Status", w:120},
+  {key:"atividade", label:"Atividade", w:420},
+  {key:"duracao", label:"Duração", w:100},
+  {key:"inicio", label:"Início", w:110},
+  {key:"termino", label:"Término", w:110},
+  {key:"marco", label:"Marco", w:130},
+  {key:"predecessoras", label:"Predecessoras", w:120},
+  {key:"responsavel", label:"Responsável", w:160},
+  {key:"anotacoes", label:"Anotações", w:420},
 ];
 const LS_COL_ORDER = "mit045_cols_order_v2";
+const LS_COL_WIDTHS = "mit045_cols_widths_v1";
 let COL_ORDER = [];
+let COL_WIDTHS = {}; // key -> px
 
 const $ = (id)=>document.getElementById(id);
 const nowBR = ()=> new Date().toLocaleString("pt-BR");
@@ -597,7 +749,7 @@ function escapeHTML(s){
     .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
 
-/* ========= COL ORDER PREF ========= */
+/* ========= COL PREFS ========= */
 function loadColOrder(){
   try{
     const o = JSON.parse(localStorage.getItem(LS_COL_ORDER) || "null");
@@ -607,11 +759,24 @@ function loadColOrder(){
     COL_ORDER = COLS_DEF.map(c=>c.key);
   }
 }
-function saveColOrder(){
-  localStorage.setItem(LS_COL_ORDER, JSON.stringify(COL_ORDER));
+function saveColOrder(){ localStorage.setItem(LS_COL_ORDER, JSON.stringify(COL_ORDER)); }
+
+function loadColWidths(){
+  try{
+    const w = JSON.parse(localStorage.getItem(LS_COL_WIDTHS) || "{}");
+    COL_WIDTHS = (w && typeof w === "object") ? w : {};
+  }catch(e){ COL_WIDTHS = {}; }
+}
+function saveColWidths(){ localStorage.setItem(LS_COL_WIDTHS, JSON.stringify(COL_WIDTHS)); }
+
+function colWidth(key){
+  const def = COLS_DEF.find(c=>c.key===key);
+  const base = def ? def.w : 120;
+  const w = parseInt(COL_WIDTHS[key] || base, 10);
+  return Math.max(70, Math.min(900, w));
 }
 
-/* ========= TABLE HEADER (draggable) ========= */
+/* ========= HEADER (drag + resize) ========= */
 function renderHeader(){
   const tr = $("theadRow");
   tr.innerHTML = "";
@@ -624,8 +789,10 @@ function renderHeader(){
     th.textContent = def.label;
     th.setAttribute("data-col", key);
     th.classList.add("draggable");
-    th.draggable = true;
+    th.style.width = colWidth(key) + "px";
 
+    // Drag reorder (mantido)
+    th.draggable = true;
     th.addEventListener("dragstart", (e)=>{
       e.dataTransfer.setData("text/plain", key);
       e.dataTransfer.effectAllowed = "move";
@@ -652,11 +819,59 @@ function renderHeader(){
 
       renderHeader();
       renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
+      renderGantt(); // mantém consistência
       updateHScrollDock();
     });
 
+    // Resize handle
+    const res = document.createElement("div");
+    res.className = "colResizer";
+    res.title = "Arraste para redimensionar";
+    res.addEventListener("mousedown", (ev)=>startResize(ev, key, th));
+    th.appendChild(res);
+
     tr.appendChild(th);
   });
+}
+
+let _resize = null;
+function startResize(ev, key, th){
+  ev.preventDefault();
+  ev.stopPropagation();
+  const startX = ev.clientX;
+  const startW = th.getBoundingClientRect().width;
+
+  _resize = {key, startX, startW};
+  document.body.style.cursor = "col-resize";
+
+  const onMove = (e)=>{
+    if(!_resize) return;
+    const dx = e.clientX - _resize.startX;
+    const newW = Math.max(70, Math.min(900, Math.round(_resize.startW + dx)));
+    COL_WIDTHS[_resize.key] = newW;
+    saveColWidths();
+
+    // aplica no TH e nas células da coluna (table-layout: fixed usa width no th)
+    const ths = document.querySelectorAll(`#theadRow th[data-col="${CSS.escape(_resize.key)}"]`);
+    ths.forEach(x=>x.style.width = newW + "px");
+    // atualiza largura do table (scroll)
+    updateHScrollDock();
+  };
+
+  const onUp = ()=>{
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+    document.body.style.cursor = "";
+    _resize = null;
+
+    // re-render leve para garantir consistência visual (especialmente em Gantt)
+    renderTable(ROWS_CANON, VIEW, buildTreeMeta(ROWS_CANON));
+    renderGantt();
+    updateHScrollDock();
+  };
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
 }
 
 /* ========= LOAD + NORMALIZE ========= */
@@ -803,6 +1018,7 @@ function applyFiltersAndRender(){
   renderKPIs(rows, VIEW);
   renderHeader();
   renderTable(rows, VIEW, buildTreeMeta(rows));
+  renderGantt(); // garante que o Gantt abre e esteja sincronizado com VIEW
   updateHScrollDock();
 }
 
@@ -875,7 +1091,7 @@ function renderTable(allRows, viewRows, meta){
       marco: `<td>${marcoHTML}</td>`,
       predecessoras: `<td>${escapeHTML(r.predecessoras||"")}</td>`,
       responsavel: `<td>${escapeHTML(r.responsavel||"")}</td>`,
-      anotacoes: `<td>${escapeHTML(r.anotacoes||"")}</td>`
+      anotacoes: `<td title="${escapeHTML(r.anotacoes||"")}">${escapeHTML(r.anotacoes||"")}</td>`
     };
 
     tr.innerHTML = COL_ORDER.map(k=>map[k]).join("");
@@ -893,22 +1109,167 @@ function renderTable(allRows, viewRows, meta){
   });
 }
 
+/* ========= GANTT ========= */
+function isoToDate(iso){
+  if(!iso) return null;
+  const d = new Date(iso + "T00:00:00");
+  return isNaN(d) ? null : d;
+}
+function dayDiff(a,b){
+  const ms = 24*3600*1000;
+  return Math.round((b.getTime()-a.getTime())/ms);
+}
+function addDays(d, n){
+  const x=new Date(d); x.setDate(x.getDate()+n); return x;
+}
+function fmtTick(d){
+  // mostra mês/ano a cada ~30 dias, senão dia
+  const mm = d.toLocaleString("pt-BR",{month:"short"}).replace(".","");
+  const yy = String(d.getFullYear()).slice(2);
+  return `${mm}/${yy}`;
+}
+function renderGantt(){
+  const panel = $("panelGantt");
+  if(!panel) return;
+
+  const rows = VIEW.slice();
+  const tl = $("gTimeline");
+  const body = $("gBody");
+  if(!tl || !body) return;
+
+  // Sem dados
+  if(!ROWS_CANON.length || !rows.length){
+    tl.innerHTML = "";
+    body.innerHTML = `<div style="padding:14px;color:var(--muted);">Sem dados para renderizar o Gantt (carregue e/ou ajuste filtros).</div>`;
+    return;
+  }
+
+  // Janela
+  const starts = rows.map(r=>r.inicio_iso).filter(Boolean).sort();
+  const ends = rows.map(r=>r.termino_iso).filter(Boolean).sort();
+  const min = isoToDate(starts[0]);
+  const max = isoToDate(ends[ends.length-1]);
+  if(!min || !max){
+    tl.innerHTML = "";
+    body.innerHTML = `<div style="padding:14px;color:var(--muted);">Datas inválidas para Gantt (início/término).</div>`;
+    return;
+  }
+
+  const totalDays = Math.max(1, dayDiff(min, max)+1);
+  // largura por dia (zoom)
+  const z = $("zoomSel").value || "normal";
+  const pxPerDay = (z==="compact") ? 4 : (z==="wide" ? 10 : 6);
+
+  const timelineWidth = totalDays * pxPerDay;
+  tl.style.width = timelineWidth + "px";
+
+  // ticks mensais
+  tl.innerHTML = "";
+  // coloca um tick por mês (base: dia 1)
+  let cursor = new Date(min.getFullYear(), min.getMonth(), 1);
+  if(cursor < min) cursor = new Date(min.getFullYear(), min.getMonth()+1, 1);
+  const ticks = [];
+  while(cursor <= max){
+    ticks.push(new Date(cursor));
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
+  }
+  // preenche uma linha contínua com blocos (cada bloco ocupa até o próximo tick)
+  let last = min;
+  for(let i=0;i<ticks.length;i++){
+    const t = ticks[i];
+    const start = last;
+    const end = addDays(t, 0);
+    const w = Math.max(1, dayDiff(start, end) * pxPerDay);
+    const div = document.createElement("div");
+    div.className = "tick";
+    div.style.width = w + "px";
+    div.textContent = fmtTick(start);
+    tl.appendChild(div);
+    last = end;
+  }
+  // resto
+  const wRest = Math.max(1, (dayDiff(last, addDays(max,1))) * pxPerDay);
+  const divRest = document.createElement("div");
+  divRest.className = "tick";
+  divRest.style.width = wRest + "px";
+  divRest.textContent = fmtTick(last);
+  tl.appendChild(divRest);
+
+  // rows
+  body.innerHTML = "";
+  for(const r of rows){
+    const gr = document.createElement("div");
+    gr.className = "gRow";
+
+    // label (respeita indent EDT como referência)
+    const level = String(r.edt||"").split(".").length-1;
+    const pad = level*14;
+
+    const left = document.createElement("div");
+    left.className = "gCellL";
+    left.style.paddingLeft = (10+pad) + "px";
+    left.innerHTML = `<span class="muted">${escapeHTML(r.edt)}</span> — <b>${escapeHTML(r.atividade||"")}</b>`;
+
+    const right = document.createElement("div");
+    right.className = "gCellR";
+
+    // faixa de fundo (grid por dia, leve)
+    right.style.width = timelineWidth + "px";
+
+    const di = isoToDate(r.inicio_iso);
+    const df = isoToDate(r.termino_iso);
+    if(di && df){
+      const off = Math.max(0, dayDiff(min, di)) * pxPerDay;
+      const dur = Math.max(1, (dayDiff(di, addDays(df,1))) * pxPerDay);
+
+      const bar = document.createElement("div");
+      bar.className = "bar " + (r.status_class || "warn");
+      bar.style.left = off + "px";
+      bar.style.width = dur + "px";
+
+      const lbl = document.createElement("div");
+      lbl.className = "barLabel";
+      lbl.style.left = (off + 6) + "px";
+      lbl.textContent = `${fmtBR(r.inicio_iso)} → ${fmtBR(r.termino_iso)}`;
+
+      right.appendChild(bar);
+      right.appendChild(lbl);
+    }
+
+    gr.appendChild(left);
+    gr.appendChild(right);
+    body.appendChild(gr);
+  }
+
+  // sincroniza scroll horizontal dock com o painel ativo (gantt/lista)
+  updateHScrollDock();
+}
+
 /* ========= SCROLL DOCK SYNC ========= */
-function getActiveHScrollTarget(){ return $("panelLista"); }
+function getActiveHScrollTarget(){
+  if(ACTIVE_TAB==="gantt") return $("panelGantt");
+  return $("panelLista");
+}
 
 function setupHScrollSync(){
   const dock = $("hScrollDock");
-  const target = getActiveHScrollTarget();
-  if(!dock || !target) return;
+  if(!dock) return;
 
   dock.addEventListener("scroll", ()=>{
     if(!HSCROLL_TARGET) return;
     HSCROLL_TARGET.scrollLeft = dock.scrollLeft;
   }, {passive:true});
 
-  target.addEventListener("scroll", ()=>{
-    dock.scrollLeft = target.scrollLeft;
-  }, {passive:true});
+  // listeners nos 2 painéis
+  const list = $("panelLista");
+  const gantt = $("panelGantt");
+  [list, gantt].forEach(target=>{
+    if(!target) return;
+    target.addEventListener("scroll", ()=>{
+      if(HSCROLL_TARGET !== target) return;
+      dock.scrollLeft = target.scrollLeft;
+    }, {passive:true});
+  });
 }
 function updateHScrollDock(){
   const dock = $("hScrollDock");
@@ -953,6 +1314,20 @@ function setSidebarCollapsed(collapsed){
   updateHScrollDock();
 }
 
+/* ========= TABS ========= */
+function setTab(tab){
+  ACTIVE_TAB = tab;
+  const isLista = tab==="lista";
+  $("panelLista").style.display = isLista ? "block" : "none";
+  $("panelGantt").style.display = isLista ? "none" : "block";
+  $("tabLista").classList.toggle("active", isLista);
+  $("tabGantt").classList.toggle("active", !isLista);
+
+  // ao abrir Gantt, renderiza novamente pra garantir
+  if(!isLista) renderGantt();
+  updateHScrollDock();
+}
+
 /* ========= BINDINGS ========= */
 $("btnLoad").addEventListener("click", ()=>loadAndNormalize());
 $("btnApply").addEventListener("click", ()=>applyFiltersAndRender());
@@ -981,6 +1356,8 @@ $("btnReset").addEventListener("click", ()=>{
   $("kWarn").textContent="0";
   $("kBad").textContent="0";
   $("kWin").textContent="—";
+  $("gTimeline").innerHTML="";
+  $("gBody").innerHTML="";
   setStatus(false, "Falha no carregamento. Ver auditoria.");
   audit("Aguardando carregamento. Clique em “Carregar & Normalizar”.");
   updateHScrollDock();
@@ -996,8 +1373,8 @@ $("btnExport").addEventListener("click", ()=>{
       const map = {
         edt: r.edt,
         indicador: r.indicador_raw,
-        pct_plan: r.pct_planejado ?? "",
-        pct_done: r.pct_concluido ?? "",
+        pct_plan: (r.pct_planejado ?? ""),
+        pct_done: (r.pct_concluido ?? ""),
         status: r.status_raw,
         atividade: r.atividade,
         duracao: r.duracao_raw,
@@ -1025,6 +1402,16 @@ $("q").addEventListener("keydown",(e)=>{ if(e.key==="Enter") applyFiltersAndRend
 
 $("btnToggleSidebar").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
 $("btnToggleSidebarTop").addEventListener("click", ()=> setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+
+$("tabLista").addEventListener("click", ()=>setTab("lista"));
+$("tabGantt").addEventListener("click", ()=>setTab("gantt"));
+$("zoomSel").addEventListener("change", ()=>{
+  if(ACTIVE_TAB==="gantt") renderGantt();
+});
+$("chkToday").addEventListener("change", ()=>{
+  // placeholder: você pode usar isso depois para destacar "hoje" no gantt (sem quebrar nada)
+  if(ACTIVE_TAB==="gantt") renderGantt();
+});
 
 $("fAtalho").addEventListener("change", ()=>{
   const v=$("fAtalho").value;
@@ -1071,6 +1458,7 @@ $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
   if(collapsed) document.body.classList.add("sidebar-collapsed");
 
   loadColOrder();
+  loadColWidths();
   renderHeader();
 
   setupHScrollSync();
@@ -1084,6 +1472,9 @@ $("fMarcoOnly").addEventListener("change", ()=>applyFiltersAndRender());
   if(top){
     top.textContent = document.body.classList.contains("sidebar-collapsed") ? "≡ Expandir Filtros" : "≡ Filtros";
   }
+
+  // garante aba inicial
+  setTab("lista");
 })();
 </script>
 </body>
