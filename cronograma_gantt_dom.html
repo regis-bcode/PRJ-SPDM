@@ -976,6 +976,13 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
 <script>
 (() => {
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+  const CSV_URL_CANDIDATES = (() => {
+    const list = [CSV_URL];
+    if (!CSV_URL.includes("gid=")) list.push(CSV_URL + "&gid=0&single=true");
+    const gviz = CSV_URL.replace("/pub?output=csv", "/gviz/tq?tqx=out:csv");
+    if (gviz !== CSV_URL) list.push(gviz);
+    return Array.from(new Set(list));
+  })();
 
   const els = {
     pillStatus: document.getElementById("pillStatus"),
@@ -1155,11 +1162,26 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
     return { rows: rows.filter(r => r.some(c => String(c).trim() !== "")), delim: DELIM };
   };
 
+  const normHeader = (v) => String(v||"")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
   const idxOf = (headers, name) => {
-    const n = String(name||"").trim().toLowerCase();
+    const n = normHeader(name);
     for(let i=0;i<headers.length;i++){
-      const h = String(headers[i]||"").trim().toLowerCase();
+      const h = normHeader(headers[i]);
       if(h === n) return i;
+    }
+    return -1;
+  };
+
+  const idxOfAny = (headers, names) => {
+    for(const name of (names || [])){
+      const i = idxOf(headers, name);
+      if(i >= 0) return i;
     }
     return -1;
   };
@@ -1228,23 +1250,31 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
 
   const normalize = (rows) => {
     const headers = rows[0] || [];
-    const req = ["edt","status","atividade","início","término"];
-    const missing = req.filter(r => idxOf(headers, r) === -1);
+    const reqMap = {
+      edt: ["edt"],
+      status: ["status"],
+      atividade: ["atividade"],
+      inicio: ["inicio", "início"],
+      termino: ["termino", "término"]
+    };
+    const missing = Object.entries(reqMap)
+      .filter(([,aliases]) => idxOfAny(headers, aliases) === -1)
+      .map(([k]) => k);
     if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
 
-    const iEDT  = idxOf(headers, "edt");
-    const iInd  = idxOf(headers, "indicador");
-    const iPlan = idxOf(headers, "% planejado");
-    const iConc = idxOf(headers, "% concluída");
-    const iStatus = idxOf(headers, "status");
-    const iAtiv = idxOf(headers, "atividade");
-    const iDur  = idxOf(headers, "duração");
-    const iIni  = idxOf(headers, "início");
-    const iFim  = idxOf(headers, "término");
-    const iMarco = idxOf(headers, "marco");
-    const iPred = idxOf(headers, "predecessoras");
-    const iResp = idxOf(headers, "responsável");
-    const iAnot = idxOf(headers, "anotações");
+    const iEDT  = idxOfAny(headers, ["edt"]);
+    const iInd  = idxOfAny(headers, ["indicador", "indicador (1)", "ind"]);
+    const iPlan = idxOfAny(headers, ["% planejado", "% planejad", "percentual planejado"]);
+    const iConc = idxOfAny(headers, ["% concluida", "% concluída", "percentual concluido", "percentual concluído"]);
+    const iStatus = idxOfAny(headers, ["status"]);
+    const iAtiv = idxOfAny(headers, ["atividade"]);
+    const iDur  = idxOfAny(headers, ["duracao", "duração"]);
+    const iIni  = idxOfAny(headers, ["inicio", "início"]);
+    const iFim  = idxOfAny(headers, ["termino", "término"]);
+    const iMarco = idxOfAny(headers, ["marco"]);
+    const iPred = idxOfAny(headers, ["predecessoras", "predecessores"]);
+    const iResp = idxOfAny(headers, ["responsavel", "responsável"]);
+    const iAnot = idxOfAny(headers, ["anotacoes", "anotações"]);
 
     const out = [];
     for(let r=1; r<rows.length; r++){
@@ -1287,7 +1317,7 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
     try{
       const res = await fetch(url, { cache: "no-store", credentials: "omit", mode: "cors" });
       const text = await res.text();
-      return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text };
+      return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text, via:"fetch", url };
     }catch(fetchErr){
       // 2) Fallback via XHR (algumas extensões/políticas podem afetar fetch)
       const xhrResult = await new Promise((resolve) => {
@@ -1303,18 +1333,37 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
               status: xhr.status || 0,
               statusText: xhr.statusText || "XHR",
               ctype,
-              text: xhr.responseText || ""
+              text: xhr.responseText || "",
+              via: "xhr",
+              url
             });
           };
-          xhr.onerror = () => resolve({ ok:false, status:0, statusText:"XHR network error", ctype:"", text:"" });
+          xhr.onerror = () => resolve({ ok:false, status:0, statusText:"XHR network error", ctype:"", text:"", via:"xhr", url });
           xhr.send(null);
         }catch(e){
-          resolve({ ok:false, status:0, statusText:"XHR exception", ctype:"", text:"" });
+          resolve({ ok:false, status:0, statusText:"XHR exception", ctype:"", text:"", via:"xhr", url });
         }
       });
       xhrResult._fetchErr = String(fetchErr||"");
       return xhrResult;
     }
+  };
+
+  const fetchCSVFromCandidates = async (urls) => {
+    const tries = [];
+    for(const url of (urls || [])){
+      const out = await fetchCSV(url);
+      tries.push(out);
+      if(out.ok){
+        try{
+          guardNotHTML(out.text);
+          return { out, tries };
+        }catch(htmlErr){
+          tries.push({ ok:false, status:out.status, statusText:String(htmlErr), ctype:out.ctype, text:"", via:out.via, url:out.url, _html:true });
+        }
+      }
+    }
+    return { out:null, tries };
   };
 
   const guardNotHTML = (text) => {
@@ -1724,9 +1773,12 @@ const applyQuickPeriod = (key) => {
       DATA=[]; VIEW=[]; els.tbody.innerHTML="";
       setPill(els.pillMeta, "—");
 
-      const out = await fetchCSV(CSV_URL);
-      guardNotHTML(out.text);
-      if(!out.ok) throw new Error("Fetch não OK: " + out.status + " " + out.statusText);
+      const loaded = await fetchCSVFromCandidates(CSV_URL_CANDIDATES);
+      const out = loaded.out;
+      if(!out){
+        const dbg = loaded.tries.map(t => `[${t.via||"?"}] ${t.status||0} ${t.statusText||""} @ ${t.url||""}`).join(" | ");
+        throw new Error("Não foi possível obter CSV válido. Tentativas: " + dbg);
+      }
 
       const parsed = parseCSV(out.text);
       META = { contentType: out.ctype, size: out.text.length, rows: parsed.rows.length, cols: (parsed.rows[0]||[]).length, delim: parsed.delim };
@@ -1739,7 +1791,7 @@ const applyQuickPeriod = (key) => {
 
       setPill(els.pillStatus, "Status: OK (Cronograma operacional)", "ok");
       setPill(els.pillInfo, "Lista + Gantt consistentes (VIEW).", "ok");
-      if (els.audit) els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
+      if (els.audit) els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Via: " + (out.via||"—") + " | Gantt: DOM/CSS";
     }catch(e){
       setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
       setPill(els.pillInfo, "Falha no carregamento. Ver auditoria.", "bad");
