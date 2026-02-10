@@ -1048,11 +1048,9 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
   let HSCROLL_TARGET = null;
   let _hsSync = false;
   function getActiveHScrollTarget(){
-    // Lista usa panelLista; Gantt usa ganttViewport (se existir e tiver overflow).
-    if(!els) return null;
-    if(els.panelLista && !els.panelLista.classList.contains('hidden')) return els.panelLista;
-    if(els.ganttViewport && !els.panelGantt.classList.contains('hidden')) return els.ganttViewport;
-    return els.panelLista || null;
+    // decide target by active view
+    const isGantt = !!(els.panelGantt && !els.panelGantt.classList.contains('hidden') && els.tabGantt && els.tabGantt.classList.contains('active'));
+    return isGantt ? els.ganttScroll : els.listScroll;
   }
   function updateHScrollDock(){
     const dock = document.getElementById('hScrollDock');
@@ -1283,10 +1281,39 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
     }
     return out;
   };
-
   const fetchCSV = async (url) => {
-    const res = await fetch(url, { cache: "no-store" });
-    return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text: await res.text() };
+    // 1) Tenta fetch padrão (Chrome/GitHub Pages)
+    try{
+      const res = await fetch(url, { cache: "no-store", credentials: "omit", mode: "cors" });
+      const text = await res.text();
+      return { ok: res.ok, status: res.status, statusText: res.statusText, ctype: res.headers.get("content-type")||"", text };
+    }catch(fetchErr){
+      // 2) Fallback via XHR (algumas extensões/políticas podem afetar fetch)
+      const xhrResult = await new Promise((resolve) => {
+        try{
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now(), true);
+          xhr.responseType = "text";
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState !== 4) return;
+            const ctype = (xhr.getResponseHeader("content-type") || "");
+            resolve({
+              ok: (xhr.status >= 200 && xhr.status < 300),
+              status: xhr.status || 0,
+              statusText: xhr.statusText || "XHR",
+              ctype,
+              text: xhr.responseText || ""
+            });
+          };
+          xhr.onerror = () => resolve({ ok:false, status:0, statusText:"XHR network error", ctype:"", text:"" });
+          xhr.send(null);
+        }catch(e){
+          resolve({ ok:false, status:0, statusText:"XHR exception", ctype:"", text:"" });
+        }
+      });
+      xhrResult._fetchErr = String(fetchErr||"");
+      return xhrResult;
+    }
   };
 
   const guardNotHTML = (text) => {
