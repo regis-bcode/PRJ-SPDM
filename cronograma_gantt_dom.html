@@ -1155,11 +1155,26 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
     return { rows: rows.filter(r => r.some(c => String(c).trim() !== "")), delim: DELIM };
   };
 
+  const normHeader = (v) => String(v||"")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
   const idxOf = (headers, name) => {
-    const n = String(name||"").trim().toLowerCase();
+    const n = normHeader(name);
     for(let i=0;i<headers.length;i++){
-      const h = String(headers[i]||"").trim().toLowerCase();
+      const h = normHeader(headers[i]);
       if(h === n) return i;
+    }
+    return -1;
+  };
+
+  const idxOfAny = (headers, names) => {
+    for(const name of (names || [])){
+      const i = idxOf(headers, name);
+      if(i >= 0) return i;
     }
     return -1;
   };
@@ -1228,23 +1243,31 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
 
   const normalize = (rows) => {
     const headers = rows[0] || [];
-    const req = ["edt","status","atividade","início","término"];
-    const missing = req.filter(r => idxOf(headers, r) === -1);
+    const reqMap = {
+      edt: ["edt"],
+      status: ["status"],
+      atividade: ["atividade"],
+      inicio: ["inicio", "início"],
+      termino: ["termino", "término"]
+    };
+    const missing = Object.entries(reqMap)
+      .filter(([,aliases]) => idxOfAny(headers, aliases) === -1)
+      .map(([k]) => k);
     if(missing.length) throw new Error("Colunas obrigatórias ausentes: " + missing.join(", "));
 
-    const iEDT  = idxOf(headers, "edt");
-    const iInd  = idxOf(headers, "indicador");
-    const iPlan = idxOf(headers, "% planejado");
-    const iConc = idxOf(headers, "% concluída");
-    const iStatus = idxOf(headers, "status");
-    const iAtiv = idxOf(headers, "atividade");
-    const iDur  = idxOf(headers, "duração");
-    const iIni  = idxOf(headers, "início");
-    const iFim  = idxOf(headers, "término");
-    const iMarco = idxOf(headers, "marco");
-    const iPred = idxOf(headers, "predecessoras");
-    const iResp = idxOf(headers, "responsável");
-    const iAnot = idxOf(headers, "anotações");
+    const iEDT  = idxOfAny(headers, ["edt"]);
+    const iInd  = idxOfAny(headers, ["indicador", "indicador (1)", "ind"]);
+    const iPlan = idxOfAny(headers, ["% planejado", "% planejad", "percentual planejado"]);
+    const iConc = idxOfAny(headers, ["% concluida", "% concluída", "percentual concluido", "percentual concluído"]);
+    const iStatus = idxOfAny(headers, ["status"]);
+    const iAtiv = idxOfAny(headers, ["atividade"]);
+    const iDur  = idxOfAny(headers, ["duracao", "duração"]);
+    const iIni  = idxOfAny(headers, ["inicio", "início"]);
+    const iFim  = idxOfAny(headers, ["termino", "término"]);
+    const iMarco = idxOfAny(headers, ["marco"]);
+    const iPred = idxOfAny(headers, ["predecessoras", "predecessores"]);
+    const iResp = idxOfAny(headers, ["responsavel", "responsável"]);
+    const iAnot = idxOfAny(headers, ["anotacoes", "anotações"]);
 
     const out = [];
     for(let r=1; r<rows.length; r++){
