@@ -1021,6 +1021,7 @@ body.theme-dark #btnMinFilters{color:#ffffff;}
     tooltip: document.getElementById("tooltip"),
     ttTitle: document.getElementById("ttTitle"),
     ttBody: document.getElementById("ttBody"),
+    audit: document.getElementById("audit"),
   };
 
   // ===== Tema (claro/escuro) =====
@@ -1719,7 +1720,7 @@ const applyQuickPeriod = (key) => {
     try{
       setPill(els.pillStatus, "Status: Carregando…", "warn");
       setPill(els.pillInfo, "Buscando CSV e normalizando…", "warn");
-      els.audit.textContent = "Iniciando carga…";
+      if (els.audit) els.audit.textContent = "Iniciando carga…";
       DATA=[]; VIEW=[]; els.tbody.innerHTML="";
       setPill(els.pillMeta, "—");
 
@@ -1738,11 +1739,11 @@ const applyQuickPeriod = (key) => {
 
       setPill(els.pillStatus, "Status: OK (Cronograma operacional)", "ok");
       setPill(els.pillInfo, "Lista + Gantt consistentes (VIEW).", "ok");
-      els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
+      if (els.audit) els.audit.textContent = "OK. Registros: " + DATA.length + " | Delim: " + META.delim + " | CT: " + (META.contentType||"—") + " | Gantt: DOM/CSS";
     }catch(e){
       setPill(els.pillStatus, "Status: NOK (Erro)", "bad");
       setPill(els.pillInfo, "Falha no carregamento. Ver auditoria.", "bad");
-      els.audit.textContent = "ERRO: " + String(e);
+      if (els.audit) els.audit.textContent = "ERRO: " + String(e);
       console.error(e);
     }
   };
@@ -1757,7 +1758,7 @@ const applyQuickPeriod = (key) => {
     DATA=[]; VIEW=[]; els.tbody.innerHTML="";
     els.fResp.innerHTML = '<option value="">(todos)</option>';
     setPill(els.pillMeta, "—");
-    els.audit.textContent = "Aguardando carga…";
+    if (els.audit) els.audit.textContent = "Aguardando carga…";
     setPill(els.pillStatus, "Status: Aguardando");
     setPill(els.pillInfo, "—");
     showLista();
