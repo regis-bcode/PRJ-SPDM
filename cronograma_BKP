@@ -1,1 +1,1797 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>MIT045 | Cronograma — Painel Gerencial (Live)</title>
 
+  <style>
+    :root{
+      --bg0:#070b14;
+      --bg1:#0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.18);
+      --text:#e9eefc;
+      --muted:#a7b3d4;
+      --muted2:#7f8bb0;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --accent:#6ee7ff;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius:16px;
+
+      /* table sizing */
+      --rowH: 36px;
+      --headH: 40px;
+      --ganttH: 520px; /* altura do corpo do grid/gantt (scroll interno vertical) */
+
+      /* light tokens (override via body[data-theme="light"]) */
+      --L-bg0:#f6f7fb;
+      --L-bg1:#eef2ff;
+      --L-panel: rgba(255,255,255,.92);
+      --L-panel2: rgba(255,255,255,.98);
+      --L-stroke: rgba(15,23,42,.12);
+      --L-stroke2: rgba(15,23,42,.18);
+      --L-text:#0f172a;
+      --L-muted:#475569;
+      --L-muted2:#64748b;
+      --L-shadow: 0 18px 50px rgba(2,6,23,.10);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(1200px 900px at 10% 0%, rgba(99,102,241,.18), transparent 55%),
+                  radial-gradient(1100px 900px at 90% 10%, rgba(236,72,153,.14), transparent 55%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    body[data-theme="light"]{
+      background: radial-gradient(1200px 900px at 10% 0%, rgba(99,102,241,.14), transparent 55%),
+                  radial-gradient(1100px 900px at 90% 10%, rgba(236,72,153,.10), transparent 55%),
+                  linear-gradient(180deg, var(--L-bg0), var(--L-bg1));
+      color:var(--L-text);
+    }
+
+    .wrap{max-width: 1500px; margin: 0 auto; padding: 18px 18px 0 18px;}
+    .topbar{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      padding: 14px 14px 12px 14px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    body[data-theme="light"] .topbar{
+      border-color: var(--L-stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
+      box-shadow: var(--L-shadow);
+    }
+
+    .titleline{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .h1{font-weight:950; letter-spacing:.2px; font-size:18px;}
+    .sub{margin-top:6px; font-size:12px; color:var(--muted)}
+    body[data-theme="light"] .sub{color: var(--L-muted)}
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-size:12px; font-weight:800;
+      white-space:nowrap;
+    }
+    body[data-theme="light"] .pill{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+      color: var(--L-text);
+    }
+
+    .pill.ok{border-color: rgba(34,197,94,.35); color: var(--good);}
+    .pill.warn{border-color: rgba(245,158,11,.35); color: var(--warn);}
+    .pill.bad{border-color: rgba(239,68,68,.35); color: var(--bad);}
+
+    .actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .btn{
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight:900;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+      user-select:none;
+    }
+    .btn:hover{border-color: var(--stroke2)}
+    .btn.primary{
+      border-color: rgba(34,197,94,.35);
+      background: linear-gradient(135deg, rgba(99,102,241,.40), rgba(34,197,94,.35));
+    }
+    body[data-theme="light"] .btn{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+      color: var(--L-text);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+    }
+    body[data-theme="light"] .btn:hover{border-color: var(--L-stroke2)}
+    body[data-theme="light"] .btn.primary{
+      border-color: rgba(34,197,94,.35);
+      background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,197,94,.18));
+    }
+
+    .btn.ghost{
+      background: transparent;
+    }
+
+    .nav{
+      display:flex; gap:10px; margin-top:12px;
+    }
+    .nav a{
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 16px; border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .nav a.active{
+      background: linear-gradient(135deg, rgba(99,102,241,.55), rgba(34,197,94,.45));
+      border-color: transparent;
+    }
+    body[data-theme="light"] .nav a{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+      color: var(--L-text);
+    }
+    body[data-theme="light"] .nav a.active{
+      background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,197,94,.18));
+    }
+
+    /* Main layout */
+    .layout{
+      display:grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+      padding-bottom: 20px;
+    }
+    .card{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    body[data-theme="light"] .card{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--L-shadow);
+    }
+
+    /* Sidebar */
+    .sidebar{
+      padding:12px;
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: hidden;
+      display:flex; flex-direction:column;
+      min-width:0;
+    }
+    .sidebarHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .sidebarHead .left{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .sidebarTitle{font-weight:950}
+    .miniBtn{
+      display:inline-flex; align-items:center; gap:8px;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      font-weight:900;
+      color: var(--text);
+      user-select:none;
+    }
+    body[data-theme="light"] .miniBtn{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+      color: var(--L-text);
+    }
+    .miniBtn .icon{
+      width:24px;height:24px;border-radius:10px;
+      border:1px solid var(--stroke);
+      display:inline-flex;align-items:center;justify-content:center;
+      background: rgba(0,0,0,.12);
+      font-weight:950;
+    }
+    body[data-theme="light"] .miniBtn .icon{
+      border-color: var(--L-stroke);
+      background: rgba(15,23,42,.05);
+    }
+
+    .sidebarBody{
+      flex:1;
+      overflow:auto;
+      padding-right:6px;
+      scrollbar-gutter: stable both-edges;
+    }
+    .sidebarBody::-webkit-scrollbar{width:12px;}
+    .sidebarBody::-webkit-scrollbar-thumb{
+      background: rgba(148,163,184,.28);
+      border: 3px solid rgba(0,0,0,.0);
+      border-radius: 999px;
+    }
+    body[data-theme="light"] .sidebarBody::-webkit-scrollbar-thumb{
+      background: rgba(15,23,42,.20);
+      border: 3px solid rgba(255,255,255,.0);
+    }
+
+    .fieldLabel{
+      font-size:12px;
+      font-weight:950;
+      margin: 10px 0 6px;
+      color: var(--text);
+    }
+    body[data-theme="light"] .fieldLabel{color: var(--L-text)}
+    .input, select{
+      width:100%;
+      border-radius: 12px;
+      padding: 10px 10px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight:800;
+      outline:none;
+    }
+    body[data-theme="light"] .input,
+    body[data-theme="light"] select{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.98);
+      color: var(--L-text);
+    }
+    .input:focus, select:focus{
+      border-color: rgba(99,102,241,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.18);
+    }
+
+    .dateRow{display:grid;grid-template-columns: 1fr 1fr; gap:10px;}
+    .sideActions{display:flex; gap:10px; margin-top:12px;}
+    .sideActions .btn{flex:1}
+
+    /* Main */
+    .main{
+      padding:12px;
+      min-width:0;
+    }
+
+    /* Top controls bar (moved up like your screenshot) */
+    .controlsBar{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 10px;
+      border:1px solid var(--stroke);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      margin-bottom: 10px;
+    }
+    body[data-theme="light"] .controlsBar{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+    }
+    .controlsLeft{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .segBtn{
+      display:inline-flex; align-items:center; gap:8px;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight:950;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .segBtn.active{
+      border-color: rgba(34,197,94,.35);
+      background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(34,197,94,.28));
+    }
+    body[data-theme="light"] .segBtn{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.96);
+      color: var(--L-text);
+    }
+    body[data-theme="light"] .segBtn.active{
+      border-color: rgba(34,197,94,.35);
+      background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(34,197,94,.14));
+    }
+    .inline{
+      display:inline-flex; align-items:center; gap:8px;
+      color: var(--muted);
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    body[data-theme="light"] .inline{color: var(--L-muted)}
+    .inline select{
+      width:auto;
+      padding:8px 10px;
+      border-radius: 12px;
+    }
+    .inline input[type="checkbox"]{transform: scale(1.1);}
+
+    /* KPI row (cards) positioned like screenshot */
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 1320px){
+      .layout{grid-template-columns: 340px minmax(0,1fr);}
+      .kpiRow{grid-template-columns: repeat(3, minmax(180px,1fr));}
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns: 1fr;}
+      .sidebar{position:relative; height:auto;}
+      .kpiRow{grid-template-columns: repeat(2, minmax(160px,1fr));}
+    }
+    .kpi{
+      padding:12px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 14px;
+      background: radial-gradient(1100px 700px at 0% 0%, rgba(99,102,241,.14), transparent 55%),
+                  radial-gradient(900px 600px at 100% 0%, rgba(236,72,153,.10), transparent 55%),
+                  rgba(255,255,255,.05);
+    }
+    body[data-theme="light"] .kpi{
+      border-color: var(--L-stroke);
+      background: radial-gradient(1100px 700px at 0% 0%, rgba(99,102,241,.10), transparent 55%),
+                  radial-gradient(900px 600px at 100% 0%, rgba(236,72,153,.08), transparent 55%),
+                  rgba(255,255,255,.96);
+    }
+    .kpi .lab{font-size:12px; font-weight:900; color: var(--muted)}
+    body[data-theme="light"] .kpi .lab{color: var(--L-muted)}
+    .kpi .val{margin-top:6px; font-size:22px; font-weight:950;}
+    .kpi .subv{margin-top:2px; font-size:12px; color: var(--muted2); font-weight:800;}
+    body[data-theme="light"] .kpi .subv{color: var(--L-muted2)}
+
+    /* Exibição pills row */
+    .summaryRow{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      margin: 0 0 10px 0;
+    }
+
+    /* Grid/Gantt viewport */
+    .viewport{
+      border:1px solid var(--stroke);
+      border-radius: 14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.12);
+    }
+    body[data-theme="light"] .viewport{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.92);
+    }
+
+    /* Header (sticky within internal vertical scroll) */
+    .gridHeader{
+      height: var(--headH);
+      display:flex;
+      align-items:stretch;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(10,14,30,.92); /* opaque */
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    body[data-theme="light"] .gridHeader{
+      border-bottom-color: var(--L-stroke);
+      background: rgba(255,255,255,.98); /* opaque */
+    }
+
+    /* Horizontal scroll main (always visible via dock) */
+    .hScrollMain{
+      overflow-x: scroll;
+      overflow-y: hidden;
+      scrollbar-gutter: stable both-edges;
+    }
+    .hScrollMain::-webkit-scrollbar{height: 12px;}
+    .hScrollMain::-webkit-scrollbar-thumb{
+      background: rgba(148,163,184,.30);
+      border-radius: 999px;
+      border: 3px solid rgba(0,0,0,.0);
+    }
+    body[data-theme="light"] .hScrollMain::-webkit-scrollbar-thumb{
+      background: rgba(15,23,42,.22);
+      border: 3px solid rgba(255,255,255,.0);
+    }
+
+    /* Vertical scroll body always visible */
+    .vScrollBody{
+      height: var(--ganttH);
+      overflow-y: scroll;
+      overflow-x: hidden;
+      position: relative;
+      scrollbar-gutter: stable both-edges;
+    }
+    .vScrollBody::-webkit-scrollbar{width: 12px;}
+    .vScrollBody::-webkit-scrollbar-thumb{
+      background: rgba(148,163,184,.30);
+      border-radius: 999px;
+      border: 3px solid rgba(0,0,0,.0);
+    }
+    body[data-theme="light"] .vScrollBody::-webkit-scrollbar-thumb{
+      background: rgba(15,23,42,.22);
+      border: 3px solid rgba(255,255,255,.0);
+    }
+
+    /* Fixed horizontal scrollbar dock (always visible) */
+    .hDock{
+      position: sticky;
+      bottom: 0;
+      z-index: 15;
+      height: 16px;
+      background: rgba(0,0,0,.14);
+      border-top: 1px solid var(--stroke);
+      overflow-x: scroll;
+      overflow-y: hidden;
+      scrollbar-gutter: stable both-edges;
+    }
+    body[data-theme="light"] .hDock{
+      background: rgba(255,255,255,.92);
+      border-top-color: var(--L-stroke);
+    }
+    .hDock::-webkit-scrollbar{height: 12px;}
+    .hDock::-webkit-scrollbar-thumb{
+      background: rgba(148,163,184,.35);
+      border-radius: 999px;
+      border: 3px solid rgba(0,0,0,.0);
+    }
+    body[data-theme="light"] .hDock::-webkit-scrollbar-thumb{
+      background: rgba(15,23,42,.25);
+      border: 3px solid rgba(255,255,255,.0);
+    }
+
+    /* Table "grid" (div-based) */
+    .gridInner{
+      width: max-content; /* critical: horizontal scroll reflects resized columns */
+      min-width: 100%;
+    }
+
+    .row{
+      display:flex;
+      align-items: stretch;
+      height: var(--rowH);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    body[data-theme="light"] .row{
+      border-bottom-color: rgba(15,23,42,.08);
+    }
+    .row:hover{background: rgba(255,255,255,.03);}
+    body[data-theme="light"] .row:hover{background: rgba(15,23,42,.03);}
+
+    /* Atrasada = linha inteira vermelha */
+    .row.atrasada{
+      background: linear-gradient(90deg, rgba(239,68,68,.24), rgba(239,68,68,.12));
+    }
+    body[data-theme="light"] .row.atrasada{
+      background: linear-gradient(90deg, rgba(239,68,68,.18), rgba(239,68,68,.10));
+    }
+
+    .cell{
+      display:flex;
+      align-items:center;
+      padding: 0 10px;
+      font-size:12px;
+      font-weight:800;
+      color: var(--text);
+      border-right: 1px solid rgba(255,255,255,.06);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+    body[data-theme="light"] .cell{
+      color: var(--L-text);
+      border-right-color: rgba(15,23,42,.08);
+    }
+
+    .headCell{
+      display:flex;
+      align-items:center;
+      padding: 0 10px;
+      font-size:12px;
+      font-weight:950;
+      color: var(--text);
+      border-right: 1px solid rgba(255,255,255,.08);
+      white-space: nowrap;
+      user-select:none;
+      position: relative;
+    }
+    body[data-theme="light"] .headCell{
+      color: var(--L-text);
+      border-right-color: rgba(15,23,42,.10);
+    }
+
+    .resizeHandle{
+      position:absolute;
+      right:-2px; top:0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      background: transparent;
+    }
+    .headCell.dragging{
+      outline: 2px solid rgba(99,102,241,.35);
+      border-radius: 10px;
+    }
+
+    /* Indicator bullets */
+    .dot{
+      width: 9px; height: 9px; border-radius: 999px;
+      display:inline-block;
+      margin-right: 0;
+    }
+    .dot.good{background: var(--good);}
+    .dot.warn{background: var(--warn);}
+    .dot.bad{background: var(--bad);}
+    .dot.neg{background: var(--bad);}
+
+    /* Activity indentation + toggle */
+    .activity{
+      display:flex; align-items:center; gap:8px;
+      min-width:0;
+    }
+    .toggle{
+      width: 18px; height: 18px;
+      border-radius: 6px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      display:inline-flex; align-items:center; justify-content:center;
+      font-weight:950;
+      cursor:pointer;
+      flex: 0 0 auto;
+    }
+    body[data-theme="light"] .toggle{
+      border-color: var(--L-stroke);
+      background: rgba(15,23,42,.04);
+    }
+
+    /* Gantt area */
+    .ganttWrap{
+      position: relative;
+      height: calc(var(--rowH) * 1); /* overwritten via JS to match row count */
+    }
+    .ganttRow{
+      position:absolute;
+      left:0;
+      height: var(--rowH);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      width: 100%;
+    }
+    body[data-theme="light"] .ganttRow{
+      border-bottom-color: rgba(15,23,42,.08);
+    }
+    .ganttBar{
+      position:absolute;
+      top: 9px;
+      height: 18px;
+      border-radius: 8px;
+      background: rgba(34,197,94,.60);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.20);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 11px;
+      font-weight: 950;
+      color: rgba(255,255,255,.95);
+      padding: 0 8px;
+      max-width: 100%;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow: ellipsis;
+    }
+    .ganttBar.bad{ background: rgba(239,68,68,.70); }
+    .ganttBar.warn{ background: rgba(245,158,11,.70); }
+
+    .todayLine{
+      position:absolute;
+      top:0;
+      width: 2px;
+      height: 100%;
+      background: rgba(99,102,241,.75);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.10);
+      z-index: 5;
+    }
+
+    /* Overlay */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.25);
+      z-index: 20;
+    }
+    .overlay .box{
+      width: 220px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.55);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      text-align:center;
+      font-weight:950;
+    }
+    body[data-theme="light"] .overlay .box{
+      border-color: var(--L-stroke);
+      background: rgba(255,255,255,.95);
+      box-shadow: var(--L-shadow);
+      color: var(--L-text);
+    }
+
+    /* Sidebar collapsed (proper UX) */
+    body.sidebar-collapsed .layout{
+      grid-template-columns: 72px minmax(0, 1fr);
+    }
+    body.sidebar-collapsed .sidebar{padding:10px;}
+    body.sidebar-collapsed .sidebarTitle,
+    body.sidebar-collapsed .sidebarBody{display:none;}
+    body.sidebar-collapsed .sidebarHead{
+      justify-content:center;
+    }
+    body.sidebar-collapsed .miniBtn{
+      width: 52px; justify-content:center;
+    }
+    body.sidebar-collapsed .miniBtn span.txt{display:none;}
+
+    /* small helper text */
+    .hint{font-size:11px;color:var(--muted2);font-weight:800;margin-top:8px;}
+    body[data-theme="light"] .hint{color: var(--L-muted2);}
+  </style>
+</head>
+
+<body data-theme="dark">
+  <div class="wrap">
+    <div class="topbar">
+      <div style="min-width:0">
+        <div class="titleline">
+          <div class="h1">MIT045 | Cronograma — Painel Gerencial (Live)</div>
+          <span id="pillStatus" class="pill ok">Status: OK (Cronograma operacional)</span>
+          <span id="pillConsistency" class="pill ok">Lista + Gantt consistentes (VIEW)</span>
+        </div>
+        <div class="sub">Gantt em HTML puro (DOM/CSS). Sem dependências externas. Fonte CSV publicada (oculta).</div>
+
+        <div class="nav">
+          <a href="index.html" id="navPainel">📊 PAINEL</a>
+          <a href="#" class="active" id="navCrono">🗓️ CRONOGRAMA</a>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btnLoad">Carregar &amp; Normalizar</button>
+        <button class="btn" id="btnExport">Exportar (CSV)</button>
+        <button class="btn ghost" id="btnTheme">🌙 Escuro</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="card sidebar" id="sidebar">
+        <div class="sidebarHead">
+          <div class="left">
+            <div class="sidebarTitle">Filtros</div>
+            <span class="pill" id="pillCount">0 itens</span>
+          </div>
+          <button class="miniBtn" id="btnToggleSidebar" title="Minimizar/Maximizar filtros">
+            <span class="icon">≡</span>
+            <span class="txt">Minimizar</span>
+          </button>
+        </div>
+
+        <div class="sidebarBody">
+          <div class="fieldLabel">Busca (texto livre)</div>
+          <input class="input" id="f_q" placeholder="Ex.: Gate, Testes, Folha Paralela, Go-Live..."/>
+
+          <div class="fieldLabel">Status (classificado)</div>
+          <select id="f_status">
+            <option value="all">(todos)</option>
+            <option value="ok">ok (Concluída)</option>
+            <option value="warn">warn (Em andamento / outros)</option>
+            <option value="bad">bad (Atrasada)</option>
+          </select>
+
+          <div class="fieldLabel">Responsável</div>
+          <select id="f_resp">
+            <option value="all">(todos)</option>
+          </select>
+
+          <div class="fieldLabel">Período (início ≥ / término ≤)</div>
+          <div class="dateRow">
+            <input class="input" id="f_ini" type="date"/>
+            <input class="input" id="f_fim" type="date"/>
+          </div>
+          <div class="hint">Início mínimo | Término máximo</div>
+
+          <div class="fieldLabel">Atalhos de período (base: hoje)</div>
+          <select id="f_quick">
+            <option value="none">(nenhum)</option>
+            <option value="thisWeek">Essa semana</option>
+            <option value="lastWeek">Semana passada</option>
+            <option value="nextWeek">Próxima semana</option>
+            <option value="next15">Próximos 15 dias</option>
+            <option value="prev15">15 dias atrás</option>
+            <option value="thisMonth">Este mês</option>
+            <option value="lastMonth">Mês passado</option>
+            <option value="nextMonth">Próximo mês</option>
+            <option value="thisYear">Este ano</option>
+            <option value="lastYear">Ano passado</option>
+          </select>
+
+          <div class="fieldLabel">Ordenação</div>
+          <select id="f_order">
+            <option value="sheet">Ordem da planilha</option>
+            <option value="startAsc">Início (asc)</option>
+            <option value="endAsc">Término (asc)</option>
+          </select>
+
+          <div class="fieldLabel">Somente Marcos</div>
+          <label class="inline" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="f_onlyMilestones"/>
+            Mostrar apenas tarefas Marco
+          </label>
+
+          <div class="sideActions">
+            <button class="btn" id="btnApplyFilters">Aplicar</button>
+            <button class="btn" id="btnClearFilters">Limpar filtros</button>
+          </div>
+
+          <div class="hint" id="auditText">Aguardando carga... Clique em “Carregar & Normalizar”.</div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="card main" style="position:relative;">
+        <div class="controlsBar">
+          <div class="controlsLeft">
+            <button class="segBtn" id="btnFiltersInline">≡ Filtros</button>
+            <button class="segBtn active" id="btnViewList">📄 Lista</button>
+            <button class="segBtn" id="btnViewGantt">📊 Gantt</button>
+
+            <span class="inline">
+              Zoom:
+              <select id="zoomSel">
+                <option value="day" selected>Normal</option>
+                <option value="week">Semana</option>
+                <option value="month">Mês</option>
+              </select>
+            </span>
+
+            <span class="inline">
+              <input type="checkbox" id="chkToday" checked/>
+              Hoje
+            </span>
+          </div>
+
+          <div class="inline" style="font-weight:950;">
+            Gate D: renderização do Gantt baseada no modelo canônico já validado.
+          </div>
+        </div>
+
+        <div class="summaryRow" id="summaryRow">
+          <span class="pill">Exibição</span>
+          <span class="pill" id="pillShown">0 exibidos</span>
+          <span class="pill ok" id="pillOK">ok: 0</span>
+          <span class="pill warn" id="pillWarn">warn: 0</span>
+          <span class="pill bad" id="pillBad">bad: 0</span>
+        </div>
+
+        <div class="kpiRow" id="kpiRow">
+          <div class="kpi"><div class="lab">Total</div><div class="val" id="kTotal">0</div><div class="subv">Atividades carregadas</div></div>
+          <div class="kpi"><div class="lab">Concluídas</div><div class="val" id="kDone">0</div><div class="subv">Status class: ok</div></div>
+          <div class="kpi"><div class="lab">Atrasadas</div><div class="val" id="kBad">0</div><div class="subv">Status class: bad</div></div>
+          <div class="kpi"><div class="lab">Em andamento / Outros</div><div class="val" id="kWarn">0</div><div class="subv">Status class: warn</div></div>
+          <div class="kpi"><div class="lab">Janela</div><div class="val" id="kWindow">—</div><div class="subv" id="kWindowSub">Min início → Max término</div></div>
+        </div>
+
+        <!-- Viewport (header + body scrollers + dock scrollbar) -->
+        <div class="viewport" id="viewport">
+          <div class="overlay" id="overlay">
+            <div class="box">
+              <div style="font-size:40px; line-height:1">🔌</div>
+              <div style="margin-top:10px;">Carregando...</div>
+            </div>
+          </div>
+
+          <!-- Horizontal scroll main: contains header + body content width -->
+          <div class="hScrollMain" id="hMain">
+            <div class="gridInner" id="gridInner">
+
+              <!-- Sticky header -->
+              <div class="gridHeader" id="gridHeader"></div>
+
+              <!-- Vertical scroll body -->
+              <div class="vScrollBody" id="vBody">
+                <div id="rowsWrap"></div>
+                <div id="ganttLayer" style="display:none; position:relative;"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Fixed horizontal scrollbar dock -->
+          <div class="hDock" id="hDock"><div id="hDockSpacer"></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   CONFIG
+========================= */
+const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQYqqAwpZ71FoGZTpPzxHf6l0lEWfASV60uL3O_tYz18xNQ6v14caD04rh8CRjZitdjemauIPolevi/pub?output=csv";
+
+/* =========================
+   STATE
+========================= */
+let RAW_ROWS = [];      // raw parsed rows array (objects by header)
+let CANON = [];         // normalized canonical rows
+let VIEW = [];          // filtered + sorted + visibility applied
+let TREE = [];          // tree nodes with children references
+let COLLAPSED = new Set(); // edt keys collapsed (hide descendants)
+
+let UI = {
+  csvUrl: DEFAULT_CSV_URL,
+  viewMode: "list", // list | gantt
+  zoom: "day",      // day | week | month
+  showToday: true,
+  theme: "dark",
+  colOrder: ["EDT","Indicador","% Planejado","% concluída","Status","Atividade","Duração","Início","Término","Marco","Predecessoras","Responsável","Anotações"],
+  colWidths: {
+    "EDT": 90,
+    "Indicador": 90,
+    "% Planejado": 105,
+    "% concluída": 105,
+    "Status": 110,
+    "Atividade": 420,
+    "Duração": 120,
+    "Início": 110,
+    "Término": 110,
+    "Marco": 90,
+    "Predecessoras": 130,
+    "Responsável": 150,
+    "Anotações": 260,
+  }
+};
+
+const COL_META = {
+  "EDT": {key:"edt"},
+  "Indicador": {key:"indicador"},
+  "% Planejado": {key:"pct_planejado"},
+  "% concluída": {key:"pct_concluido"},
+  "Status": {key:"status_raw"},
+  "Atividade": {key:"atividade"},
+  "Duração": {key:"duracao_raw"},
+  "Início": {key:"inicio_iso"},
+  "Término": {key:"termino_iso"},
+  "Marco": {key:"marco"},
+  "Predecessoras": {key:"predecessoras"},
+  "Responsável": {key:"responsavel"},
+  "Anotações": {key:"anotacoes"},
+};
+
+function $(id){ return document.getElementById(id); }
+
+function showOverlay(on){
+  $("overlay").style.display = on ? "flex" : "none";
+}
+
+/* =========================
+   CSV PARSER (safe, no regex pitfalls)
+========================= */
+function parseCSV(text){
+  const rows=[];
+  let row=[], cur="", inQ=false;
+  // normalize newlines
+  text = String(text||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], nx=text[i+1];
+    if(inQ){
+      if(ch === '"' && nx === '"'){ cur+='"'; i++; }
+      else if(ch === '"'){ inQ=false; }
+      else { cur+=ch; }
+    }else{
+      if(ch === '"'){ inQ=true; }
+      else if(ch === ','){ row.push(cur); cur=""; }
+      else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else { cur+=ch; }
+    }
+  }
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=>r.some(c=>String(c).trim()!==""));
+}
+
+function normalizeHeaders(h){
+  const seen={};
+  return h.map(x=>{
+    const name = String(x||"").trim() || "(vazio)";
+    if(seen[name]===undefined){ seen[name]=0; return name; }
+    seen[name]++; return `${name} (${seen[name]})`;
+  });
+}
+
+/* =========================
+   NORMALIZATION (Gate B+)
+========================= */
+function toISODatePT(v){
+  const s=String(v||"").trim();
+  if(!s) return "";
+  // formats accepted:
+  // "qua. 12/06/24" | "12/06/2024" | "2024-06-12"
+  let m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){
+    const dd = String(m[1]).padStart(2,'0');
+    const mm = String(m[2]).padStart(2,'0');
+    const yy = (m[3].length===2 ? "20"+m[3] : m[3]);
+    return `${yy}-${mm}-${dd}`;
+  }
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  return "";
+}
+
+function parsePct(v){
+  const s=String(v||"").trim();
+  if(!s) return 0;
+  const n = Number(String(s).replace("%","").replace(",","."));
+  return isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
+}
+
+function statusClassFromRaw(raw){
+  const s=String(raw||"").toLowerCase();
+  if(s.includes("atras")) return "bad";
+  if(s.includes("concl")) return "ok";
+  if(s.includes("andam") || s.includes("em andamento")) return "warn";
+  // fallback by % if needed
+  return "warn";
+}
+
+function normalizeRow(r, sheetIndex){
+  // Map from expected headers
+  const edt = String(r["EDT"]||r["edt"]||"").trim();
+  const indicadorRaw = String(r["Indicador"]||r["Indicador (1)"]||r["Ind"]||"").trim();
+  const pctPlanejado = parsePct(r["% Planejado"] ?? r["% Planejado "] ?? r["% Planejado"] ?? r["% Planejado (1)"] ?? r["% Planejado"] ?? r["% Planejado"] ?? r["% Planejado"]);
+  const pctConcluido = parsePct(r["% concluída"] ?? r["% concluida"] ?? r["% concluída "] ?? r["% concluida "] ?? r["% concluída"]);
+  const statusRaw = String(r["Status"]||r["status"]||"").trim();
+  const atividade = String(r["Atividade"]||r["atividade"]||"").trim();
+  const duracaoRaw = String(r["Duração"]||r["Duracao"]||r["duração"]||"").trim();
+  const inicioRaw = String(r["Início"]||r["Inicio"]||r["início"]||"").trim();
+  const terminoRaw = String(r["Término"]||r["Termino"]||r["término"]||"").trim();
+  const marco = String(r["Marco"]||r["marco"]||"").trim();
+  const predecessoras = String(r["Predecessoras"]||r["Predecessores"]||r["predecessoras"]||"").trim();
+  const responsavel = String(r["Responsável"]||r["Responsavel"]||r["responsável"]||"").trim();
+  const anotacoes = String(r["Anotações"]||r["Anotacoes"]||r["anotações"]||"").trim();
+
+  const inicioISO = toISODatePT(inicioRaw);
+  const terminoISO = toISODatePT(terminoRaw);
+
+  const status_class = statusClassFromRaw(statusRaw);
+
+  // indicador: negative -> show red bullet; 100% concluído -> green bullet
+  let indicadorNum = Number(String(indicadorRaw).replace(",","."));
+  if(!isFinite(indicadorNum)) indicadorNum = 0;
+
+  return {
+    sheetIndex,
+    edt,
+    indicador: indicadorNum,
+    pct_planejado: pctPlanejado,
+    pct_concluido: pctConcluido,
+    status_raw: statusRaw,
+    status_class,
+    atividade,
+    duracao_raw: duracaoRaw,
+    inicio_raw: inicioRaw,
+    termino_raw: terminoRaw,
+    inicio_iso: inicioISO,
+    termino_iso: terminoISO,
+    marco: marco,
+    predecessoras,
+    responsavel,
+    anotacoes
+  };
+}
+
+/* =========================
+   TREE (MS Project behavior)
+========================= */
+function levelFromEDT(edt){
+  const s=String(edt||"").trim();
+  if(!s) return 0;
+  return s.split(".").length - 1;
+}
+function parentEDT(edt){
+  const s=String(edt||"").trim();
+  const p = s.split(".");
+  if(p.length<=1) return "";
+  p.pop();
+  return p.join(".");
+}
+
+function buildTree(rows){
+  const map = new Map();
+  rows.forEach(r=>{
+    map.set(r.edt, {...r, level: levelFromEDT(r.edt), children: [], hasChildren:false, parent: parentEDT(r.edt) });
+  });
+  // attach
+  map.forEach(node=>{
+    if(node.parent && map.has(node.parent)){
+      const parent = map.get(node.parent);
+      parent.children.push(node.edt);
+      parent.hasChildren = true;
+    }
+  });
+  // keep children order as in sheetIndex order
+  map.forEach(node=>{
+    node.children.sort((a,b)=> map.get(a).sheetIndex - map.get(b).sheetIndex);
+  });
+  // build ordered list by sheet order
+  const ordered = Array.from(map.values()).sort((a,b)=>a.sheetIndex - b.sheetIndex);
+  return {map, ordered};
+}
+
+function isHiddenByCollapse(node, treeMap){
+  // if any ancestor is collapsed => hidden
+  let p = node.parent;
+  while(p){
+    if(COLLAPSED.has(p)) return true;
+    const pn = treeMap.get(p);
+    p = pn ? pn.parent : "";
+  }
+  return false;
+}
+
+/* =========================
+   FILTERS / SORT
+========================= */
+function today0(){
+  const d=new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+function addDays(d, n){
+  const x=new Date(d.getTime());
+  x.setDate(x.getDate()+n);
+  return x;
+}
+function startOfWeek(d){
+  const x=new Date(d.getTime());
+  const day = (x.getDay()+6)%7; // Monday=0
+  x.setDate(x.getDate()-day);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfWeek(d){
+  const s=startOfWeek(d);
+  const e=addDays(s,6);
+  e.setHours(23,59,59,999);
+  return e;
+}
+function startOfMonth(d){
+  const x=new Date(d.getFullYear(), d.getMonth(), 1);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfMonth(d){
+  const x=new Date(d.getFullYear(), d.getMonth()+1, 0);
+  x.setHours(23,59,59,999);
+  return x;
+}
+function startOfYear(d){
+  const x=new Date(d.getFullYear(), 0, 1);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfYear(d){
+  const x=new Date(d.getFullYear(), 11, 31);
+  x.setHours(23,59,59,999);
+  return x;
+}
+function parseISO(v){
+  if(!v) return null;
+  const d=new Date(v);
+  return isNaN(d)?null:d;
+}
+
+function applyFiltersAndBuildView(){
+  const q = ($("f_q").value||"").trim().toLowerCase();
+  const statusSel = $("f_status").value;
+  const respSel = $("f_resp").value;
+  const ini = $("f_ini").value ? new Date($("f_ini").value) : null;
+  const fim = $("f_fim").value ? new Date($("f_fim").value) : null;
+  const quick = $("f_quick").value;
+  const order = $("f_order").value;
+  const onlyMilestones = $("f_onlyMilestones").checked;
+
+  let qIni=null, qFim=null;
+  const t=today0();
+  if(quick && quick!=="none"){
+    if(quick==="thisWeek"){ qIni=startOfWeek(t); qFim=endOfWeek(t); }
+    if(quick==="lastWeek"){ qIni=addDays(startOfWeek(t),-7); qFim=addDays(endOfWeek(t),-7); }
+    if(quick==="nextWeek"){ qIni=addDays(startOfWeek(t),7); qFim=addDays(endOfWeek(t),7); }
+    if(quick==="next15"){ qIni=t; qFim=addDays(t,15); qFim.setHours(23,59,59,999); }
+    if(quick==="prev15"){ qIni=addDays(t,-15); qFim=t; qFim.setHours(23,59,59,999); }
+    if(quick==="thisMonth"){ qIni=startOfMonth(t); qFim=endOfMonth(t); }
+    if(quick==="lastMonth"){ const lm= new Date(t.getFullYear(), t.getMonth()-1, 1); qIni=startOfMonth(lm); qFim=endOfMonth(lm); }
+    if(quick==="nextMonth"){ const nm= new Date(t.getFullYear(), t.getMonth()+1, 1); qIni=startOfMonth(nm); qFim=endOfMonth(nm); }
+    if(quick==="thisYear"){ qIni=startOfYear(t); qFim=endOfYear(t); }
+    if(quick==="lastYear"){ const ly=new Date(t.getFullYear()-1,0,1); qIni=startOfYear(ly); qFim=endOfYear(ly); }
+  }
+
+  const tree = buildTree(CANON);
+  const map = tree.map;
+
+  let rows = tree.ordered.filter(n=>{
+    if(!n.edt) return false;
+
+    // collapse behavior (hide descendants)
+    if(isHiddenByCollapse(n, map)) return false;
+
+    // q search
+    if(q){
+      const hay = [n.edt, n.status_raw, n.atividade, n.duracao_raw, n.inicio_raw, n.termino_raw, n.predecessoras, n.responsavel, n.anotacoes].join(" ").toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    // status filter
+    if(statusSel!=="all" && n.status_class !== statusSel) return false;
+
+    // responsável filter
+    if(respSel!=="all" && String(n.responsavel||"") !== respSel) return false;
+
+    // milestone filter
+    if(onlyMilestones){
+      const m = String(n.marco||"").toLowerCase();
+      if(!(m==="sim" || m==="marco" || m.includes("sim"))) return false;
+    }
+
+    // date range filters on canonical start/end
+    const ds = parseISO(n.inicio_iso);
+    const de = parseISO(n.termino_iso);
+    if(ini && ds && ds < ini) return false;
+    if(fim && de){
+      const end = new Date(fim.getTime()); end.setHours(23,59,59,999);
+      if(de > end) return false;
+    }
+    if(qIni || qFim){
+      if(!ds || !de) return false;
+      if(qIni && ds < qIni) return false;
+      if(qFim && de > qFim) return false;
+    }
+
+    return true;
+  });
+
+  // sort
+  if(order==="sheet"){
+    rows.sort((a,b)=>a.sheetIndex-b.sheetIndex);
+  }else if(order==="startAsc"){
+    rows.sort((a,b)=>(a.inicio_iso||"").localeCompare(b.inicio_iso||"") || a.sheetIndex-b.sheetIndex);
+  }else if(order==="endAsc"){
+    rows.sort((a,b)=>(a.termino_iso||"").localeCompare(b.termino_iso||"") || a.sheetIndex-b.sheetIndex);
+  }
+
+  // build VIEW rows with runtime computed fields
+  VIEW = rows.map(n=>{
+    const level = levelFromEDT(n.edt);
+    const hasChildren = n.hasChildren;
+    const collapsed = COLLAPSED.has(n.edt);
+    return {...n, level, hasChildren, collapsed};
+  });
+
+  // update counts
+  updatePillsAndKPIs();
+  renderGrid();
+  if(UI.viewMode==="gantt") renderGantt();
+}
+
+/* =========================
+   UI COUNTS / KPI
+========================= */
+function updatePillsAndKPIs(){
+  $("pillCount").textContent = `${CANON.length} itens`;
+  $("pillShown").textContent = `${VIEW.length} exibidos`;
+
+  const ok = VIEW.filter(r=>r.status_class==="ok").length;
+  const warn = VIEW.filter(r=>r.status_class==="warn").length;
+  const bad = VIEW.filter(r=>r.status_class==="bad").length;
+
+  $("pillOK").textContent = `ok: ${ok}`;
+  $("pillWarn").textContent = `warn: ${warn}`;
+  $("pillBad").textContent = `bad: ${bad}`;
+
+  $("kTotal").textContent = String(CANON.length);
+  $("kDone").textContent = String(CANON.filter(r=>r.status_class==="ok").length);
+  $("kBad").textContent = String(CANON.filter(r=>r.status_class==="bad").length);
+  $("kWarn").textContent = String(CANON.filter(r=>r.status_class==="warn").length);
+
+  const starts = CANON.map(r=>r.inicio_iso).filter(Boolean).sort();
+  const ends = CANON.map(r=>r.termino_iso).filter(Boolean).sort();
+  if(starts.length && ends.length){
+    const s = fmtBR(starts[0]);
+    const e = fmtBR(ends[ends.length-1]);
+    $("kWindow").textContent = `${s} → ${e}`;
+  }else{
+    $("kWindow").textContent = "—";
+  }
+}
+
+function fmtBR(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  if(isNaN(d)) return "";
+  const dd=String(d.getDate()).padStart(2,"0");
+  const mm=String(d.getMonth()+1).padStart(2,"0");
+  const yy=String(d.getFullYear());
+  return `${dd}/${mm}/${yy}`;
+}
+
+/* =========================
+   GRID RENDER (header + rows)
+   - columns resizable & reorderable
+   - header fixed & opaque
+   - percent shows with '%'
+   - activity has expand/collapse toggle
+========================= */
+function colWidth(name){
+  return UI.colWidths[name] ?? 120;
+}
+
+function buildHeader(){
+  const header = $("gridHeader");
+  header.innerHTML = "";
+
+  UI.colOrder.forEach((colName, idx)=>{
+    const hc = document.createElement("div");
+    hc.className = "headCell";
+    hc.draggable = true;
+    hc.dataset.col = colName;
+    hc.style.width = colWidth(colName) + "px";
+    hc.textContent = colName;
+
+    // drag reorder
+    hc.addEventListener("dragstart", (e)=>{
+      hc.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", colName);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    hc.addEventListener("dragend", ()=>{
+      hc.classList.remove("dragging");
+    });
+    hc.addEventListener("dragover", (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; });
+    hc.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      const from = e.dataTransfer.getData("text/plain");
+      const to = colName;
+      if(!from || from===to) return;
+      const a = UI.colOrder.slice();
+      const iFrom = a.indexOf(from);
+      const iTo = a.indexOf(to);
+      if(iFrom<0 || iTo<0) return;
+      a.splice(iFrom,1);
+      a.splice(iTo,0,from);
+      UI.colOrder = a;
+      buildHeader();
+      renderRowsOnly();
+      updateDockWidths();
+    });
+
+    // resize
+    const rh = document.createElement("div");
+    rh.className = "resizeHandle";
+    let startX=0, startW=0;
+    rh.addEventListener("mousedown", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      startX = e.clientX;
+      startW = colWidth(colName);
+      const onMove = (ev)=>{
+        const dx = ev.clientX - startX;
+        const nw = Math.max(70, startW + dx);
+        UI.colWidths[colName] = nw;
+        // apply immediately
+        // header cell
+        hc.style.width = nw + "px";
+        // all row cells for this column
+        document.querySelectorAll(`.cell[data-col="${cssEscape(colName)}"]`).forEach(el=>{
+          el.style.width = nw + "px";
+        });
+        updateDockWidths();
+      };
+      const onUp = ()=>{
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    });
+    hc.appendChild(rh);
+
+    header.appendChild(hc);
+  });
+}
+
+function cssEscape(s){
+  // minimal escape
+  return String(s).replace(/"/g,'\\"');
+}
+
+function renderGrid(){
+  buildHeader();
+  renderRowsOnly();
+  updateDockWidths();
+}
+
+function renderRowsOnly(){
+  const rowsWrap = $("rowsWrap");
+  const ganttLayer = $("ganttLayer");
+
+  rowsWrap.style.display = (UI.viewMode==="list") ? "block" : "none";
+  ganttLayer.style.display = (UI.viewMode==="gantt") ? "block" : "none";
+
+  rowsWrap.innerHTML = "";
+
+  // set gantt layer height to match rows
+  ganttLayer.innerHTML = "";
+  ganttLayer.style.height = (VIEW.length * parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH"))) + "px";
+
+  // render list rows (div grid)
+  VIEW.forEach((r, rowIdx)=>{
+    const row = document.createElement("div");
+    row.className = "row" + (r.status_class==="bad" ? " atrasada" : "");
+    row.dataset.edt = r.edt;
+
+    UI.colOrder.forEach(colName=>{
+      const meta = COL_META[colName];
+      const key = meta.key;
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.col = colName;
+      cell.style.width = colWidth(colName) + "px";
+
+      // content
+      if(colName === "Indicador"){
+        // NEGATIVO -> bullet vermelho, 100% concluído -> bullet verde, senão status_class bullet
+        let dotClass = r.status_class;
+        if(r.indicador < 0) dotClass = "neg";
+        else if(r.pct_concluido >= 100) dotClass = "good";
+        const dot = document.createElement("span");
+        dot.className = "dot " + (dotClass==="neg" ? "bad" : dotClass);
+        cell.appendChild(dot);
+      }
+      else if(colName === "% Planejado"){
+        cell.textContent = `${r.pct_planejado}%`;
+      }
+      else if(colName === "% concluída"){
+        cell.textContent = `${r.pct_concluido}%`;
+      }
+      else if(colName === "Atividade"){
+        const wrap = document.createElement("div");
+        wrap.className = "activity";
+
+        // indent spacer
+        const indent = document.createElement("div");
+        indent.style.width = (r.level * 14) + "px";
+        indent.style.flex = "0 0 auto";
+        wrap.appendChild(indent);
+
+        // toggle only if has children
+        if(r.hasChildren){
+          const tgl = document.createElement("span");
+          tgl.className = "toggle";
+          tgl.title = r.collapsed ? "Expandir (mostrar descendentes)" : "Recolher (esconder descendentes)";
+          tgl.textContent = r.collapsed ? "+" : "–";
+          tgl.addEventListener("click", (e)=>{
+            e.stopPropagation();
+            if(COLLAPSED.has(r.edt)) COLLAPSED.delete(r.edt); else COLLAPSED.add(r.edt);
+            applyFiltersAndBuildView(); // rebuild view with collapse effects
+          });
+          wrap.appendChild(tgl);
+        }else{
+          const spacer = document.createElement("span");
+          spacer.style.width="18px";
+          spacer.style.height="18px";
+          spacer.style.flex="0 0 auto";
+          wrap.appendChild(spacer);
+        }
+
+        const txt = document.createElement("span");
+        txt.style.minWidth="0";
+        txt.style.overflow="hidden";
+        txt.style.textOverflow="ellipsis";
+        txt.style.whiteSpace="nowrap";
+        txt.textContent = r.atividade || "";
+        wrap.appendChild(txt);
+
+        cell.appendChild(wrap);
+      }
+      else if(colName === "Marco"){
+        // if SIM -> flag icon; else show "Não"
+        const m = String(r.marco||"").toLowerCase();
+        if(m==="sim" || m==="marco" || m.includes("sim")){
+          cell.innerHTML = `<span class="pill ok" style="padding:4px 10px; font-size:11px;">🚩 Marco</span>`;
+        }else{
+          cell.textContent = "Não";
+        }
+      }
+      else if(colName === "Início"){
+        cell.textContent = fmtBR(r.inicio_iso);
+      }
+      else if(colName === "Término"){
+        cell.textContent = fmtBR(r.termino_iso);
+      }
+      else {
+        // default
+        cell.textContent = String(r[key] ?? "").trim();
+      }
+
+      row.appendChild(cell);
+    });
+
+    rowsWrap.appendChild(row);
+  });
+
+  // ensure vBody still scrollable with stable height
+  // (nothing else needed)
+}
+
+/* =========================
+   GANTT RENDER
+   - DOM bars
+   - today line (when checked)
+========================= */
+function renderGantt(){
+  // This Gantt is rendered inside the same scroll+header system.
+  // We'll use ganttLayer and ganttRow absolute positioning.
+  const ganttLayer = $("ganttLayer");
+  ganttLayer.innerHTML = "";
+
+  // Determine timeline window = min start -> max end of VIEW (not CANON)
+  const starts = VIEW.map(r=>r.inicio_iso).filter(Boolean).sort();
+  const ends = VIEW.map(r=>r.termino_iso).filter(Boolean).sort();
+  if(!starts.length || !ends.length){
+    return;
+  }
+  const minD = new Date(starts[0]);
+  const maxD = new Date(ends[ends.length-1]);
+  minD.setHours(0,0,0,0);
+  maxD.setHours(0,0,0,0);
+
+  // timeline width: based on zoom
+  const days = Math.max(1, Math.round((maxD - minD) / (24*3600*1000)) + 1);
+
+  let pxPerDay = 16;
+  if(UI.zoom==="week") pxPerDay = 8;
+  if(UI.zoom==="month") pxPerDay = 4;
+
+  const timelineW = Math.max(800, days * pxPerDay);
+
+  // Gantt lives in a "virtual column" width inside gridInner; we reuse existing horizontal scroll.
+  // We render bars aligned with rows; bars start after total table width (sum columns).
+  const tableW = UI.colOrder.reduce((a,c)=>a+colWidth(c),0);
+  const fullW = tableW + timelineW;
+
+  // set gridInner width via max-content; but ensure a spacer for gantt width:
+  // We'll append a transparent spacer in header and each row already exist as flex.
+  // For gantt overlay we position using left = tableW
+  ganttLayer.style.width = fullW + "px";
+  ganttLayer.style.height = (VIEW.length * parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH"))) + "px";
+  ganttLayer.style.position = "relative";
+
+  // background row separators (optional)
+  for(let i=0;i<VIEW.length;i++){
+    const gr = document.createElement("div");
+    gr.className = "ganttRow";
+    gr.style.top = (i * parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH"))) + "px";
+    gr.style.left = tableW + "px";
+    gr.style.width = timelineW + "px";
+    ganttLayer.appendChild(gr);
+  }
+
+  // today line
+  if(UI.showToday){
+    const t = today0();
+    if(t>=minD && t<=maxD){
+      const x = Math.round((t - minD)/(24*3600*1000))*pxPerDay;
+      const line = document.createElement("div");
+      line.className = "todayLine";
+      line.style.left = (tableW + x) + "px";
+      ganttLayer.appendChild(line);
+    }
+  }
+
+  // bars
+  VIEW.forEach((r,i)=>{
+    const ds = parseISO(r.inicio_iso);
+    const de = parseISO(r.termino_iso);
+    if(!ds || !de) return;
+    const startOffset = Math.max(0, Math.round((ds - minD)/(24*3600*1000))*pxPerDay);
+    const dur = Math.max(1, Math.round((de - ds)/(24*3600*1000)) + 1);
+    const w = Math.max(10, dur * pxPerDay);
+
+    const bar = document.createElement("div");
+    bar.className = "ganttBar";
+    if(r.status_class==="bad") bar.classList.add("bad");
+    else if(r.status_class==="warn") bar.classList.add("warn");
+
+    bar.style.left = (tableW + startOffset) + "px";
+    bar.style.top = (i * parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rowH")) + 9) + "px";
+    bar.style.width = Math.min(w, timelineW - startOffset) + "px";
+    bar.textContent = (r.pct_concluido>=100 ? "100%" : `${r.pct_concluido}%`);
+
+    ganttLayer.appendChild(bar);
+  });
+
+  // update dock widths now that gantt extended content
+  updateDockWidths();
+}
+
+/* =========================
+   SCROLL SYNCHRONIZATION
+   - hDock (fixed) <-> hMain
+========================= */
+let _syncing = false;
+function updateDockWidths(){
+  // content width = gridInner scrollWidth
+  const main = $("hMain");
+  const spacer = $("hDockSpacer");
+  const inner = $("gridInner");
+  const w = inner.scrollWidth;
+  spacer.style.width = w + "px";
+  spacer.style.height = "1px";
+}
+
+function bindScrollSync(){
+  const hMain = $("hMain");
+  const hDock = $("hDock");
+  const vBody = $("vBody");
+
+  hMain.addEventListener("scroll", ()=>{
+    if(_syncing) return;
+    _syncing = true;
+    hDock.scrollLeft = hMain.scrollLeft;
+    _syncing = false;
+  });
+  hDock.addEventListener("scroll", ()=>{
+    if(_syncing) return;
+    _syncing = true;
+    hMain.scrollLeft = hDock.scrollLeft;
+    _syncing = false;
+  });
+
+  // keep header sticky handled by CSS; just ensure header matches horizontal scroll (it is inside same scroll, so ok)
+}
+
+/* =========================
+   LOAD & NORMALIZE (must not break)
+========================= */
+async function loadAndNormalize(){
+  showOverlay(true);
+  $("pillStatus").className = "pill warn";
+  $("pillStatus").textContent = "Status: Carregando...";
+  $("pillConsistency").className = "pill warn";
+  $("pillConsistency").textContent = "Carregando CSV...";
+
+  try{
+    const url = UI.csvUrl || DEFAULT_CSV_URL;
+    const r = await fetch(url, {cache:"no-store"});
+    if(!r.ok) throw new Error(`HTTP ${r.status} ao buscar CSV`);
+    const ct = r.headers.get("content-type") || "";
+    const text = await r.text();
+
+    const rows = parseCSV(text);
+    if(rows.length < 2) throw new Error("CSV vazio ou sem linhas suficientes");
+
+    const headers = normalizeHeaders(rows[0]);
+    RAW_ROWS = [];
+    for(let i=1;i<rows.length;i++){
+      const arr = rows[i];
+      const obj = {};
+      headers.forEach((h,idx)=> obj[h] = (arr[idx]!==undefined ? String(arr[idx]).trim() : ""));
+      RAW_ROWS.push(obj);
+    }
+
+    // Normalize
+    CANON = RAW_ROWS.map((obj, idx)=> normalizeRow(obj, idx)).filter(x=>x.edt);
+
+    // Build responsible dropdown
+    const resps = Array.from(new Set(CANON.map(r=>String(r.responsavel||"").trim()).filter(Boolean)))
+      .sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    const sel = $("f_resp");
+    sel.innerHTML = `<option value="all">(todos)</option>` + resps.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+
+    // Reset collapse
+    COLLAPSED = new Set();
+
+    // Apply filters & render
+    applyFiltersAndBuildView();
+
+    // audit text
+    $("auditText").textContent = `OK. CSV carregado e normalizado. CT: ${ct || "—"} | Registros: ${CANON.length}`;
+
+    $("pillStatus").className = "pill ok";
+    $("pillStatus").textContent = "Status: OK (Cronograma operacional)";
+    $("pillConsistency").className = "pill ok";
+    $("pillConsistency").textContent = "Lista + Gantt consistentes (VIEW).";
+
+  }catch(e){
+    console.error(e);
+    $("auditText").textContent = `ERRO: ${String(e.message||e)}`;
+    $("pillStatus").className = "pill bad";
+    $("pillStatus").textContent = "Status: NOK (Erro)";
+    $("pillConsistency").className = "pill bad";
+    $("pillConsistency").textContent = "Falha no carregamento. Ver auditoria.";
+  }finally{
+    showOverlay(false);
+    updateDockWidths();
+  }
+}
+
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;");
+}
+
+/* =========================
+   EXPORT
+========================= */
+function exportCurrentCSV(){
+  const cols = UI.colOrder.slice(); // visible in current order
+  const header = cols.join(",");
+  const lines = VIEW.map(r=>{
+    const values = cols.map(c=>{
+      if(c==="Indicador"){
+        // export numeric
+        return String(r.indicador);
+      }
+      if(c==="% Planejado") return String(r.pct_planejado);
+      if(c==="% concluída") return String(r.pct_concluido);
+      if(c==="Início") return String(r.inicio_iso||"");
+      if(c==="Término") return String(r.termino_iso||"");
+      if(c==="Atividade") return String(r.atividade||"");
+      if(c==="Status") return String(r.status_raw||"");
+      if(c==="Duração") return String(r.duracao_raw||"");
+      if(c==="Marco") return String(r.marco||"");
+      if(c==="Predecessoras") return String(r.predecessoras||"");
+      if(c==="Responsável") return String(r.responsavel||"");
+      if(c==="Anotações") return String(r.anotacoes||"");
+      if(c==="EDT") return String(r.edt||"");
+      return "";
+    }).map(v=> `"${String(v).replaceAll('"','""')}"`).join(",");
+    return values;
+  });
+  const csv = [header, ...lines].join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "mit045_cronograma_view.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1200);
+}
+
+/* =========================
+   BINDINGS (do not break load)
+========================= */
+function setTheme(next){
+  UI.theme = next;
+  document.body.setAttribute("data-theme", next);
+  const btn = $("btnTheme");
+  btn.textContent = (next==="dark") ? "🌙 Escuro" : "☀️ Claro";
+}
+
+function setViewMode(mode){
+  UI.viewMode = mode;
+  $("btnViewList").classList.toggle("active", mode==="list");
+  $("btnViewGantt").classList.toggle("active", mode==="gantt");
+  // keep rowsWrap vs ganttLayer toggled
+  renderRowsOnly();
+  if(mode==="gantt"){
+    renderGantt();
+  }
+}
+
+function resetUI(){
+  $("f_q").value="";
+  $("f_status").value="all";
+  $("f_resp").value="all";
+  $("f_ini").value="";
+  $("f_fim").value="";
+  $("f_quick").value="none";
+  $("f_order").value="sheet";
+  $("f_onlyMilestones").checked=false;
+  COLLAPSED = new Set();
+  applyFiltersAndBuildView();
+}
+
+function boot(){
+  // sidebar toggle UX
+  $("btnToggleSidebar").addEventListener("click", ()=>{
+    const collapsed = document.body.classList.toggle("sidebar-collapsed");
+    // update label
+    const txt = $("btnToggleSidebar").querySelector(".txt");
+    if(txt) txt.textContent = collapsed ? "Abrir" : "Minimizar";
+  });
+  $("btnFiltersInline").addEventListener("click", ()=>{
+    $("btnToggleSidebar").click();
+  });
+
+  // top actions
+  $("btnLoad").addEventListener("click", ()=> loadAndNormalize());
+  $("btnExport").addEventListener("click", ()=> exportCurrentCSV());
+  $("btnReset").addEventListener("click", ()=> resetUI());
+
+  // theme toggle
+  $("btnTheme").addEventListener("click", ()=>{
+    const next = (UI.theme==="dark") ? "light" : "dark";
+    setTheme(next);
+  });
+
+  // view toggles
+  $("btnViewList").addEventListener("click", ()=> setViewMode("list"));
+  $("btnViewGantt").addEventListener("click", ()=> setViewMode("gantt"));
+
+  // zoom/today
+  $("zoomSel").addEventListener("change", (e)=>{
+    UI.zoom = e.target.value;
+    if(UI.viewMode==="gantt") renderGantt();
+  });
+  $("chkToday").addEventListener("change", (e)=>{
+    UI.showToday = !!e.target.checked;
+    if(UI.viewMode==="gantt") renderGantt();
+  });
+
+  // filters
+  $("btnApplyFilters").addEventListener("click", ()=> applyFiltersAndBuildView());
+  $("btnClearFilters").addEventListener("click", ()=>{
+    $("f_q").value="";
+    $("f_status").value="all";
+    $("f_resp").value="all";
+    $("f_ini").value="";
+    $("f_fim").value="";
+    $("f_quick").value="none";
+    $("f_order").value="sheet";
+    $("f_onlyMilestones").checked=false;
+    applyFiltersAndBuildView();
+  });
+
+  // ensure scroll sync
+  bindScrollSync();
+
+  // default theme
+  setTheme("dark");
+
+  // prebuild header even empty
+  buildHeader();
+  updateDockWidths();
+}
+boot();
+</script>
+</body>
+</html>
